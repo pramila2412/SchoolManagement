@@ -1,0 +1,203 @@
+.student-detail-page {
+    max-width: 1100px;
+}
+
+.profile-card {
+    padding: 28px 32px;
+    margin-bottom: 24px;
+}
+
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.profile-avatar-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+}
+
+.profile-main-info h2 {
+    font-size: 1.4rem;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.profile-class {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.profile-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Detail Grid */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.detail-section {
+    padding: 24px;
+}
+
+.detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--bg);
+}
+
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
+/* Fee Overview */
+.fee-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.fee-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fee-progress-bar {
+    height: 10px;
+    background: var(--bg);
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.fee-progress-fill {
+    height: 100%;
+    border-radius: 50px;
+    transition: width 1s ease;
+}
+
+.fee-progress-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.fee-amounts {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.fee-amount-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fee-amount-item span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.fee-amount-item strong {
+    font-size: 1rem;
+}
+
+/* Attendance Overview */
+.attendance-overview {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.attendance-circle {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+.attendance-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.attendance-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.attendance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attendance-info span:first-child {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .profile-top {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-badges {
+        justify-content: center;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}

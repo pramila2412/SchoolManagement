@@ -1,0 +1,264 @@
+.dashboard {
+    max-width: 1200px;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: var(--radius-lg);
+    padding: 30px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    right: 10%;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.welcome-content h1 {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.welcome-school {
+    color: var(--accent);
+}
+
+.welcome-content p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.welcome-date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 50px;
+}
+
+/* Stats */
+.stat-card {
+    padding: 22px;
+    animation: slideInUp 0.4s ease forwards;
+    opacity: 0;
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.stat-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 50px;
+}
+
+.trend-up {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.trend-down {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+/* Section Headers */
+.dashboard-section {
+    margin-bottom: 28px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    font-size: 1.15rem;
+    color: var(--primary);
+}
+
+.section-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: 12px;
+}
+
+.section-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    transition: var(--transition-fast);
+}
+
+.section-link:hover {
+    color: var(--accent-hover);
+    gap: 10px;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 16px;
+}
+
+.quick-action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.quick-action-card:hover .qa-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.qa-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.qa-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.qa-arrow {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--text-muted);
+    opacity: 0;
+    transform: translateX(-5px);
+    transition: var(--transition);
+}
+
+/* Payment Card */
+.payment-card {
+    overflow: hidden;
+}
+
+.payment-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.td-bold {
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .welcome-banner {
+        padding: 20px;
+    }
+
+    .welcome-content h1 {
+        font-size: 1.2rem;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .qa-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .qa-label {
+        font-size: 0.78rem;
+    }
+}

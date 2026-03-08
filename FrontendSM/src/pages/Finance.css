@@ -1,0 +1,51 @@
+.finance-page {
+    max-width: 1200px;
+}
+
+.stat-card-finance {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px;
+    position: relative;
+}
+
+.stat-fin-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-fin-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.stat-fin-label {
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+.stat-fin-trend {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    opacity: 0.5;
+}
+
+.payment-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-light);
+}

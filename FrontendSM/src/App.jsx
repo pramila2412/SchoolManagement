@@ -11,6 +11,21 @@ import StudentDetail from './pages/StudentDetail';
 import FinancePage from './pages/Finance';
 import ConcessionPage from './pages/Concessions';
 import PlaceholderPage from './pages/PlaceholderPage';
+import HomeWork from './pages/HomeWork';
+import EContent from './pages/EContent';
+import AcademicCalendar from './pages/AcademicCalendar';
+import TimeTable from './pages/TimeTable';
+import LibraryPage from './pages/LibraryPage';
+
+import Attendance from './pages/Attendance';
+import Certificates from './pages/Certificates';
+import Reports from './pages/Reports';
+import Announcements from './pages/Announcements';
+import TC from './pages/TC';
+import Expenses from './pages/Expenses';
+import Transport from './pages/Transport';
+import Examination from './pages/Examination';
+import FrontOffice from './pages/FrontOffice';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -38,15 +53,23 @@ function AppLayout() {
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/finance/concessions" element={<ConcessionPage />} />
-            <Route path="/finance/expenses" element={<PlaceholderPage moduleId="finance-expenses" />} />
-            <Route path="/attendance" element={<PlaceholderPage moduleId="attendance" />} />
-            <Route path="/library" element={<PlaceholderPage moduleId="library" />} />
-            <Route path="/transport" element={<PlaceholderPage moduleId="transport" />} />
-            <Route path="/examination" element={<PlaceholderPage moduleId="examination" />} />
-            <Route path="/front-office" element={<PlaceholderPage moduleId="front-office" />} />
-            <Route path="/certificates" element={<PlaceholderPage moduleId="examination" />} />
-            <Route path="/announcements" element={<PlaceholderPage moduleId="front-office" />} />
-            <Route path="/tc" element={<PlaceholderPage moduleId="front-office" />} />
+            <Route path="/finance/expenses" element={<Expenses />} />
+            <Route path="/attendance" element={<Attendance />} />
+            
+            {/* Academics */}
+            <Route path="/academics/homework" element={<HomeWork />} />
+            <Route path="/academics/e-content" element={<EContent />} />
+            <Route path="/academics/calendar" element={<AcademicCalendar />} />
+            <Route path="/academics/timetable" element={<TimeTable />} />
+            <Route path="/academics/library" element={<LibraryPage />} />
+
+            <Route path="/transport" element={<Transport />} />
+            <Route path="/examination" element={<Examination />} />
+            <Route path="/front-office" element={<FrontOffice />} />
+            <Route path="/certificates" element={<Certificates />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/tc" element={<TC />} />
           </Routes>
         </div>
       </main>

@@ -1,0 +1,65 @@
+.econtent-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.econtent-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.econtent-page .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text-grey);
+    margin-bottom: 4px;
+}
+
+.econtent-page .page-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.econtent-page .page-breadcrumb .separator {
+    color: var(--text-grey-light);
+}
+
+.econtent-page h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.econtent-page .tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    color: var(--text-grey);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.econtent-page .tab-btn:hover {
+    color: var(--primary);
+    background: var(--bg-light);
+}
+
+.econtent-page .tab-btn.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+/* Upload Box Hover */
+.econtent-page .upload-box:hover {
+    border-color: var(--primary) !important;
+    background: var(--primary-light) !important;
+}

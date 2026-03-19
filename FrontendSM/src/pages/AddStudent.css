@@ -1,9 +1,11 @@
 .add-student-page {
     max-width: 900px;
+    padding: 24px;
+    margin: 0 auto;
 }
 
 .add-student-form {
-    padding: 28px 32px;
+    padding: 40px;
 }
 
 .form-section-title {
@@ -22,10 +24,24 @@
     margin-top: 0;
 }
 
+.form-section {
+    margin-bottom: 32px;
+    padding-bottom: 8px;
+}
+
 .form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.form-row.two-cols {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.form-row.four-cols {
+    grid-template-columns: repeat(4, 1fr);
 }
 
 .form-error {

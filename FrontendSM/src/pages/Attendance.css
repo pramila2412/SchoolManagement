@@ -1,0 +1,185 @@
+.attendance-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.attendance-container {
+    background: transparent;
+}
+
+.attendance-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.attendance-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.header-icon {
+    color: var(--primary);
+}
+
+.attendance-card {
+    background: white;
+    border-radius: 8px;
+    padding: 32px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.date-row {
+    grid-template-columns: 250px; /* Only one item in this row based on screenshot */
+}
+
+.date-input-wrapper {
+    position: relative;
+}
+
+.view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.view-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.form-actions {
+    margin-top: 16px;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 120px;
+    padding: 20px 16px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.sum-total { background-color: #f0f7ff; border-color: #dbeafe; }
+.sum-total .sum-count { color: #3b82f6; }
+.sum-total .sum-label { color: #3b82f6; }
+
+.sum-present { background-color: #f0fdf4; border-color: #dcfce7; }
+.sum-present .sum-count { color: #22c55e; }
+.sum-present .sum-label { color: #22c55e; }
+
+.sum-absent { background-color: #fef2f2; border-color: #fee2e2; }
+.sum-absent .sum-count { color: #ef4444; }
+.sum-absent .sum-label { color: #ef4444; }
+
+.sum-late { background-color: #fff7ed; border-color: #ffedd5; }
+.sum-late .sum-count { color: #f97316; }
+.sum-late .sum-label { color: #f97316; }
+
+.sum-leave { background-color: #eff6ff; border-color: #dbeafe; }
+.sum-leave .sum-count { color: #2563eb; }
+.sum-leave .sum-label { color: #2563eb; }
+
+.sum-unmarked { background-color: #f8fafc; border-color: #f1f5f9; }
+.sum-unmarked .sum-count { color: #64748b; }
+.sum-unmarked .sum-label { color: #64748b; }
+
+.sum-count {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.sum-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Action Buttons */
+.attendance-action-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.att-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 48px;
+    height: 32px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.att-btn svg {
+    stroke-width: 3;
+}
+
+.btn-present { border: 1px solid #22c55e; color: #22c55e; }
+.btn-present:hover { background: #dcfce7; }
+.btn-present.active { background: #22c55e; color: white; }
+
+.btn-absent { border: 1px solid #ef4444; color: #ef4444; }
+.btn-absent:hover { background: #fee2e2; }
+.btn-absent.active { background: #ef4444; color: white; }
+
+.btn-late { border: 1px solid #f97316; color: #f97316; }
+.btn-late:hover { background: #ffedd5; }
+.btn-late.active { background: #f97316; color: white; }
+
+.btn-leave { border: 1px solid #3b82f6; color: #3b82f6; }
+.btn-leave:hover { background: #dbeafe; }
+.btn-leave.active { background: #3b82f6; color: white; }
+
+/* Status Pills */
+.status-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid currentColor;
+}
+
+.pill-unmarked { color: #64748b; border-color: #cbd5e1; }
+.pill-present { color: #22c55e; border-color: #86efac; }
+.pill-absent { color: #ef4444; border-color: #fca5a5; }
+.pill-late { color: #f97316; border-color: #fdba74; }
+.pill-leave { color: #3b82f6; border-color: #93c5fd; }
+

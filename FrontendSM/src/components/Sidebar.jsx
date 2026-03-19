@@ -4,12 +4,13 @@ import {
     LayoutDashboard, Users, IndianRupee, CalendarCheck,
     BookOpen, Bus, FileText, Building, ChevronDown, ChevronRight,
     UserPlus, Award, Megaphone, FileCheck, Receipt, Wallet,
+    GraduationCap, PencilLine, Video, Calendar, Clock,
 } from 'lucide-react';
 import './Sidebar.css';
 
 const iconMap = {
     LayoutDashboard, Users, IndianRupee, CalendarCheck,
-    BookOpen, Bus, FileText, Building,
+    BookOpen, Bus, FileText, Building, GraduationCap,
 };
 
 const subIconMap = {
@@ -22,6 +23,11 @@ const subIconMap = {
     'Fees Collection': Receipt,
     'Concessions': Wallet,
     'Expenses': IndianRupee,
+    'Home-Work': PencilLine,
+    'E-Content': Video,
+    'Academic Calendar': Calendar,
+    'Time Table': Clock,
+    'Library': BookOpen,
 };
 
 export default function Sidebar({ open, onClose }) {
@@ -49,8 +55,17 @@ export default function Sidebar({ open, onClose }) {
                 { name: 'Expenses', path: '/finance/expenses' },
             ]
         },
+        {
+            id: 'academics', name: 'Academics', icon: 'GraduationCap', path: '/academics',
+            subModules: [
+                { name: 'Home-Work', path: '/academics/homework' },
+                { name: 'E-Content', path: '/academics/e-content' },
+                { name: 'Academic Calendar', path: '/academics/calendar' },
+                { name: 'Time Table', path: '/academics/timetable' },
+                { name: 'Library', path: '/academics/library' },
+            ]
+        },
         { id: 'attendance', name: 'Attendance', icon: 'CalendarCheck', path: '/attendance' },
-        { id: 'library', name: 'Library', icon: 'BookOpen', path: '/library' },
         { id: 'transport', name: 'Transport', icon: 'Bus', path: '/transport' },
         { id: 'examination', name: 'Examination', icon: 'FileText', path: '/examination' },
         { id: 'frontoffice', name: 'Front Office', icon: 'Building', path: '/front-office' },

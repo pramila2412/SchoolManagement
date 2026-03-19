@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ===== CSS Custom Properties (Design System) ===== */
 :root {
@@ -86,6 +89,18 @@ input, select, textarea {
   font-family: inherit;
   font-size: inherit;
   outline: none;
+}
+
+::selection {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+select option:checked,
+select option:hover,
+select option:focus {
+  background-color: var(--primary-light) !important;
+  color: white !important;
 }
 
 img {
@@ -216,7 +231,7 @@ h5 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
 
 /* ===== Form Elements ===== */
 .form-group {
-  margin-bottom: 20px;
+  position: relative;
 }
 .form-label {
   display: block;
@@ -317,6 +332,12 @@ h5 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
   background: var(--bg);
 }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -340,6 +361,7 @@ h5 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
 }
 .main-content {
   flex: 1;
+  min-width: 0;
   margin-left: var(--sidebar-width);
   padding-top: var(--header-height);
   min-height: 100vh;
@@ -464,3 +486,4 @@ h5 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
     grid-template-columns: 1fr;
   }
 }
+

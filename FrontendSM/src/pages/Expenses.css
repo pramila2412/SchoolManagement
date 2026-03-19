@@ -1,0 +1,84 @@
+.expenses-card {
+    padding: 0;
+}
+
+.exp-form-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-group-text {
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-right: none;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    color: var(--text-muted);
+}
+
+.input-group .form-input {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.document-upload-zone {
+    margin-bottom: 20px;
+}
+
+.upload-box {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    background: #fafafa;
+}
+
+.upload-box:hover {
+    border-color: var(--accent);
+    background: white;
+}
+
+.upload-box p {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.upload-box span {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.flex-fill {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-fill .form-textarea {
+    flex-grow: 1;
+}
+
+.text-right {
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .exp-form-layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}

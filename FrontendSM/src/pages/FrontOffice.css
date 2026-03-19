@@ -1,0 +1,31 @@
+.fo-card {
+    padding: 0;
+}
+
+.fo-split-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.fo-form .row-group {
+    display: flex;
+    gap: 16px;
+}
+
+.fo-form .row-group .field {
+    flex: 1;
+}
+
+@media (max-width: 1024px) {
+    .fo-split-layout {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+    .fo-form .row-group {
+        flex-direction: column;
+        gap: 0;
+    }
+}

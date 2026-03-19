@@ -1,0 +1,75 @@
+.homework-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.homework-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.homework-page .page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text-grey);
+    margin-bottom: 4px;
+}
+
+.homework-page .page-breadcrumb a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.homework-page .page-breadcrumb .separator {
+    color: var(--text-grey-light);
+}
+
+.homework-page h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.homework-page .tab-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    color: var(--text-grey);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.homework-page .tab-btn:hover {
+    color: var(--primary);
+    background: var(--bg-light);
+}
+
+.homework-page .tab-btn.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+/* Custom Checkbox Grid */
+.custom-hw-grid label {
+    transition: background 0.2s ease;
+}
+
+.custom-hw-grid label:hover {
+    background: var(--border-light) !important;
+}
+
+.custom-hw-grid input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}

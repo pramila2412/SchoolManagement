@@ -34,16 +34,18 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Connect to MongoDB and start server
+// Start server first, then try MongoDB
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+// Connect to MongoDB (non-blocking — server works without it for auth)
 mongoose
     .connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-        });
     })
     .catch((err) => {
-        console.error('❌ MongoDB connection error:', err.message);
-        process.exit(1);
+        console.warn('⚠️  MongoDB not available:', err.message);
+        console.warn('   Auth will still work. Other features need MongoDB.');
     });

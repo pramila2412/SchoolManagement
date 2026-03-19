@@ -100,11 +100,11 @@ export default function AddStudent() {
                 </Link>
             </div>
 
-            <div className="card form-container">
+            <div className="card add-student-form">
                 <form onSubmit={handleSubmit}>
                     {/* BASIC INFORMATION */}
                     <div className="form-section">
-                        <h3 className="section-title">BASIC INFORMATION</h3>
+                        <h3 className="form-section-title">BASIC INFORMATION</h3>
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label">Batch <span className="required">*</span></label>
@@ -130,7 +130,7 @@ export default function AddStudent() {
                             </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">First Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.firstName ? 'error' : ''}`} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" />
@@ -159,8 +159,8 @@ export default function AddStudent() {
 
                     {/* PARENT & CONTACT DETAILS */}
                     <div className="form-section">
-                        <h3 className="section-title">PARENT & CONTACT DETAILS</h3>
-                        <div className="form-row">
+                        <h3 className="form-section-title">PARENT & CONTACT DETAILS</h3>
+                        <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Father's Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.fatherName ? 'error' : ''}`} name="fatherName" value={formData.fatherName} onChange={handleChange} placeholder="Enter father's name" />
@@ -172,7 +172,7 @@ export default function AddStudent() {
                             </div>
                         </div>
 
-                        <div className="form-row">
+                        <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Contact No <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="Enter contact no" />
@@ -192,7 +192,8 @@ export default function AddStudent() {
 
                     {/* ACADEMIC & FACILITY */}
                     <div className="form-section">
-                        <div className="form-row">
+                        <h3 className="form-section-title">ACADEMIC & FACILITY</h3>
+                        <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Roll No</label>
                                 <input type="text" className="form-input" name="rollNo" value={formData.rollNo} onChange={handleChange} placeholder="Enter Roll No" />
@@ -221,7 +222,7 @@ export default function AddStudent() {
                             </div>
                         </div>
 
-                        <div className="form-row" style={{ marginTop: 24 }}>
+                        <div className="form-row two-cols" style={{ marginTop: 24 }}>
                             <div className="form-group">
                                 <label className="form-label">New Student?</label>
                                 <div className="radio-group">

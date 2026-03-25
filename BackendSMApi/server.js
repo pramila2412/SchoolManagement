@@ -15,6 +15,7 @@ const collaborateRoutes = require('./routes/collaborate');
 const attendanceRoutes = require('./routes/attendance');
 const certificateRoutes = require('./routes/certificates');
 const tcRoutes = require('./routes/tc');
+const frontofficeRoutes = require('./routes/frontoffice');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,7 @@ app.use('/api/collaborate', collaborateRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/tc', tcRoutes);
+app.use('/api/frontoffice', frontofficeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

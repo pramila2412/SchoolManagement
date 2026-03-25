@@ -1,31 +1,118 @@
-.fo-card {
-    padding: 0;
+.frontoffice-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.fo-split-layout {
+/* ─── Tabs ─── */
+.fo-tabs {
     display: flex;
-    gap: 30px;
-    align-items: flex-start;
+    gap: 4px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.fo-tabs .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.fo-tabs .tab-btn:hover { background: var(--bg); }
+.fo-tabs .tab-btn.active { background: var(--primary); color: #fff; }
+
+/* ─── KPI Dashboard ─── */
+.fo-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 8px;
+}
+.fo-kpi-card {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.fo-kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.fo-kpi-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
 }
 
-.fo-form .row-group {
+/* ─── Quick Actions ─── */
+.fo-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+.fo-action-btn {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: all 0.2s;
+}
+.fo-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.fo-action-btn svg { color: var(--primary); }
+
+/* ─── Forms ─── */
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
 }
-
-.fo-form .row-group .field {
-    flex: 1;
+.form-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
+    .form-grid-3 [style*="grid-column: span"],
+    .form-grid-4 [style*="grid-column: span"] { grid-column: span 1 !important; }
 }
 
-@media (max-width: 1024px) {
-    .fo-split-layout {
-        flex-direction: column;
-    }
+/* ─── Report Grid ─── */
+.fo-report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+.fo-report-card {
+    transition: all 0.2s;
+}
+.fo-report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-@media (max-width: 600px) {
-    .fo-form .row-group {
-        flex-direction: column;
-        gap: 0;
-    }
-}
+/* ─── Misc ─── */
+.fo-form-card { border-left: 3px solid var(--primary); }
+.action-buttons-center { display: flex; gap: 6px; justify-content: center; }
+.text-danger { color: #ef4444 !important; }

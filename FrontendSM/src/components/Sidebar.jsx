@@ -7,7 +7,7 @@ import {
     GraduationCap, PencilLine, Video, Calendar, Clock,
     Truck, Map, UserCheck, Navigation, ClipboardCheck, CreditCard,
     Stamp, BarChart3, Settings, MessageSquare, FileUp, Mail,
-    CheckSquare, Clipboard,
+    CheckSquare, Clipboard, Phone, HelpCircle, AlertTriangle, Package, CalendarClock,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -57,6 +57,13 @@ const subIconMap = {
     'Tasks': CheckSquare,
     'Notice Board': Clipboard,
     'Collab Settings': Settings,
+    'FO Dashboard': LayoutDashboard,
+    'Visitors': Users,
+    'Call Logs': Phone,
+    'Enquiries': HelpCircle,
+    'Complaints': AlertTriangle,
+    'Postal': Package,
+    'Appointments': CalendarClock,
 };
 
 export default function Sidebar({ open, onClose }) {
@@ -121,7 +128,18 @@ export default function Sidebar({ open, onClose }) {
                 { name: 'Exam Settings', path: '/examination?tab=settings' },
             ]
         },
-        { id: 'frontoffice', name: 'Front Office', icon: 'Building', path: '/front-office' },
+        {
+            id: 'frontoffice', name: 'Front Office', icon: 'Building', path: '/front-office',
+            subModules: [
+                { name: 'FO Dashboard', path: '/front-office' },
+                { name: 'Visitors', path: '/front-office?tab=visitors' },
+                { name: 'Call Logs', path: '/front-office?tab=calls' },
+                { name: 'Enquiries', path: '/front-office?tab=enquiries' },
+                { name: 'Complaints', path: '/front-office?tab=complaints' },
+                { name: 'Postal', path: '/front-office?tab=postal' },
+                { name: 'Appointments', path: '/front-office?tab=appointments' },
+            ]
+        },
         {
             id: 'collaborate', name: 'Collaborate', icon: 'BookOpen', path: '/collaborate',
             subModules: [

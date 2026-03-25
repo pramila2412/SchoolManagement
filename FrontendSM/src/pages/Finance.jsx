@@ -65,6 +65,15 @@ export default function FinancePage() {
                 </div>
             </div>
 
+            <div className="tabs-header" style={{ marginBottom: 20 }}>
+                <button className={`tab-btn ${tab === 'collection' ? 'active' : ''}`} onClick={() => setTab('collection')}>
+                    Fee Collection
+                </button>
+                <button className={`tab-btn ${tab === 'structure' ? 'active' : ''}`} onClick={() => setTab('structure')}>
+                    Fee Structure (2026-27)
+                </button>
+            </div>
+
             {loading ? (
                 <div style={{ padding: '40px', textAlign: 'center' }}>Loading finance data...</div>
             ) : (
@@ -161,6 +170,63 @@ export default function FinancePage() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {!loading && tab === 'structure' && (
+                <div className="card animate-fade-in" style={{ marginBottom: 24 }}>
+                    <h3 style={{ marginBottom: '16px', fontSize: '1.1rem', color: 'var(--text-dark)' }}>Mount Zion School - Fee Structure 2026-27</h3>
+                    <div className="table-wrapper">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Class Group</th>
+                                    <th>Admission Fee</th>
+                                    <th>Annual Fee (Incidental)</th>
+                                    <th>Examination Fee (1 Year)</th>
+                                    <th>Monthly Fee</th>
+                                    <th className="td-bold text-right" style={{ background: 'var(--bg)' }}>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className="td-bold">NURSERY, LKG & UKG</td>
+                                    <td>FREE (3000.00)</td><td>2000.00</td><td>2000.00</td><td>1500.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>5500.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 1 to 2</td>
+                                    <td>FREE (4000.00)</td><td>3000.00</td><td>2000.00</td><td>2000.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>7000.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 3 to 4</td>
+                                    <td>FREE (4000.00)</td><td>3000.00</td><td>2000.00</td><td>2400.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>7400.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 5 to 7</td>
+                                    <td>7500.00</td><td>7950.00</td><td>3050.00</td><td>2700.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>21200.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 8</td>
+                                    <td>7500.00</td><td>7950.00</td><td>3650.00</td><td>3300.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>22400.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 9</td>
+                                    <td>8000.00</td><td>9150.00</td><td>4250.00</td><td>3300.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>24700.00</td>
+                                </tr>
+                                <tr>
+                                    <td className="td-bold">STD. 11</td>
+                                    <td>-</td><td>8550.00</td><td>4000.00</td><td>3300.00</td>
+                                    <td className="text-right fw-600" style={{ background: 'var(--bg)' }}>15850.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             )}
         </div>
     );

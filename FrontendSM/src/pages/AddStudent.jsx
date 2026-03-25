@@ -15,13 +15,19 @@ export default function AddStudent() {
         firstName: '',
         lastName: '',
         gender: 'Male',
+        dateOfBirth: '',
+        bloodGroup: '',
+        religion: '',
         fatherName: '',
         motherName: '',
+        guardianPhone: '',
+        guardianOccupation: '',
         contactNo: '',
         email: '',
         address: '',
         rollNo: '',
         admissionNo: '',
+        admissionDate: '',
         feesStartDate: '',
         applicationNo: '',
         facility: [],
@@ -49,7 +55,10 @@ export default function AddStudent() {
         if (!formData.class) newErrors.class = 'Class is required';
         if (!formData.section) newErrors.section = 'Section is required';
         if (!formData.contactNo.trim()) newErrors.contactNo = 'Contact Number is required';
+        else if (!/^\d{10}$/.test(formData.contactNo)) newErrors.contactNo = 'Must be 10 digits';
         if (!formData.fatherName.trim()) newErrors.fatherName = "Father's Name is required";
+        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email format';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -60,22 +69,19 @@ export default function AddStudent() {
 
         setIsSubmitting(true);
         try {
-            // Auto-generate ID just for the demo based on Name and RollNo
-            const newId = `STU${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-
+            const newId = `STU-${formData.batch.split('-')[0]}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
             const newStudent = {
                 ...formData,
                 id: newId,
-                totalFees: 45000, // Default fee
+                status: 'Active',
+                totalFees: 45000,
                 paidFees: 0,
                 attendance: 100
             };
-
             await api.createStudent(newStudent);
             navigate('/students');
         } catch (err) {
             console.error("Failed to add student", err);
-            // Fallback/error alert
             alert("Failed to add student to DB. Check server.");
         } finally {
             setIsSubmitting(false);
@@ -102,9 +108,105 @@ export default function AddStudent() {
 
             <div className="card add-student-form">
                 <form onSubmit={handleSubmit}>
-                    {/* BASIC INFORMATION */}
+                    {/* PERSONAL INFORMATION */}
                     <div className="form-section">
-                        <h3 className="form-section-title">BASIC INFORMATION</h3>
+                        <h3 className="form-section-title">PERSONAL INFORMATION</h3>
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">First Name <span className="required">*</span></label>
+                                <input type="text" className={`form-input ${errors.firstName ? 'error' : ''}`} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" />
+                                {errors.firstName && <span className="error-text">{errors.firstName}</span>}
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Last Name</label>
+                                <input type="text" className="form-input" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Enter last name" />
+                            </div>
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label className="form-label">Gender</label>
+                                <div className="radio-group">
+                                    <label className="radio-label"><input type="radio" name="gender" value="Male" checked={formData.gender === 'Male'} onChange={handleChange} /><span>Male</span></label>
+                                    <label className="radio-label"><input type="radio" name="gender" value="Female" checked={formData.gender === 'Female'} onChange={handleChange} /><span>Female</span></label>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Date of Birth <span className="required">*</span></label>
+                                <input type="date" className={`form-input ${errors.dateOfBirth ? 'error' : ''}`} name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} />
+                                {errors.dateOfBirth && <span className="error-text">{errors.dateOfBirth}</span>}
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Blood Group</label>
+                                <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
+                                    <option value="">Select</option>
+                                    {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b=><option key={b} value={b}>{b}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Religion</label>
+                                <input type="text" className="form-input" name="religion" value={formData.religion} onChange={handleChange} placeholder="Enter religion" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Category</label>
+                                <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PARENT & CONTACT DETAILS */}
+                    <div className="form-section">
+                        <h3 className="form-section-title">PARENT & CONTACT DETAILS</h3>
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Father's Name <span className="required">*</span></label>
+                                <input type="text" className={`form-input ${errors.fatherName ? 'error' : ''}`} name="fatherName" value={formData.fatherName} onChange={handleChange} placeholder="Enter father's name" />
+                                {errors.fatherName && <span className="error-text">{errors.fatherName}</span>}
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Mother's Name</label>
+                                <input type="text" className="form-input" name="motherName" value={formData.motherName} onChange={handleChange} placeholder="Enter mother's name" />
+                            </div>
+                        </div>
+
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Guardian Phone</label>
+                                <input type="text" className="form-input" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Enter guardian phone" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Guardian Occupation</label>
+                                <input type="text" className="form-input" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleChange} placeholder="Enter occupation" />
+                            </div>
+                        </div>
+
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Contact No <span className="required">*</span></label>
+                                <input type="text" className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="10-digit number" />
+                                {errors.contactNo && <span className="error-text">{errors.contactNo}</span>}
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">E-mail ID</label>
+                                <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter email" />
+                                {errors.email && <span className="error-text">{errors.email}</span>}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Address</label>
+                            <textarea className="form-input" name="address" value={formData.address} onChange={handleChange} placeholder="Enter full address" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    {/* ADMISSION & ACADEMIC */}
+                    <div className="form-section">
+                        <h3 className="form-section-title">ADMISSION & ACADEMIC</h3>
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label">Batch <span className="required">*</span></label>
@@ -132,69 +234,6 @@ export default function AddStudent() {
 
                         <div className="form-row two-cols">
                             <div className="form-group">
-                                <label className="form-label">First Name <span className="required">*</span></label>
-                                <input type="text" className={`form-input ${errors.firstName ? 'error' : ''}`} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" />
-                                {errors.firstName && <span className="error-text">{errors.firstName}</span>}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Last Name</label>
-                                <input type="text" className="form-input" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Enter last name" />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Gender</label>
-                            <div className="radio-group">
-                                <label className="radio-label">
-                                    <input type="radio" name="gender" value="Male" checked={formData.gender === 'Male'} onChange={handleChange} />
-                                    <span>Male</span>
-                                </label>
-                                <label className="radio-label">
-                                    <input type="radio" name="gender" value="Female" checked={formData.gender === 'Female'} onChange={handleChange} />
-                                    <span>Female</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* PARENT & CONTACT DETAILS */}
-                    <div className="form-section">
-                        <h3 className="form-section-title">PARENT & CONTACT DETAILS</h3>
-                        <div className="form-row two-cols">
-                            <div className="form-group">
-                                <label className="form-label">Father's Name <span className="required">*</span></label>
-                                <input type="text" className={`form-input ${errors.fatherName ? 'error' : ''}`} name="fatherName" value={formData.fatherName} onChange={handleChange} placeholder="Enter father's name" />
-                                {errors.fatherName && <span className="error-text">{errors.fatherName}</span>}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Mother's Name</label>
-                                <input type="text" className="form-input" name="motherName" value={formData.motherName} onChange={handleChange} placeholder="Enter mother's name" />
-                            </div>
-                        </div>
-
-                        <div className="form-row two-cols">
-                            <div className="form-group">
-                                <label className="form-label">Contact No <span className="required">*</span></label>
-                                <input type="text" className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="Enter contact no" />
-                                {errors.contactNo && <span className="error-text">{errors.contactNo}</span>}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">E-mail ID</label>
-                                <input type="email" className="form-input" name="email" value={formData.email} onChange={handleChange} placeholder="Enter email" />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Address</label>
-                            <textarea className="form-input" name="address" value={formData.address} onChange={handleChange} placeholder="Enter full address" rows="3"></textarea>
-                        </div>
-                    </div>
-
-                    {/* ACADEMIC & FACILITY */}
-                    <div className="form-section">
-                        <h3 className="form-section-title">ACADEMIC & FACILITY</h3>
-                        <div className="form-row two-cols">
-                            <div className="form-group">
                                 <label className="form-label">Roll No</label>
                                 <input type="text" className="form-input" name="rollNo" value={formData.rollNo} onChange={handleChange} placeholder="Enter Roll No" />
                             </div>
@@ -204,60 +243,40 @@ export default function AddStudent() {
                             </div>
                         </div>
 
-                        <div className="form-group" style={{ marginTop: 20 }}>
-                            <label className="form-label">Facility</label>
-                            <div style={{ display: 'flex', gap: 24, marginTop: 8 }}>
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="facility" value="Hostel" checked={formData.facility.includes('Hostel')} onChange={handleChange} />
-                                    <span>Hostel</span>
-                                </label>
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="facility" value="Transport" checked={formData.facility.includes('Transport')} onChange={handleChange} />
-                                    <span>Transport</span>
-                                </label>
-                                <label className="checkbox-label">
-                                    <input type="checkbox" name="facility" value="Library" checked={formData.facility.includes('Library')} onChange={handleChange} />
-                                    <span>Library</span>
-                                </label>
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Admission Date</label>
+                                <input type="date" className="form-input" name="admissionDate" value={formData.admissionDate} onChange={handleChange} />
                             </div>
-                        </div>
-
-                        <div className="form-row two-cols" style={{ marginTop: 24 }}>
                             <div className="form-group">
                                 <label className="form-label">New Student?</label>
                                 <div className="radio-group">
-                                    <label className="radio-label">
-                                        <input type="radio" name="newStudent" value="true" checked={formData.newStudent === true} onChange={() => setFormData({ ...formData, newStudent: true })} />
-                                        <span>Yes</span>
-                                    </label>
-                                    <label className="radio-label">
-                                        <input type="radio" name="newStudent" value="false" checked={formData.newStudent === false} onChange={() => setFormData({ ...formData, newStudent: false })} />
-                                        <span>No</span>
-                                    </label>
+                                    <label className="radio-label"><input type="radio" name="newStudent" value="true" checked={formData.newStudent === true} onChange={() => setFormData({ ...formData, newStudent: true })} /><span>Yes</span></label>
+                                    <label className="radio-label"><input type="radio" name="newStudent" value="false" checked={formData.newStudent === false} onChange={() => setFormData({ ...formData, newStudent: false })} /><span>No</span></label>
                                 </div>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Category</label>
-                                <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
-                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
+                        </div>
+                    </div>
+
+                    {/* FACILITY */}
+                    <div className="form-section">
+                        <h3 className="form-section-title">FACILITY</h3>
+                        <div style={{ display: 'flex', gap: 24, marginTop: 8 }}>
+                            {['Hostel', 'Transport', 'Library'].map(f => (
+                                <label key={f} className="checkbox-label">
+                                    <input type="checkbox" name="facility" value={f} checked={formData.facility.includes(f)} onChange={handleChange} />
+                                    <span>{f}</span>
+                                </label>
+                            ))}
                         </div>
                     </div>
 
                     {/* FORM ACTIONS */}
                     <div className="form-actions">
-                        <button type="button" className="btn btn-warning" onClick={() => navigate('/students')}>
-                            Cancel
+                        <button type="button" className="btn btn-warning" onClick={() => navigate('/students')}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120, justifyContent: 'center' }}>
+                            {isSubmitting ? 'Saving...' : <><Save size={16} /> Submit</>}
                         </button>
-                        <div style={{ display: 'flex', gap: 12 }}>
-                            <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--warning)', borderColor: 'var(--warning)' }}>
-                                <PlusCircle size={16} /> Add More Info
-                            </button>
-                            <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 120, justifyContent: 'center' }}>
-                                {isSubmitting ? 'Saving...' : <><Save size={16} /> Submit</>}
-                            </button>
-                        </div>
                     </div>
                 </form>
             </div>

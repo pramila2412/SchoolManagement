@@ -1,21 +1,115 @@
+/* ===== Transport Module Styles ===== */
+
+.transport-page .tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    background: var(--bg);
+    padding: 6px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom: 2px solid var(--border);
+}
+
+.transport-page .tab-btn {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+.transport-page .tab-btn:hover {
+    background: var(--card-bg);
+    color: var(--text);
+}
+.transport-page .tab-btn.active {
+    background: var(--card-bg);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.transport-page .tabs-content {
+    padding: 24px;
+}
+
 .transport-card {
     padding: 0;
 }
 
-.two-col-layout {
-    display: flex;
-    gap: 30px;
-    align-items: flex-start;
+/* ===== KPI Grid ===== */
+.transport-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
 }
 
+.kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition);
+}
+.kpi-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.kpi-info h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+.kpi-info p {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+/* ===== Quick Actions ===== */
+.transport-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.transport-quick-actions .btn {
+    font-size: 0.82rem;
+    padding: 8px 16px;
+    min-height: 38px;
+}
+
+/* ===== Two Column Layout ===== */
+.two-col-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
 .form-panel {
-    flex: 0 0 350px;
+    flex: 0 0 380px;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 24px;
 }
-
 .table-panel {
     flex: 1;
     min-width: 0;
@@ -27,27 +121,386 @@
 
 .form-panel h3 {
     margin-bottom: 20px;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--primary);
     border-bottom: 2px solid var(--border-light);
     padding-bottom: 10px;
 }
 
 .transport-form .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+}
+.transport-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+.transport-form .form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
+/* ===== Status Badges ===== */
+.badge-active {
+    background: var(--success-light);
+    color: var(--success);
+}
+.badge-maintenance {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+.badge-inactive {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+.badge-draft {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6B7280;
+}
+.badge-suspended {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+/* ===== Vehicle Checkbox List ===== */
 .vehicle-checkboxes .checkbox-list {
     margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     background: var(--bg);
-    padding: 16px;
+    padding: 14px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-light);
 }
 
+/* ===== Route Stops Panel ===== */
+.stops-list {
+    margin-top: 16px;
+}
+.stop-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    border: 1px solid var(--border-light);
+}
+.stop-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.stop-details {
+    flex: 1;
+    min-width: 0;
+}
+.stop-details h5 {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+.stop-details span {
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+/* ===== Route Summary Card ===== */
+.route-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+.route-summary-item {
+    background: var(--bg);
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+.route-summary-item label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    font-weight: 600;
+}
+.route-summary-item p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 4px;
+}
+
+/* ===== Tracking Cards ===== */
+.tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+.tracking-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: var(--transition);
+}
+.tracking-card:hover {
+    box-shadow: var(--shadow-md);
+}
+.tracking-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.tracking-card-header h4 {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tracking-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.tracking-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+.tracking-detail span:first-child {
+    color: var(--text-light);
+}
+.tracking-detail span:last-child {
+    font-weight: 500;
+    color: var(--text);
+}
+.tracking-progress {
+    margin-top: 12px;
+}
+.tracking-progress-bar {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.tracking-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* ===== Attendance Grid ===== */
+.attendance-filter-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: flex-end;
+}
+.attendance-filter-row .form-group {
+    flex: 1;
+    min-width: 160px;
+}
+.attendance-student-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.attendance-student-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+}
+.attendance-student-row .student-info {
+    flex: 1;
+    min-width: 0;
+}
+.attendance-student-row .student-info h5 {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.attendance-student-row .student-info span {
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+.attendance-actions {
+    display: flex;
+    gap: 8px;
+}
+.attendance-actions .btn-sm {
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    min-height: 32px;
+    border-radius: var(--radius-sm);
+}
+.btn-boarded {
+    background: var(--success);
+    color: #fff;
+}
+.btn-boarded:hover {
+    background: #229954;
+}
+.btn-not-boarded {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-light);
+}
+.btn-not-boarded:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-light);
+}
+.btn-not-boarded.active-not-boarded {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+}
+
+/* ===== Fee Config ===== */
+.fee-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+.fee-card {
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+.fee-card h4 {
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.fee-card .fee-amount {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.fee-card .fee-meta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 6px;
+}
+
+/* ===== Bulk Assign ===== */
+.bulk-assign-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+.bulk-assign-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.9rem;
+}
+.bulk-assign-item:last-child {
+    border-bottom: none;
+}
+.bulk-assign-item input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 18px;
+    height: 18px;
+}
+
+/* ===== Section Title ===== */
+.section-divider {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 28px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===== Empty State ===== */
+.transport-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-light);
+}
+.transport-empty svg {
+    opacity: 0.3;
+    margin-bottom: 12px;
+}
+.transport-empty p {
+    font-size: 0.9rem;
+    max-width: 300px;
+}
+
+/* ===== Simulated Map ===== */
+.simulated-map {
+    background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 50%, #c3e6cb 100%);
+    border-radius: var(--radius-md);
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.simulated-map::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 41px),
+        repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.03) 40px, rgba(0,0,0,0.03) 41px);
+}
+.simulated-map .map-label {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: var(--text-light);
+}
+.simulated-map .map-label svg {
+    margin-bottom: 8px;
+    color: var(--accent);
+}
+.simulated-map .map-label p {
+    font-size: 0.85rem;
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 1024px) {
     .two-col-layout {
         flex-direction: column;
@@ -55,5 +508,33 @@
     .form-panel {
         flex: 1;
         width: 100%;
+    }
+    .transport-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .transport-page .tabs-header {
+        gap: 0;
+    }
+    .transport-page .tab-btn {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+    .transport-page .tabs-content {
+        padding: 16px;
+    }
+    .transport-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .transport-form .form-row {
+        grid-template-columns: 1fr;
+    }
+    .tracking-grid {
+        grid-template-columns: 1fr;
+    }
+    .attendance-filter-row {
+        flex-direction: column;
     }
 }

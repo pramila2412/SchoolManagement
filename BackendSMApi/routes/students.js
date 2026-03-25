@@ -2,17 +2,24 @@ const express = require('express');
 const router = express.Router();
 const Student = require('../models/Student');
 
-// Get all students
+// Get all students with optional filters
 router.get('/', async (req, res) => {
     try {
-        const students = await Student.find().sort({ createdAt: -1 });
+        const { class: cls, section, gender, status } = req.query;
+        const filter = {};
+        if (cls) filter.class = cls;
+        if (section) filter.section = section;
+        if (gender) filter.gender = gender;
+        if (status) filter.status = status;
+        else filter.status = { $ne: 'Left' }; // default: hide left students
+        const students = await Student.find(filter).sort({ createdAt: -1 });
         res.json(students);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-// Get a single student by id (e.g., STU001)
+// Get a single student by id
 router.get('/:id', async (req, res) => {
     try {
         const student = await Student.findOne({ id: req.params.id });
@@ -48,11 +55,15 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete a student
+// Soft delete (mark inactive)
 router.delete('/:id', async (req, res) => {
     try {
-        await Student.findOneAndDelete({ id: req.params.id });
-        res.json({ message: 'Student deleted' });
+        const student = await Student.findOneAndUpdate(
+            { id: req.params.id },
+            { status: 'Inactive' },
+            { new: true }
+        );
+        res.json({ message: 'Student deactivated', student });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

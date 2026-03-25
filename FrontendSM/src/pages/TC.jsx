@@ -1,41 +1,71 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, FileEdit, FileText } from 'lucide-react';
+import { Search, FileEdit, FileText, Eye, Printer } from 'lucide-react';
 import './TC.css';
 
+const API = '/api';
+
 export default function TC() {
-    const [formData, setFormData] = useState({
-        batch: '2024-2025',
-        class: '',
-        section: '',
-        keyword: ''
-    });
-
-    const [filters, setFilters] = useState({
-        Name: true,
-        RollNo: false,
-        AdmNo: false,
-        FatherName: false,
-        MotherName: false,
-        LoginId: false,
-        Mobile: false
-    });
-
-    const handleFilterChange = (key) => {
-        setFilters(prev => ({ ...prev, [key]: !prev[key] }));
-    };
-
+    const [activeView, setActiveView] = useState('search');
+    const [formData, setFormData] = useState({ batch: '2024-2025', class: '', section: '', keyword: '' });
     const [results, setResults] = useState([]);
     const [hasSearched, setHasSearched] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [tcForm, setTcForm] = useState({ dateOfLeaving: '', reasonForLeaving: '', conduct: 'Good', medium: 'English' });
+    const [generating, setGenerating] = useState(false);
+    const [tcList, setTcList] = useState([]);
 
-    const handleSearch = (e) => {
+    useEffect(() => {
+        fetch(`${API}/tc`).then(r => r.json()).then(setTcList).catch(() => {});
+    }, []);
+
+    const handleSearch = async (e) => {
         e.preventDefault();
-        // Mock data
-        setResults([
-            { id: 1, batch: '2024-2025', className: 'NURSERY - A', rollNo: '12', studentName: 'Rohan Verma', fatherName: 'Vikash Verma', contact: '9876500001', admNo: 'ADM-101' },
-            { id: 2, batch: '2024-2025', className: 'NURSERY - A', rollNo: '15', studentName: 'Sneha Singh', fatherName: 'Manoj Singh', contact: '9876500002', admNo: 'ADM-105' }
-        ]);
-        setHasSearched(true);
+        try {
+            let url = `${API}/students?status=Active`;
+            if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
+            if (formData.section) url += `&section=${formData.section}`;
+            const res = await fetch(url);
+            let data = await res.json();
+            if (formData.keyword) {
+                const kw = formData.keyword.toLowerCase();
+                data = data.filter(s => `${s.firstName} ${s.lastName} ${s.admissionNo} ${s.rollNo} ${s.fatherName}`.toLowerCase().includes(kw));
+            }
+            setResults(data);
+            setHasSearched(true);
+        } catch { setResults([]); setHasSearched(true); }
+    };
+
+    const openTcForm = (student) => {
+        setSelectedStudent(student);
+        setTcForm({ dateOfLeaving: '', reasonForLeaving: '', conduct: 'Good', medium: 'English' });
+        setActiveView('generate');
+    };
+
+    const handleGenerate = async () => {
+        if (!tcForm.dateOfLeaving || !tcForm.reasonForLeaving) return alert('Fill all required fields');
+        setGenerating(true);
+        try {
+            const body = {
+                studentId: selectedStudent.id,
+                studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
+                class: selectedStudent.class,
+                section: selectedStudent.section,
+                admissionNo: selectedStudent.admissionNo,
+                admissionDate: selectedStudent.admissionDate,
+                dateOfBirth: selectedStudent.dateOfBirth,
+                fatherName: selectedStudent.fatherName,
+                classLastStudied: selectedStudent.class,
+                ...tcForm,
+            };
+            const res = await fetch(`${API}/tc`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const tc = await res.json();
+            alert(`TC Generated! TC No: ${tc.tcNo}`);
+            setActiveView('search');
+            setResults(results.filter(r => r.id !== selectedStudent.id));
+            setTcList([tc, ...tcList]);
+        } catch { alert('Failed to generate TC'); }
+        finally { setGenerating(false); }
     };
 
     return (
@@ -43,123 +73,133 @@ export default function TC() {
             <div className="page-header">
                 <div>
                     <div className="page-breadcrumb">
-                        <Link to="/">Dashboard</Link>
-                        <span className="separator">/</span>
-                        <span>Front Office</span>
-                        <span className="separator">/</span>
-                        <span>TC Requests</span>
+                        <Link to="/">Dashboard</Link><span className="separator">/</span><span>Transfer Certificate</span>
                     </div>
-                    <h1>View TC Request</h1>
+                    <h1>Transfer Certificate (TC)</h1>
                 </div>
             </div>
 
-            <div className="card tc-filter-card">
-                <form onSubmit={handleSearch}>
-                    <div className="form-grid-3">
+            {activeView === 'search' && (
+                <>
+                    <div className="card tc-filter-card">
+                        <form onSubmit={handleSearch}>
+                            <div className="form-grid-3">
+                                <div className="form-group">
+                                    <label className="form-label">Batch</label>
+                                    <select className="form-select" value={formData.batch} onChange={e => setFormData({...formData, batch: e.target.value})}>
+                                        <option value="2024-2025">2024-2025</option><option value="2023-2024">2023-2024</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Class</label>
+                                    <select className="form-select" value={formData.class} onChange={e => setFormData({...formData, class: e.target.value})}>
+                                        <option value="">All Classes</option>
+                                        {['Nursery','I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Section</label>
+                                    <select className="form-select" value={formData.section} onChange={e => setFormData({...formData, section: e.target.value})}>
+                                        <option value="">All Sections</option>
+                                        {['A','B','C','D'].map(s=><option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="form-group" style={{marginTop:20}}>
+                                <label className="form-label">Search Student</label>
+                                <input type="text" className="form-input" placeholder="Search by name, admission no..." value={formData.keyword} onChange={e => setFormData({...formData, keyword: e.target.value})} />
+                            </div>
+                            <div className="form-actions" style={{display:'flex',justifyContent:'flex-end',marginTop:24}}>
+                                <button type="submit" className="btn btn-primary"><Search size={18}/> Search</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {hasSearched && (
+                        <div className="card tc-results-card animate-slide-up" style={{marginTop:24}}>
+                            <div className="table-responsive">
+                                <table className="data-table">
+                                    <thead><tr><th>Adm No</th><th>Student</th><th>Class</th><th>Father</th><th>Contact</th><th style={{textAlign:'center'}}>Action</th></tr></thead>
+                                    <tbody>
+                                        {results.length > 0 ? results.map(s => (
+                                            <tr key={s.id}>
+                                                <td>{s.admissionNo}</td>
+                                                <td className="fw-600">{s.firstName} {s.lastName}</td>
+                                                <td>{s.class} - {s.section}</td>
+                                                <td>{s.fatherName}</td>
+                                                <td>{s.contactNo}</td>
+                                                <td><div className="action-buttons-center"><button className="btn btn-primary btn-sm" onClick={()=>openTcForm(s)}>Generate TC</button></div></td>
+                                            </tr>
+                                        )) : (
+                                            <tr><td colSpan="6"><div className="empty-state"><FileText size={48}/><h3>No Active Students Found</h3></div></td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {tcList.length > 0 && (
+                        <div className="card" style={{marginTop:24,padding:24}}>
+                            <h3 style={{marginBottom:16}}>Recently Issued TCs</h3>
+                            <div className="table-responsive">
+                                <table className="data-table">
+                                    <thead><tr><th>TC No</th><th>Student</th><th>Class</th><th>Date of Leaving</th><th>Reason</th><th>Conduct</th></tr></thead>
+                                    <tbody>
+                                        {tcList.map(tc=>(
+                                            <tr key={tc._id}>
+                                                <td className="fw-600">{tc.tcNo}</td>
+                                                <td>{tc.studentName}</td>
+                                                <td>{tc.class} - {tc.section}</td>
+                                                <td>{new Date(tc.dateOfLeaving).toLocaleDateString('en-IN')}</td>
+                                                <td>{tc.reasonForLeaving}</td>
+                                                <td><span className="badge badge-success">{tc.conduct}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {activeView === 'generate' && selectedStudent && (
+                <div className="card" style={{padding:30,marginTop:20}}>
+                    <h3 style={{marginBottom:20}}>Generate TC for {selectedStudent.firstName} {selectedStudent.lastName}</h3>
+                    <div className="detail-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+                        <div><span style={{color:'var(--text-light)',fontSize:'0.85rem'}}>Admission No</span><p style={{fontWeight:600}}>{selectedStudent.admissionNo}</p></div>
+                        <div><span style={{color:'var(--text-light)',fontSize:'0.85rem'}}>Class</span><p style={{fontWeight:600}}>{selectedStudent.class} - {selectedStudent.section}</p></div>
+                        <div><span style={{color:'var(--text-light)',fontSize:'0.85rem'}}>Father's Name</span><p style={{fontWeight:600}}>{selectedStudent.fatherName}</p></div>
+                        <div><span style={{color:'var(--text-light)',fontSize:'0.85rem'}}>Date of Birth</span><p style={{fontWeight:600}}>{selectedStudent.dateOfBirth ? new Date(selectedStudent.dateOfBirth).toLocaleDateString('en-IN') : '—'}</p></div>
+                    </div>
+                    <div className="form-row two-cols">
                         <div className="form-group">
-                            <label className="form-label">Batch</label>
-                            <select className="form-select" value={formData.batch} onChange={e => setFormData({...formData, batch: e.target.value})}>
-                                <option value="2024-2025">2024-2025</option>
-                                <option value="2023-2024">2023-2024</option>
-                            </select>
+                            <label className="form-label">Date of Leaving <span className="required">*</span></label>
+                            <input type="date" className="form-input" value={tcForm.dateOfLeaving} onChange={e=>setTcForm({...tcForm,dateOfLeaving:e.target.value})} />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Class</label>
-                            <select className="form-select" value={formData.class} onChange={e => setFormData({...formData, class: e.target.value})}>
-                                <option value="">Select Class</option>
-                                <option value="NURSERY">NURSERY</option>
-                                <option value="I">Class I</option>
+                            <label className="form-label">Conduct</label>
+                            <select className="form-select" value={tcForm.conduct} onChange={e=>setTcForm({...tcForm,conduct:e.target.value})}>
+                                {['Excellent','Good','Satisfactory','Needs Improvement'].map(c=><option key={c} value={c}>{c}</option>)}
                             </select>
+                        </div>
+                    </div>
+                    <div className="form-row two-cols" style={{marginTop:16}}>
+                        <div className="form-group">
+                            <label className="form-label">Reason for Leaving <span className="required">*</span></label>
+                            <input type="text" className="form-input" value={tcForm.reasonForLeaving} onChange={e=>setTcForm({...tcForm,reasonForLeaving:e.target.value})} placeholder="e.g. Transfer, Relocation" />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Section</label>
-                            <select className="form-select" value={formData.section} onChange={e => setFormData({...formData, section: e.target.value})}>
-                                <option value="">Select Section</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
+                            <label className="form-label">Medium of Instruction</label>
+                            <select className="form-select" value={tcForm.medium} onChange={e=>setTcForm({...tcForm,medium:e.target.value})}>
+                                <option value="English">English</option><option value="Hindi">Hindi</option><option value="Telugu">Telugu</option>
                             </select>
                         </div>
                     </div>
-
-                    <div className="form-group" style={{ marginTop: '20px' }}>
-                        <label className="form-label">Select Student</label>
-                        <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="Enter Keyword..." 
-                            value={formData.keyword}
-                            onChange={e => setFormData({...formData, keyword: e.target.value})}
-                        />
-                    </div>
-
-                    <div className="checkbox-row">
-                        {Object.keys(filters).map(key => (
-                            <label key={key} className="checkbox-item tc-checkbox">
-                                <input 
-                                    type="checkbox" 
-                                    checked={filters[key]} 
-                                    onChange={() => handleFilterChange(key)} 
-                                />
-                                {key.replace(/([A-Z])/g, ' $1').trim()}
-                            </label>
-                        ))}
-                    </div>
-
-                    <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                        <button type="submit" className="btn btn-primary" style={{ padding: '10px 30px' }}>
-                            <Search size={18} /> Search
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            {hasSearched && (
-                <div className="card tc-results-card animate-slide-up" style={{ marginTop: '24px' }}>
-                    <div className="table-responsive">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Batch</th>
-                                    <th>Class & Sec</th>
-                                    <th>Roll No.</th>
-                                    <th>Student</th>
-                                    <th>Father</th>
-                                    <th>Contact No.</th>
-                                    <th>Adm No.</th>
-                                    <th style={{ textAlign: 'center' }}>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {results.length > 0 ? results.map(row => (
-                                    <tr key={row.id}>
-                                        <td>{row.batch}</td>
-                                        <td>{row.className}</td>
-                                        <td>{row.rollNo}</td>
-                                        <td className="fw-600">{row.studentName}</td>
-                                        <td>{row.fatherName}</td>
-                                        <td>{row.contact}</td>
-                                        <td>{row.admNo}</td>
-                                        <td>
-                                            <div className="action-buttons-center">
-                                                <button className="btn-icon text-info" title="Manage TC">
-                                                    <FileEdit size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="8">
-                                            <div className="empty-state">
-                                                <FileText size={48} />
-                                                <h3>No TC Requests Found</h3>
-                                                <p>Try adjusting your search filters to find records.</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                    <div style={{display:'flex',gap:12,justifyContent:'flex-end',marginTop:24}}>
+                        <button className="btn btn-outline" onClick={()=>setActiveView('search')}>Cancel</button>
+                        <button className="btn btn-primary" onClick={handleGenerate} disabled={generating}>{generating ? 'Generating...' : 'Generate TC'}</button>
                     </div>
                 </div>
             )}

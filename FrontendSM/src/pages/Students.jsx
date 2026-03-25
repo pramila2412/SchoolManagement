@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Plus, User, Phone, Mail } from 'lucide-react';
+import { Search, Filter, Plus, Phone } from 'lucide-react';
 import { api } from '../utils/api';
 import { getInitials, getAvatarColor } from '../utils/helpers';
 import './Students.css';
@@ -9,6 +9,8 @@ export default function StudentsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('All Classes');
     const [sectionFilter, setSectionFilter] = useState('All Sections');
+    const [genderFilter, setGenderFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('Active');
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +34,9 @@ export default function StudentsPage() {
             .includes(searchTerm.toLowerCase());
         const matchClass = classFilter === 'All Classes' || s.class === classFilter;
         const matchSection = sectionFilter === 'All Sections' || s.section === sectionFilter;
-        return matchSearch && matchClass && matchSection;
+        const matchGender = genderFilter === 'All' || s.gender === genderFilter;
+        const matchStatus = statusFilter === 'All' || (s.status || 'Active') === statusFilter;
+        return matchSearch && matchClass && matchSection && matchGender && matchStatus;
     });
 
     return (
@@ -75,6 +79,17 @@ export default function StudentsPage() {
                             <option key={s} value={s}>Section {s}</option>
                         ))}
                     </select>
+                    <select className="filter-select" value={genderFilter} onChange={e => setGenderFilter(e.target.value)}>
+                        <option value="All">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                    <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                        <option value="All">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Left">Left</option>
+                    </select>
                     <div className="results-count">
                         <Filter size={14} /> {filteredStudents.length} students found
                     </div>
@@ -104,6 +119,9 @@ export default function StudentsPage() {
                                 <Phone size={14} /> {student.contactNo}
                             </div>
                             <div className="student-badges">
+                                {(student.status === 'Inactive' || student.status === 'Left') && (
+                                    <span className="badge badge-danger">{student.status}</span>
+                                )}
                                 {student.paidFees >= student.totalFees && student.totalFees > 0 ? (
                                     <span className="badge badge-success">Fees Paid</span>
                                 ) : (

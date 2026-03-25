@@ -1,0 +1,17 @@
+{
+    "name": "school-management-erp",
+    "version": "1.0.0",
+    "description": "Mount Zion School Management System - Full Stack MERN App",
+    "scripts": {
+        "install:all": "cd BackendSMApi && npm install && cd ../FrontendSM && npm install",
+        "build:frontend": "cd FrontendSM && npm run build",
+        "start": "cd BackendSMApi && node server.js",
+        "dev:backend": "cd BackendSMApi && npm run dev",
+        "dev:frontend": "cd FrontendSM && npm run dev",
+        "build": "npm run install:all && npm run build:frontend",
+        "postinstall": "npm run install:all"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

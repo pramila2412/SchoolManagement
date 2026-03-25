@@ -19,5 +19,14 @@ export default defineConfig({
         autoprefixer(),
       ],
     },
+  },
+  // Proxy API calls to backend during local dev
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      }
+    }
   }
 })

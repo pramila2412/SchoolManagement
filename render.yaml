@@ -1,0 +1,19 @@
+databases:
+  - name: school-management-db
+    plan: free
+    databaseName: schoolmanagement
+
+services:
+  - type: web
+    name: school-management-erp
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromDatabase:
+          name: school-management-db
+          property: connectionString

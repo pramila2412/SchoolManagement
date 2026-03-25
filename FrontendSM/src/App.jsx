@@ -26,6 +26,7 @@ import Expenses from './pages/Expenses';
 import Transport from './pages/Transport';
 import Examination from './pages/Examination';
 import FrontOffice from './pages/FrontOffice';
+import Collaborate from './pages/Collaborate';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -66,6 +67,7 @@ function AppLayout() {
             <Route path="/transport" element={<Transport />} />
             <Route path="/examination" element={<Examination />} />
             <Route path="/front-office" element={<FrontOffice />} />
+            <Route path="/collaborate" element={<Collaborate />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/announcements" element={<Announcements />} />

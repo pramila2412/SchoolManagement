@@ -5,6 +5,9 @@ import {
     BookOpen, Bus, FileText, Building, ChevronDown, ChevronRight,
     UserPlus, Award, Megaphone, FileCheck, Receipt, Wallet,
     GraduationCap, PencilLine, Video, Calendar, Clock,
+    Truck, Map, UserCheck, Navigation, ClipboardCheck, CreditCard,
+    Stamp, BarChart3, Settings, MessageSquare, FileUp, Mail,
+    CheckSquare, Clipboard,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -28,6 +31,32 @@ const subIconMap = {
     'Academic Calendar': Calendar,
     'Time Table': Clock,
     'Library': BookOpen,
+    'Transport Dashboard': LayoutDashboard,
+    'Vehicles': Truck,
+    'Drivers': Users,
+    'Routes': Map,
+    'Student Assignment': UserCheck,
+    'Live Tracking': Navigation,
+    'Transport Attendance': ClipboardCheck,
+    'Transport Fees': CreditCard,
+    'Exam Setup': LayoutDashboard,
+    'Exam Timetable': Calendar,
+    'Hall Tickets': Stamp,
+    'Marks Entry': ClipboardCheck,
+    'Exam Results': Award,
+    'Report Cards': FileText,
+    'Exam Analytics': BarChart3,
+    'Exam Settings': Settings,
+    'Collab Dashboard': LayoutDashboard,
+    'Announcements': Megaphone,
+    'Discussions': MessageSquare,
+    'Groups': Users,
+    'File Sharing': FileUp,
+    'Messaging': Mail,
+    'Meetings': Video,
+    'Tasks': CheckSquare,
+    'Notice Board': Clipboard,
+    'Collab Settings': Settings,
 };
 
 export default function Sidebar({ open, onClose }) {
@@ -66,9 +95,48 @@ export default function Sidebar({ open, onClose }) {
             ]
         },
         { id: 'attendance', name: 'Attendance', icon: 'CalendarCheck', path: '/attendance' },
-        { id: 'transport', name: 'Transport', icon: 'Bus', path: '/transport' },
-        { id: 'examination', name: 'Examination', icon: 'FileText', path: '/examination' },
+        {
+            id: 'transport', name: 'Transport', icon: 'Bus', path: '/transport',
+            subModules: [
+                { name: 'Transport Dashboard', path: '/transport' },
+                { name: 'Vehicles', path: '/transport?tab=vehicles' },
+                { name: 'Drivers', path: '/transport?tab=drivers' },
+                { name: 'Routes', path: '/transport?tab=routes' },
+                { name: 'Student Assignment', path: '/transport?tab=students' },
+                { name: 'Live Tracking', path: '/transport?tab=tracking' },
+                { name: 'Transport Attendance', path: '/transport?tab=attendance' },
+                { name: 'Transport Fees', path: '/transport?tab=fees' },
+            ]
+        },
+        {
+            id: 'examination', name: 'Examination', icon: 'FileText', path: '/examination',
+            subModules: [
+                { name: 'Exam Setup', path: '/examination' },
+                { name: 'Exam Timetable', path: '/examination?tab=timetable' },
+                { name: 'Hall Tickets', path: '/examination?tab=halltickets' },
+                { name: 'Marks Entry', path: '/examination?tab=marks' },
+                { name: 'Exam Results', path: '/examination?tab=results' },
+                { name: 'Report Cards', path: '/examination?tab=reportcards' },
+                { name: 'Exam Analytics', path: '/examination?tab=analytics' },
+                { name: 'Exam Settings', path: '/examination?tab=settings' },
+            ]
+        },
         { id: 'frontoffice', name: 'Front Office', icon: 'Building', path: '/front-office' },
+        {
+            id: 'collaborate', name: 'Collaborate', icon: 'BookOpen', path: '/collaborate',
+            subModules: [
+                { name: 'Collab Dashboard', path: '/collaborate' },
+                { name: 'Announcements', path: '/collaborate?tab=announcements' },
+                { name: 'Discussions', path: '/collaborate?tab=discussions' },
+                { name: 'Groups', path: '/collaborate?tab=groups' },
+                { name: 'File Sharing', path: '/collaborate?tab=files' },
+                { name: 'Messaging', path: '/collaborate?tab=messages' },
+                { name: 'Meetings', path: '/collaborate?tab=meetings' },
+                { name: 'Tasks', path: '/collaborate?tab=tasks' },
+                { name: 'Notice Board', path: '/collaborate?tab=notices' },
+                { name: 'Collab Settings', path: '/collaborate?tab=settings' },
+            ]
+        },
     ];
 
     const toggleModule = (moduleId) => {

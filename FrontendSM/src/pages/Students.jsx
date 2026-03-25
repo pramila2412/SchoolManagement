@@ -69,7 +69,7 @@ export default function StudentsPage() {
                 <div className="filter-dropdowns">
                     <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)}>
                         <option value="All Classes">All Classes</option>
-                        {['Nursery', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'].map(c => (
+                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => (
                             <option key={c} value={c}>Class {c}</option>
                         ))}
                     </select>

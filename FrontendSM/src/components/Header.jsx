@@ -32,7 +32,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
                     </div>
                     <div className="header-title">
                         <h1>MOUNT ZION SCHOOL</h1>
-                        <span className="header-subtitle">CBSE • Nursery to X</span>
+                        <span className="header-subtitle">CBSE • Nursery to XII</span>
                     </div>
                 </div>
             </div>

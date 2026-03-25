@@ -343,7 +343,7 @@ function EnquiryTab() {
                                     <input className="form-input" value={form.parentName} onChange={e=>setForm({...form,parentName:e.target.value})}/></div>
                                 <div className="form-group"><label className="form-label">Class Interested</label>
                                     <select className="form-select" value={form.classInterested} onChange={e=>setForm({...form,classInterested:e.target.value})}>
-                                        <option value="">Select</option>{['Nursery','I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c}>{c}</option>)}</select></div>
+                                        <option value="">Select</option>{['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c}>{c}</option>)}</select></div>
                             </div>
                         )}
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>

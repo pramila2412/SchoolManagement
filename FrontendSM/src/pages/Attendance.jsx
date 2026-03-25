@@ -89,7 +89,7 @@ export default function Attendance() {
                                         <label className="form-label">Class</label>
                                         <select className="form-select" value={formData.class} onChange={e=>setFormData({...formData,class:e.target.value})}>
                                             <option value="">Select Class</option>
-                                            {['Nursery','I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c} value={c}>{c}</option>)}
+                                            {['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
@@ -202,7 +202,7 @@ export default function Attendance() {
                                 <label className="form-label">Class</label>
                                 <select className="form-select" value={reportForm.class} onChange={e=>setReportForm({...reportForm,class:e.target.value})}>
                                     <option value="">Select</option>
-                                    {['Nursery','I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c} value={c}>{c}</option>)}
+                                    {['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

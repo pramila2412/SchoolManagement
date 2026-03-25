@@ -205,7 +205,7 @@ export const students = [
 
 export const classes = [
   'Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V',
-  'VI', 'VII', 'VIII', 'IX', 'X'
+  'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'
 ];
 
 export const sections = ['A', 'B', 'C', 'D'];

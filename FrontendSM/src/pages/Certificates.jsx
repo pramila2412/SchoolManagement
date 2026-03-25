@@ -89,7 +89,7 @@ export default function Certificates() {
                                     <label className="form-label">Class</label>
                                     <select className="form-select" value={formData.class} onChange={e => setFormData({...formData, class: e.target.value})}>
                                         <option value="">All Classes</option>
-                                        {['Nursery','I','II','III','IV','V','VI','VII','VIII','IX','X'].map(c=><option key={c} value={c}>{c}</option>)}
+                                        {['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">

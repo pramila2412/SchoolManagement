@@ -1,0 +1,155 @@
+/* ===== Add-Ons Module Styles ===== */
+
+.addons-page .tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    background: var(--bg);
+    padding: 6px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom: 2px solid var(--border);
+}
+
+.addons-page .tab-btn {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+.addons-page .tab-btn:hover {
+    background: var(--card-bg);
+    color: var(--text);
+}
+.addons-page .tab-btn.active {
+    background: var(--card-bg);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.addons-page .tabs-content {
+    padding: 24px;
+}
+
+.addons-card {
+    padding: 0;
+}
+
+/* ===== Analytics / Stats ===== */
+.ado-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+.ado-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition);
+}
+.ado-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.ado-stat-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.ado-stat-info h4 { font-size: 1.5rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.ado-stat-info p { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+
+/* ===== Forms & Inputs ===== */
+.ado-form-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.ado-form-panel h3 {
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.ado-form .form-group { margin-bottom: 14px; }
+.ado-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ado-form .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.ado-form .form-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ===== Modals / Overlays (Inline for simplicity) ===== */
+.ado-modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+}
+.ado-modal {
+    background: var(--card-bg); border-radius: var(--radius-md);
+    padding: 24px; width: 100%; max-width: 500px;
+    box-shadow: var(--shadow-lg);
+}
+.ado-modal h3 { margin-bottom: 16px; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+.ado-modal .close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+
+/* ===== Gallery Grids ===== */
+.ado-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+.ado-gallery-item {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    position: relative;
+}
+.ado-gallery-img { width: 100%; height: 160px; object-fit: cover; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+.ado-gallery-info { padding: 12px; }
+.ado-gallery-info h5 { font-size: 0.9rem; margin-bottom: 4px; }
+.ado-gallery-info p { font-size: 0.75rem; color: var(--text-light); }
+.ado-gallery-action { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); border-radius: 50%; padding: 4px; cursor: pointer; }
+
+/* ===== Form Builder ===== */
+.ado-form-builder { display: flex; gap: 24px; }
+.ado-fb-sidebar { width: 200px; padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.ado-fb-main { flex: 1; padding: 24px; border: 1px dashed var(--border); border-radius: var(--radius-sm); min-height: 300px; }
+.ado-fb-field { padding: 12px; background: var(--card-bg); border: 1px solid var(--border-light); margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: move; }
+
+/* ===== Settings Toggles ===== */
+.ado-toggles-list { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ado-toggle-card { border: 1px solid var(--border-light); padding: 16px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; }
+.ado-toggle-info h4 { font-size: 0.95rem; margin-bottom: 4px; }
+.ado-toggle-info p { font-size: 0.8rem; color: var(--text-light); }
+.ado-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.ado-switch input { opacity: 0; width: 0; height: 0; }
+.ado-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 24px; }
+.ado-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .ado-slider { background-color: var(--accent); }
+input:checked + .ado-slider:before { transform: translateX(20px); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+    .ado-form-builder { flex-direction: column; }
+    .ado-fb-sidebar { width: 100%; display: flex; overflow-x: auto; gap: 8px; }
+    .ado-toggles-list { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .addons-page .tabs-header { gap: 0; }
+    .addons-page .tab-btn { padding: 8px 8px; font-size: 0.72rem; }
+    .addons-page .tabs-content { padding: 16px; }
+    .ado-form .form-row, .ado-form .form-row-3 { grid-template-columns: 1fr; }
+    .ado-stats-row { grid-template-columns: 1fr; }
+}

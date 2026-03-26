@@ -8,21 +8,18 @@ import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
 import StudentDetail from './pages/StudentDetail';
-import FinancePage from './pages/Finance';
-import ConcessionPage from './pages/Concessions';
 import PlaceholderPage from './pages/PlaceholderPage';
-import HomeWork from './pages/HomeWork';
-import EContent from './pages/EContent';
-import AcademicCalendar from './pages/AcademicCalendar';
-import TimeTable from './pages/TimeTable';
-import LibraryPage from './pages/LibraryPage';
+import Academics from './pages/Academics';
+import Admission from './pages/Admission';
+import Addons from './pages/Addons';
+import Finance from './pages/Finance';
+import HR from './pages/HR';
 
 import Attendance from './pages/Attendance';
 import Certificates from './pages/Certificates';
 import Reports from './pages/Reports';
 import Announcements from './pages/Announcements';
 import TC from './pages/TC';
-import Expenses from './pages/Expenses';
 import Transport from './pages/Transport';
 import Examination from './pages/Examination';
 import FrontOffice from './pages/FrontOffice';
@@ -52,17 +49,14 @@ function AppLayout() {
             <Route path="/students" element={<StudentsPage />} />
             <Route path="/students/add" element={<AddStudent />} />
             <Route path="/students/:id" element={<StudentDetail />} />
-            <Route path="/finance" element={<FinancePage />} />
-            <Route path="/finance/concessions" element={<ConcessionPage />} />
-            <Route path="/finance/expenses" element={<Expenses />} />
             <Route path="/attendance" element={<Attendance />} />
             
             {/* Academics */}
-            <Route path="/academics/homework" element={<HomeWork />} />
-            <Route path="/academics/e-content" element={<EContent />} />
-            <Route path="/academics/calendar" element={<AcademicCalendar />} />
-            <Route path="/academics/timetable" element={<TimeTable />} />
-            <Route path="/academics/library" element={<LibraryPage />} />
+            <Route path="/academics" element={<Academics />} />
+            <Route path="/admission" element={<Admission />} />
+            <Route path="/addons" element={<Addons />} />
+            <Route path="/finance" element={<Finance />} />
+            <Route path="/hr" element={<HR />} />
 
             <Route path="/transport" element={<Transport />} />
             <Route path="/examination" element={<Examination />} />

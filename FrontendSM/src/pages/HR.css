@@ -1,0 +1,112 @@
+/* ===== HR Module Styles ===== */
+
+.hr-page .tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    background: var(--bg);
+    padding: 6px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom: 2px solid var(--border);
+}
+.hr-page .tab-btn {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-light);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+.hr-page .tab-btn:hover { background: var(--card-bg); color: var(--text); }
+.hr-page .tab-btn.active { background: var(--card-bg); color: var(--accent); font-weight: 600; box-shadow: var(--shadow-sm); }
+.hr-page .tabs-content { padding: 24px; }
+.hr-card { padding: 0; }
+
+/* KPI Dashboard */
+.hr-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.hr-kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--transition);
+}
+.hr-kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.hr-kpi-info h4 { color: var(--text-light); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.hr-kpi-info p { color: var(--text); font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.hr-kpi-info p.success { color: var(--success); }
+.hr-kpi-info p.danger { color: var(--danger); }
+.hr-kpi-info p.warning { color: var(--warning); }
+.hr-kpi-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* Form Panels */
+.hr-form-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.hr-form-panel h3 { margin-bottom: 20px; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid var(--border-light); padding-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* Attendance Grid */
+.hr-attendance-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.hr-attendance-grid .att-header { background: var(--bg); padding: 12px; font-weight: 600; font-size: 0.85rem; color: var(--text); }
+.hr-attendance-grid .att-cell { background: var(--card-bg); padding: 10px 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+
+/* Payslip Preview */
+.hr-payslip-preview {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 32px;
+    background: #fff;
+    max-width: 800px;
+    margin: 0 auto 24px;
+    box-shadow: var(--shadow-sm);
+}
+.hr-payslip-header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 24px; margin-bottom: 24px; }
+.hr-payslip-title { font-size: 1.4rem; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
+
+/* Pipeline Cards */
+.hr-pipeline { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; }
+.hr-pipeline-col { min-width: 220px; flex: 1; background: var(--bg); border-radius: var(--radius-sm); padding: 16px; }
+.hr-pipeline-col h4 { font-size: 0.85rem; text-transform: uppercase; color: var(--text-light); margin-bottom: 12px; letter-spacing: 0.5px; }
+.hr-pipeline-card { background: var(--card-bg); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+.hr-pipeline-card h5 { font-size: 0.9rem; margin-bottom: 4px; }
+.hr-pipeline-card p { font-size: 0.8rem; color: var(--text-light); }
+
+/* Quick Actions */
+.hr-quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.hr-quick-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border); padding: 12px 20px; border-radius: var(--radius-sm); font-weight: 500; font-size: 0.9rem; color: var(--text); cursor: pointer; transition: all 0.2s; }
+.hr-quick-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+@media (max-width: 1024px) {
+    .hr-page .tabs-header { padding: 2px; }
+    .hr-page .tab-btn { padding: 8px 10px; font-size: 0.75rem; }
+}
+@media (max-width: 768px) {
+    .hr-dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .hr-attendance-grid { grid-template-columns: 1fr; }
+    .hr-pipeline { flex-direction: column; }
+}

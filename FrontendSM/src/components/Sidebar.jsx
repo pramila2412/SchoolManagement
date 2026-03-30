@@ -58,6 +58,16 @@ const subIconMap = {
     'HR Reports': Download,
     'HR Settings': Settings,
 
+    // Parent Portal Submodules
+    'Portal Dashboard': PieChart,
+    'Student Profile': Users,
+    'Student Attendance': CalendarCheck,
+    'School Announcements': Megaphone,
+    'Certificates Download': Award,
+    'Fee Payment': CreditCard,
+    'Payment History': Clock,
+    'Contact School': Phone,
+
     // Academics sub-modules
     'Academic Year': Calendar,
     'Classes & Sections': Layers,
@@ -232,6 +242,19 @@ export default function Sidebar({ open, onClose }) {
                 { name: 'Shifts & Timetable', path: '/hr?tab=shifts' },
                 { name: 'HR Reports', path: '/hr?tab=reports' },
                 { name: 'HR Settings', path: '/hr?tab=settings' },
+            ]
+        },
+        {
+            id: 'parent-portal', name: 'Parent Portal', icon: 'Users', path: '/parent-portal',
+            subModules: [
+                { name: 'Portal Dashboard', path: '/parent-portal?tab=dashboard' },
+                { name: 'Student Profile', path: '/parent-portal?tab=profile' },
+                { name: 'Student Attendance', path: '/parent-portal?tab=attendance' },
+                { name: 'School Announcements', path: '/parent-portal?tab=announcements' },
+                { name: 'Certificates Download', path: '/parent-portal?tab=certificates' },
+                { name: 'Fee Payment', path: '/parent-portal?tab=fees' },
+                { name: 'Payment History', path: '/parent-portal?tab=history' },
+                { name: 'Contact School', path: '/parent-portal?tab=contact' },
             ]
         },
         { id: 'attendance', name: 'Attendance', icon: 'CalendarCheck', path: '/attendance' },

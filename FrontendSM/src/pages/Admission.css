@@ -253,4 +253,166 @@
     .adm-form .form-row, .adm-form .form-row-3 { grid-template-columns: 1fr; }
     .adm-stats-row { grid-template-columns: 1fr; }
     .adm-steps { flex-wrap: wrap; }
+    .idcard-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== ID Card Grid (Reference Site Style) ===== */
+.idcard-tab-container {
+    width: 100%;
+}
+
+.idcard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.idcard-student-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.idcard-student-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.idcard-header-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-light), #ffffff);
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.idcard-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--bg);
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    z-index: 1;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.idcard-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.idcard-name {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    text-align: center;
+    z-index: 1;
+}
+
+.idcard-info {
+    width: 100%;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    z-index: 1;
+}
+
+.idcard-info div {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-light);
+}
+
+.idcard-info div:last-child {
+    border-bottom: none;
+}
+
+.idcard-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.idcard-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.idcard-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    z-index: 1;
+}
+
+.idcard-badges span {
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-class {
+    background: #FFE4E6; /* Light Rose */
+    color: #E11D48; /* Rose 600 */
+}
+
+.badge-section {
+    background: #E0F2FE; /* Light Sky */
+    color: #0284C7; /* Sky 600 */
+}
+
+.idcard-actions {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid var(--border-light);
+    margin-top: auto; /* Push to bottom */
+}
+
+.idcard-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    border-right: 1px solid var(--border-light);
+}
+
+.idcard-action-btn:last-child {
+    border-right: none;
+}
+
+.edit-btn { color: var(--accent); }
+.edit-btn:hover { background: var(--accent-light); }
+
+.download-btn { color: var(--text-light); }
+.download-btn:hover { background: var(--bg); color: var(--primary); }
+
+.delete-btn { color: var(--danger); }
+.delete-btn:hover { background: var(--danger-light); }

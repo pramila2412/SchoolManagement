@@ -14,6 +14,7 @@ import Admission from './pages/Admission';
 import Addons from './pages/Addons';
 import Finance from './pages/Finance';
 import HR from './pages/HR';
+import ParentPortal from './pages/ParentPortal';
 
 import Attendance from './pages/Attendance';
 import Certificates from './pages/Certificates';
@@ -57,6 +58,7 @@ function AppLayout() {
             <Route path="/addons" element={<Addons />} />
             <Route path="/finance" element={<Finance />} />
             <Route path="/hr" element={<HR />} />
+            <Route path="/parent-portal" element={<ParentPortal />} />
 
             <Route path="/transport" element={<Transport />} />
             <Route path="/examination" element={<Examination />} />

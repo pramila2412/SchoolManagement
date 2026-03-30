@@ -5,8 +5,13 @@ import {
     Trash2, Edit3, Eye, Send, Phone, Mail, Calendar, Search,
     CheckCircle2, XCircle, CreditCard, Award, Settings, BarChart3,
     MessageSquare, ArrowRight, Clock, BookOpen, Upload, Download,
-    ChevronRight, User, MapPin, GraduationCap, IdCard
+    ChevronRight, User, MapPin, GraduationCap, IdCard, Filter
 } from 'lucide-react';
+import { api } from '../utils/api';
+import { getInitials, getAvatarColor, formatDate } from '../utils/helpers';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import JSZip from 'jszip';
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
@@ -336,37 +341,197 @@ function ConfirmationTab() {
 
 // ======================== ID CARD ========================
 function IDCardTab() {
-    const [preview, setPreview] = useState(false);
+    const [classFilter, setClassFilter] = useState('All Classes');
+    const [sectionFilter, setSectionFilter] = useState('All Sections');
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [downloadingId, setDownloadingId] = useState(null);
+    const [bulkDownloading, setBulkDownloading] = useState(false);
+
+    useEffect(() => {
+        fetchStudents();
+    }, [classFilter, sectionFilter]);
+
+    const fetchStudents = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getStudentsByFilter(classFilter, sectionFilter);
+            setStudents(data);
+        } catch (err) {
+            console.error("Failed to load students", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const downloadIndividualCard = async (student) => {
+        setDownloadingId(student.id);
+        try {
+            const cardElement = document.getElementById(`idcard-${student.id}`);
+            if (!cardElement) return;
+
+            // Temporarily hide actions for screenshot
+            const actionsEl = cardElement.querySelector('.idcard-actions');
+            if (actionsEl) actionsEl.style.display = 'none';
+
+            const canvas = await html2canvas(cardElement, { scale: 2, useCORS: true });
+            
+            if (actionsEl) actionsEl.style.display = 'flex'; // Restore
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`${student.firstName}_${student.lastName}_IDCard.pdf`);
+        } catch (error) {
+            console.error("Error generating ID card PDF", error);
+            alert("Failed to generate ID card.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
+    const downloadBulkZip = async () => {
+        if (students.length === 0) {
+            alert("No students to download.");
+            return;
+        }
+        if (classFilter === 'All Classes' || sectionFilter === 'All Sections') {
+            alert("Please select a specific Class and Section for bulk ZIP download.");
+            return;
+        }
+
+        setBulkDownloading(true);
+        try {
+            const zip = new JSZip();
+
+            for (const student of students) {
+                const cardElement = document.getElementById(`idcard-${student.id}`);
+                if (!cardElement) continue;
+
+                const actionsEl = cardElement.querySelector('.idcard-actions');
+                if (actionsEl) actionsEl.style.display = 'none';
+
+                const canvas = await html2canvas(cardElement, { scale: 2, useCORS: true });
+                
+                if (actionsEl) actionsEl.style.display = 'flex';
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                
+                // Get PDF as ArrayBuffer to add to ZIP
+                const pdfBlob = pdf.output('blob');
+                zip.file(`${student.firstName}_${student.lastName}_${student.admissionNo}.pdf`, pdfBlob);
+            }
+
+            const content = await zip.generateAsync({ type: "blob" });
+            const url = window.URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `IDCards_Class_${classFilter}_Sec_${sectionFilter}.zip`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+            
+            // To match reference site behavior, show a toast or alert
+            // Here we use a standard alert for simplicity, but a toast would be better if one exists in the project
+            // alert(`ZIP downloaded for Class ${classFilter} - Section ${sectionFilter}`);
+            
+        } catch (error) {
+            console.error("Error generating ZIP", error);
+            alert("Failed to generate bulk ZIP.");
+        } finally {
+            setBulkDownloading(false);
+        }
+    };
 
     return (
-        <div className="animate-fade-in">
-            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div className="form-group"><label className="form-label">Select Student</label>
-                    <select className="form-select" style={{ width: 200 }}><option>Arjun Patel (ADM-2026-0001)</option><option>Meera Joshi (ADM-2026-0002)</option></select></div>
-                <button className="btn btn-primary" onClick={() => setPreview(true)}><Eye size={16}/> Preview ID Card</button>
-                <button className="btn btn-outline"><Download size={16}/> Download PDF</button>
+        <div className="animate-fade-in idcard-tab-container">
+            <div className="filters-bar" style={{ marginBottom: 24, padding: '16px 20px', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+                <div className="filter-dropdowns" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <Filter size={18} style={{ color: 'var(--text-light)' }}/>
+                    <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ minWidth: 150 }}>
+                        <option value="All Classes">All Classes</option>
+                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => (
+                            <option key={c} value={c}>Class {c}</option>
+                        ))}
+                    </select>
+                    <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} style={{ minWidth: 150 }}>
+                        <option value="All Sections">All Sections</option>
+                        {['A', 'B', 'C', 'D'].map(s => (
+                            <option key={s} value={s}>Section {s}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <button 
+                        className="btn btn-primary" 
+                        onClick={downloadBulkZip}
+                        disabled={bulkDownloading || students.length === 0}
+                    >
+                        {bulkDownloading ? <Clock size={16} className="spin-icon"/> : <Download size={16}/>} 
+                        {bulkDownloading ? 'Generating ZIP...' : 'Download ZIP'}
+                    </button>
+                </div>
             </div>
 
-            {preview && (
-                <div className="id-card-preview">
-                    <div className="id-header">
-                        <h3>🏫 Mount Zion School</h3>
-                        <p>CBSE • Nursery to XII</p>
-                        <p style={{ fontWeight: 600, color: 'var(--accent)', marginTop: 4 }}>STUDENT IDENTITY CARD</p>
-                    </div>
-                    <div className="id-photo">Photo</div>
-                    <div className="id-details">
-                        <div><strong>Name:</strong> Arjun Patel</div>
-                        <div><strong>Admission No:</strong> ADM-2026-0001</div>
-                        <div><strong>Class & Section:</strong> Grade 2 - A</div>
-                        <div><strong>Date of Birth:</strong> 15-06-2019</div>
-                        <div><strong>Blood Group:</strong> B+</div>
-                        <div><strong>Parent Contact:</strong> 9876543212</div>
-                        <div><strong>Valid Until:</strong> March 2027</div>
-                    </div>
-                    <div style={{ marginTop: 16, fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                        Principal Signature: _____________
-                    </div>
+            {loading ? (
+                <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-light)' }}>Loading students...</div>
+            ) : students.length === 0 ? (
+                <div className="adm-empty">
+                    <Users size={48}/>
+                    <p style={{ marginTop: 16 }}>No students found for the selected class and section.</p>
+                </div>
+            ) : (
+                <div className="idcard-grid">
+                    {students.map(student => (
+                        <div className="idcard-student-card" id={`idcard-${student.id}`} key={student.id}>
+                            <div className="idcard-header-bar"></div>
+                            
+                            <div className="idcard-avatar" style={{ background: getAvatarColor(student.firstName + student.lastName) }}>
+                                {student.photoUrl ? (
+                                    <img src={student.photoUrl} alt="Profile" />
+                                ) : (
+                                    getInitials(student.firstName, student.lastName)
+                                )}
+                            </div>
+                            
+                            <div className="idcard-name">
+                                {student.firstName} {student.lastName}
+                            </div>
+                            
+                            <div className="idcard-info">
+                                <div><span className="idcard-label">Admn No:</span> <span className="idcard-value">{student.admissionNo}</span></div>
+                                <div><span className="idcard-label">D.O.B:</span> <span className="idcard-value">{formatDate(student.dateOfBirth)}</span></div>
+                                <div><span className="idcard-label">Contact:</span> <span className="idcard-value">{student.contactNo}</span></div>
+                            </div>
+                            
+                            <div className="idcard-badges">
+                                <span className="badge-class">{student.class}</span>
+                                <span className="badge-section">Section {student.section}</span>
+                            </div>
+                            
+                            <div className="idcard-actions" data-html2canvas-ignore="true">
+                                <button className="idcard-action-btn edit-btn" title="Edit Student">
+                                    <Edit3 size={16} />
+                                </button>
+                                <button 
+                                    className="idcard-action-btn download-btn" 
+                                    title="Download ID Card"
+                                    onClick={() => downloadIndividualCard(student)}
+                                    disabled={downloadingId === student.id}
+                                >
+                                    {downloadingId === student.id ? <Clock size={16}/> : <Download size={16} />}
+                                </button>
+                                <button className="idcard-action-btn delete-btn" title="Delete record">
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

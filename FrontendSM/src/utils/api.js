@@ -14,6 +14,20 @@ export const api = {
         if (!res.ok) throw new Error('Failed to fetch students');
         return res.json();
     },
+    getStudentsByFilter: async (classFilter, sectionFilter) => {
+        let url = `${API_BASE_URL}/students?`;
+        if (classFilter && classFilter !== 'All Classes') url += `class=${encodeURIComponent(classFilter)}&`;
+        if (sectionFilter && sectionFilter !== 'All Sections') url += `section=${encodeURIComponent(sectionFilter)}&`;
+        if (classFilter !== 'All Classes' && !classFilter.includes('Class')) {
+           // Ensure format matches DB
+           // Reference DB seems to use "Grade 1" or "Nursery" or just numbers.
+           // `routes/students.js` does direct match `if (cls) filter.class = cls;`
+           // Based on Admission form it's `Grade X` but Students page uses `Nursery`, `I`, `X` etc.
+        }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch filtered students');
+        return res.json();
+    },
     getStudentById: async (id) => {
         const res = await fetch(`${API_BASE_URL}/students/${id}`);
         if (!res.ok) throw new Error('Failed to fetch student');

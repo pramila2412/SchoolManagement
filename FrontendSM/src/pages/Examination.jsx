@@ -13,8 +13,17 @@ function useApi(endpoint) {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const fetch_ = useCallback(async () => {
-        try { setLoading(true); const r = await fetch(`${API}${endpoint}`); setData(await r.json()); }
-        catch (e) { console.error(e); } finally { setLoading(false); }
+        try { 
+            setLoading(true); 
+            const r = await fetch(`${API}${endpoint}`); 
+            const j = await r.json(); 
+            setData(Array.isArray(j) ? j : []); 
+        } catch (e) { 
+            console.error(e); 
+            setData([]); 
+        } finally { 
+            setLoading(false); 
+        }
     }, [endpoint]);
     useEffect(() => { fetch_(); }, [fetch_]);
     return { data, loading, refresh: fetch_ };
@@ -380,7 +389,7 @@ export default function Examination() {
     const tabFromUrl = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'setup');
     const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    useEffect(() => { setActiveTab(tabFromUrl || 'setup'); }, [tabFromUrl]);
 
     return (
         <div className="exam-page animate-fade-in">

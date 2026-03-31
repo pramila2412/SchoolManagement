@@ -21,49 +21,7 @@ router.post('/', async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-router.get('/:id', async (req, res) => {
-    try {
-        const exam = await Exam.findById(req.params.id);
-        if (!exam) return res.status(404).json({ error: 'Exam not found' });
-        res.json(exam);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-router.put('/:id', async (req, res) => {
-    try {
-        const exam = await Exam.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!exam) return res.status(404).json({ error: 'Exam not found' });
-        res.json(exam);
-    } catch (err) { res.status(400).json({ error: err.message }); }
-});
-
-router.delete('/:id', async (req, res) => {
-    try {
-        await Exam.findByIdAndDelete(req.params.id);
-        await ExamTimetable.deleteMany({ exam: req.params.id });
-        await ExamMarks.deleteMany({ exam: req.params.id });
-        await ExamResult.deleteMany({ exam: req.params.id });
-        res.json({ message: 'Exam and related data deleted' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// ======================== SUBJECTS PER EXAM ========================
-router.post('/:id/subjects', async (req, res) => {
-    try {
-        const exam = await Exam.findById(req.params.id);
-        if (!exam) return res.status(404).json({ error: 'Exam not found' });
-        const { className, sections, subjects } = req.body;
-        const existingClass = exam.classes.find(c => c.className === className);
-        if (existingClass) {
-            existingClass.sections = sections || existingClass.sections;
-            existingClass.subjects = subjects || existingClass.subjects;
-        } else {
-            exam.classes.push({ className, sections, subjects });
-        }
-        await exam.save();
-        res.json(exam);
-    } catch (err) { res.status(400).json({ error: err.message }); }
-});
 
 // ======================== TIMETABLE ========================
 router.get('/timetable', async (req, res) => {
@@ -304,6 +262,51 @@ router.get('/analytics', async (req, res) => {
 
         res.json({ totalStudents, passCount, failCount, avgPercentage, passRate: totalStudents > 0 ? Math.round(passCount / totalStudents * 10000) / 100 : 0, topPerformers, subjectAnalysis });
     } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ======================== SPECIFIC EXAM CRUD ========================
+router.get('/:id', async (req, res) => {
+    try {
+        const exam = await Exam.findById(req.params.id);
+        if (!exam) return res.status(404).json({ error: 'Exam not found' });
+        res.json(exam);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/:id', async (req, res) => {
+    try {
+        const exam = await Exam.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        if (!exam) return res.status(404).json({ error: 'Exam not found' });
+        res.json(exam);
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        await Exam.findByIdAndDelete(req.params.id);
+        await ExamTimetable.deleteMany({ exam: req.params.id });
+        await ExamMarks.deleteMany({ exam: req.params.id });
+        await ExamResult.deleteMany({ exam: req.params.id });
+        res.json({ message: 'Exam and related data deleted' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ======================== SUBJECTS PER EXAM ========================
+router.post('/:id/subjects', async (req, res) => {
+    try {
+        const exam = await Exam.findById(req.params.id);
+        if (!exam) return res.status(404).json({ error: 'Exam not found' });
+        const { className, sections, subjects } = req.body;
+        const existingClass = exam.classes.find(c => c.className === className);
+        if (existingClass) {
+            existingClass.sections = sections || existingClass.sections;
+            existingClass.subjects = subjects || existingClass.subjects;
+        } else {
+            exam.classes.push({ className, sections, subjects });
+        }
+        await exam.save();
+        res.json(exam);
+    } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 // ======================== HELPERS ========================

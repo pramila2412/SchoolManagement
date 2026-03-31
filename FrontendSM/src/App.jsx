@@ -34,15 +34,23 @@ function ProtectedRoute({ children }) {
 }
 
 function AppLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const handleToggleSidebar = () => {
+    if (window.innerWidth <= 1024) {
+      setMobileSidebarOpen(prev => !prev);
+    } else {
+      setSidebarCollapsed(prev => !prev);
+    }
+  };
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <Header
-        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-        sidebarOpen={sidebarOpen}
+        onToggleSidebar={handleToggleSidebar}
       />
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <main className="main-content">
         <div className="page-content">
           <Routes>

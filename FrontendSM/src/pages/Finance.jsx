@@ -53,9 +53,10 @@ function DashboardTab() {
 // ======================== FEE STRUCTURE ========================
 function FeeStructureTab() {
     const structures = [
-        { id: 1, name: 'Grade 10 - Annual Package', amount: '₹ 85,000', frequency: 'Installments (4)', classes: '10-A, 10-B' },
-        { id: 2, name: 'Grade 1 to 5 - Tuition Fee', amount: '₹ 45,000', frequency: 'Installments (4)', classes: '1 to 5 all' },
-        { id: 3, name: 'Transport - Route A', amount: '₹ 12,000', frequency: 'Monthly (₹ 1,000)', classes: 'All Routes' },
+        { id: 1, name: 'Annual Fee', amount: '₹ 10,000', frequency: 'One-time', classes: 'All Classes' },
+        { id: 2, name: 'Grade 10 - Annual Package', amount: '₹ 85,000', frequency: 'Installments (4)', classes: '10-A, 10-B' },
+        { id: 3, name: 'Grade 1 to 5 - Tuition Fee', amount: '₹ 45,000', frequency: 'Installments (4)', classes: '1 to 5 all' },
+        { id: 4, name: 'Transport - Route A', amount: '₹ 12,000', frequency: 'Monthly (₹ 1,000)', classes: 'All Routes' },
     ];
     return (
         <div className="animate-fade-in">

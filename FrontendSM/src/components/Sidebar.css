@@ -190,6 +190,13 @@
     color: var(--text-muted);
 }
 
+/* ===== Desktop Collapse ===== */
+@media (min-width: 1025px) {
+    .sidebar-collapsed .sidebar {
+        transform: translateX(-100%);
+    }
+}
+
 /* ===== Mobile / Tablet ===== */
 @media (max-width: 1024px) {
     .sidebar {

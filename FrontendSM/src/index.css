@@ -459,6 +459,12 @@ h5 { font-size: 1rem; font-weight: 600; line-height: 1.5; }
 }
 
 /* ===== Responsive ===== */
+@media (min-width: 1025px) {
+  .sidebar-collapsed .main-content {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;

@@ -96,14 +96,18 @@ export default function ConcessionPage() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Type <span className="required">*</span></label>
-                                <select className="form-select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                                <select className="form-select" value={form.type} onChange={e => {
+                                    const nextType = e.target.value;
+                                    setForm({ ...form, type: nextType, value: nextType === 'Total Free' ? 100 : form.value });
+                                }}>
                                     <option value="Percentage">Percentage</option>
                                     <option value="Fixed">Fixed Amount</option>
+                                    <option value="Total Free">Total Free</option>
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Value <span className="required">*</span></label>
-                                <input type="number" required className="form-input" placeholder={form.type === 'Percentage' ? 'e.g. 50' : 'e.g. 5000'} value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+                                <input type="number" required className="form-input" placeholder={form.type === 'Percentage' ? 'e.g. 50' : 'e.g. 5000'} value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} disabled={form.type === 'Total Free'} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Status</label>
@@ -146,7 +150,7 @@ export default function ConcessionPage() {
                                         <tr key={c._id}>
                                             <td className="td-bold">{c.title}</td>
                                             <td>{c.type}</td>
-                                            <td className="td-bold">{c.type === 'Percentage' ? `${c.value}%` : `₹${c.value.toLocaleString()}`}</td>
+                                            <td className="td-bold">{c.type === 'Percentage' || c.type === 'Total Free' ? `${c.value}%` : `₹${c.value.toLocaleString()}`}</td>
                                             <td><span className="badge badge-success">{c.status}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>

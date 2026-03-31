@@ -143,11 +143,7 @@ const subIconMap = {
     'Appointments': CalendarClock,
 };
 
-export default function Sidebar({ open, onClose }) {
-    const location = useLocation();
-    const [expandedModules, setExpandedModules] = useState(['student', 'finance']);
-
-    const modules = [
+export const SIDEBAR_MODULES = [
         { id: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', path: '/' },
         {
             id: 'student', name: 'Student', icon: 'Users', path: '/students',
@@ -181,7 +177,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'academics', name: 'Academics', icon: 'GraduationCap', path: '/academics',
             subModules: [
-                { name: 'Academic Year', path: '/academics' },
+                { name: 'Academic Year', path: '/academics?tab=year' },
                 { name: 'Classes & Sections', path: '/academics?tab=classes' },
                 { name: 'Subjects', path: '/academics?tab=subjects' },
                 { name: 'Teacher Assignment', path: '/academics?tab=teachers' },
@@ -200,7 +196,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'admission', name: 'Admission', icon: 'BookOpen', path: '/admission',
             subModules: [
-                { name: 'Enquiries', path: '/admission' },
+                { name: 'Enquiries', path: '/admission?tab=enquiry' },
                 { name: 'Application Form', path: '/admission?tab=apply' },
                 { name: 'Documents', path: '/admission?tab=documents' },
                 { name: 'Review & Approval', path: '/admission?tab=review' },
@@ -261,7 +257,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'transport', name: 'Transport', icon: 'Bus', path: '/transport',
             subModules: [
-                { name: 'Transport Dashboard', path: '/transport' },
+                { name: 'Transport Dashboard', path: '/transport?tab=dashboard' },
                 { name: 'Vehicles', path: '/transport?tab=vehicles' },
                 { name: 'Drivers', path: '/transport?tab=drivers' },
                 { name: 'Routes', path: '/transport?tab=routes' },
@@ -274,7 +270,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'examination', name: 'Examination', icon: 'FileText', path: '/examination',
             subModules: [
-                { name: 'Exam Setup', path: '/examination' },
+                { name: 'Exam Setup', path: '/examination?tab=setup' },
                 { name: 'Exam Timetable', path: '/examination?tab=timetable' },
                 { name: 'Hall Tickets', path: '/examination?tab=halltickets' },
                 { name: 'Marks Entry', path: '/examination?tab=marks' },
@@ -287,7 +283,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'frontoffice', name: 'Front Office', icon: 'Building', path: '/front-office',
             subModules: [
-                { name: 'FO Dashboard', path: '/front-office' },
+                { name: 'FO Dashboard', path: '/front-office?tab=dashboard' },
                 { name: 'Visitors', path: '/front-office?tab=visitors' },
                 { name: 'Call Logs', path: '/front-office?tab=calls' },
                 { name: 'Enquiries', path: '/front-office?tab=enquiries' },
@@ -299,7 +295,7 @@ export default function Sidebar({ open, onClose }) {
         {
             id: 'collaborate', name: 'Collaborate', icon: 'BookOpen', path: '/collaborate',
             subModules: [
-                { name: 'Collab Dashboard', path: '/collaborate' },
+                { name: 'Collab Dashboard', path: '/collaborate?tab=dashboard' },
                 { name: 'Announcements', path: '/collaborate?tab=announcements' },
                 { name: 'Discussions', path: '/collaborate?tab=discussions' },
                 { name: 'Groups', path: '/collaborate?tab=groups' },
@@ -313,6 +309,10 @@ export default function Sidebar({ open, onClose }) {
         },
     ];
 
+export default function Sidebar({ open, onClose }) {
+    const location = useLocation();
+    const [expandedModules, setExpandedModules] = useState(['student', 'finance']);
+
     const toggleModule = (moduleId) => {
         setExpandedModules(prev =>
             prev.includes(moduleId)
@@ -325,8 +325,28 @@ export default function Sidebar({ open, onClose }) {
         if (mod.path === '/' && location.pathname === '/') return true;
         if (mod.path !== '/' && location.pathname.startsWith(mod.path)) return true;
         if (mod.subModules) {
-            return mod.subModules.some(sub => location.pathname === sub.path);
+            return mod.subModules.some(sub => location.pathname === sub.path.split('?')[0]);
         }
+        return false;
+    };
+
+    const isSubModuleActive = (sub, mod) => {
+        const [targetPath, targetSearch] = sub.path.split('?');
+        if (location.pathname !== targetPath) {
+            return false;
+        }
+
+        const currentParams = new URLSearchParams(location.search);
+        const targetParams = new URLSearchParams(targetSearch || '');
+        
+        const currentTab = currentParams.get('tab');
+        const targetTab = targetParams.get('tab');
+
+        if (currentTab === targetTab) return true;
+
+        // Fallback for when URL has no exact tab yet, default to first sub-module
+        if (!currentTab && mod.subModules[0].path === sub.path) return true;
+
         return false;
     };
 
@@ -346,7 +366,7 @@ export default function Sidebar({ open, onClose }) {
 
                 <nav className="sidebar-nav">
                     <div className="nav-section-label">Main Menu</div>
-                    {modules.map((mod) => {
+                    {SIDEBAR_MODULES.map((mod) => {
                         const Icon = iconMap[mod.icon] || LayoutDashboard;
                         const hasChildren = mod.subModules && mod.subModules.length > 0;
                         const isExpanded = expandedModules.includes(mod.id);
@@ -389,9 +409,8 @@ export default function Sidebar({ open, onClose }) {
                                                 <NavLink
                                                     key={sub.path}
                                                     to={sub.path}
-                                                    end
-                                                    className={({ isActive: linkActive }) =>
-                                                        `nav-sub-item ${linkActive ? 'active' : ''}`
+                                                    className={() =>
+                                                        `nav-sub-item ${isSubModuleActive(sub, mod) ? 'active' : ''}`
                                                     }
                                                     onClick={() => window.innerWidth < 1024 && onClose()}
                                                 >

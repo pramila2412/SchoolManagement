@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Upload, Video, FileDigit } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
 import './EContent.css';
 
 export default function EContent() {
@@ -10,9 +11,9 @@ export default function EContent() {
         { id: 2, class: 'VIII', section: 'B', subject: 'English', topic: 'Tenses', type: 'PDF', date: '2026-03-15' },
     ]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        alert('E-Content saved successfully!');
+        await customAlert('E-Content saved successfully!');
     };
 
     return (

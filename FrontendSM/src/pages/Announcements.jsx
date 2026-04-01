@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Plus, Edit, Trash2, Copy, Megaphone, Eye, Calendar } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Announcements.css';
 
 const API = '/api';
@@ -28,9 +29,9 @@ export default function Announcements() {
         localStorage.setItem('erp_announcements', JSON.stringify(list));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.title.trim() || !formData.message.trim()) return alert('Title and message are required');
+        if (!formData.title.trim() || !formData.message.trim()) return await customAlert('Title and message are required');
         if (editingId) {
             save(announcements.map(a => a.id === editingId ? { ...a, ...formData } : a));
             setEditingId(null);
@@ -47,8 +48,8 @@ export default function Announcements() {
         setActiveTab('create');
     };
 
-    const handleDelete = (id) => {
-        if (!confirm('Delete this announcement?')) return;
+    const handleDelete = async (id) => {
+        if (!await customConfirm('Delete this announcement?')) return;
         save(announcements.filter(a => a.id !== id));
     };
 
@@ -71,35 +72,41 @@ export default function Announcements() {
             </div>
 
             {activeTab === 'list' && (
-                <div className="card" style={{padding:24}}>
+                <div className="announcements-list-container">
                     {announcements.length > 0 ? (
-                        <div className="announcements-list">
+                        <div className="announcements-list" style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
                             {announcements.map(a => (
-                                <div key={a.id} className="announcement-item card" style={{padding:20,marginBottom:12}}>
-                                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                                        <div>
-                                            <h3 style={{margin:0,fontSize:'1.05rem'}}>{a.title}</h3>
-                                            <p style={{color:'var(--text-light)',margin:'8px 0',fontSize:'0.9rem'}}>{a.message.substring(0, 200)}{a.message.length > 200 ? '...' : ''}</p>
-                                            <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:8}}>
-                                                <span className="badge badge-info">{a.targetGroup}</span>
-                                                <span className={`badge ${a.status === 'Published' ? 'badge-success' : a.status === 'Draft' ? 'badge-warning' : 'badge-info'}`}>{a.status}</span>
-                                                <span style={{fontSize:'0.8rem',color:'var(--text-light)'}}><Calendar size={12}/> {new Date(a.publishDate).toLocaleDateString('en-IN')}</span>
+                                <div key={a.id} className="announcement-item" style={{
+                                    backgroundColor: '#fff', 
+                                    border: '1px solid #eaedf1', 
+                                    borderRadius: '8px', 
+                                    padding: '24px', 
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                                }}>
+                                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start', gap: '24px'}}>
+                                        <div style={{flex: 1}}>
+                                            <h3 style={{margin:0,fontSize:'1.15rem', fontWeight: '600', color: '#111827'}}>{a.title}</h3>
+                                            <p style={{color:'#4b5563',margin:'8px 0 16px 0',fontSize:'0.95rem', lineHeight: '1.5'}}>{a.message.substring(0, 200)}{a.message.length > 200 ? '...' : ''}</p>
+                                            <div style={{display:'flex',gap:12,flexWrap:'wrap', alignItems: 'center'}}>
+                                                <span className="badge" style={{backgroundColor: '#f3f4f6', color: '#374151', fontWeight: 500, padding: '4px 10px', borderRadius: '6px'}}>{a.targetGroup}</span>
+                                                <span className={`badge ${a.status === 'Published' ? 'badge-success' : 'badge-warning'}`} style={{fontWeight: 500, padding: '4px 10px', borderRadius: '6px'}}>{a.status}</span>
+                                                <span style={{fontSize:'0.85rem',color:'#6b7280', display: 'flex', alignItems: 'center', gap: '6px'}}><Calendar size={14}/> {new Date(a.publishDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                             </div>
                                         </div>
                                         <div style={{display:'flex',gap:8,flexShrink:0}}>
-                                            <button className="btn-icon" title="Edit" onClick={()=>handleEdit(a)}><Edit size={16}/></button>
-                                            <button className="btn-icon" title="Duplicate" onClick={()=>handleDuplicate(a)}><Copy size={16}/></button>
-                                            <button className="btn-icon text-danger" title="Delete" onClick={()=>handleDelete(a.id)}><Trash2 size={16}/></button>
+                                            <button className="btn-icon" style={{background: '#f9fafb', border: '1px solid #e5e7eb', color: '#4b5563'}} title="Edit" onClick={()=>handleEdit(a)}><Edit size={16}/></button>
+                                            <button className="btn-icon" style={{background: '#f9fafb', border: '1px solid #e5e7eb', color: '#4b5563'}} title="Duplicate" onClick={()=>handleDuplicate(a)}><Copy size={16}/></button>
+                                            <button className="btn-icon" style={{background: '#fef2f2', border: '1px solid #fde8e8', color: '#ef4444'}} title="Delete" onClick={()=>handleDelete(a.id)}><Trash2 size={16}/></button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="empty-state" style={{padding:40}}>
-                            <Megaphone size={48}/>
-                            <h3>No Announcements Yet</h3>
-                            <p>Click "New Announcement" to create your first announcement.</p>
+                        <div className="empty-state card" style={{padding:60, border: '1px solid #eaedf1', boxShadow: '0 1px 3px rgba(0,0,0,0.02)'}}>
+                            <Megaphone size={48} style={{color: '#9ca3af', marginBottom: 16}}/>
+                            <h3 style={{color: '#111827'}}>No Announcements Yet</h3>
+                            <p style={{color: '#6b7280'}}>Click "New Announcement" to create your first announcement.</p>
                         </div>
                     )}
                 </div>

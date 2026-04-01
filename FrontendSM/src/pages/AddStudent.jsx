@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
 import { classes, sections, batches, categories } from '../data/mockData';
 import { api } from '../utils/api';
+import { customAlert } from '../utils/dialogs';
 import './AddStudent.css';
 
 export default function AddStudent() {
@@ -82,7 +83,7 @@ export default function AddStudent() {
             navigate('/students');
         } catch (err) {
             console.error("Failed to add student", err);
-            alert("Failed to add student to DB. Check server.");
+            await customAlert("Failed to add student to DB. Check server.");
         } finally {
             setIsSubmitting(false);
         }

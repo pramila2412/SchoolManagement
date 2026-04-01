@@ -1,0 +1,118 @@
+.global-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+    padding: 20px;
+}
+
+.global-dialog-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    position: relative;
+    text-align: center;
+}
+
+.global-dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.global-dialog-close:hover {
+    background-color: var(--background);
+    color: var(--danger);
+}
+
+.global-dialog-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.global-dialog-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.global-dialog-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-dialog-icon.confirm {
+    background-color: var(--warning-light);
+    color: var(--warning);
+}
+
+.global-dialog-icon.alert {
+    background-color: var(--info-light);
+    color: var(--primary);
+}
+
+.global-dialog-body {
+    margin-bottom: 30px;
+}
+
+.global-dialog-body p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.global-dialog-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.global-dialog-footer .btn {
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* Animations included in standard theme (animate-fade-in/animate-slide-up), customized here inside */
+@keyframes dialogSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.global-dialog-modal {
+    animation: dialogSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

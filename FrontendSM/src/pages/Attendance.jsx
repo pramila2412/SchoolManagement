@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Eye, Check, X, Clock, Save, RotateCcw, BarChart2, Calendar } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
 import './Attendance.css';
 
 const API = '/api';
@@ -15,7 +16,7 @@ export default function Attendance() {
 
     const handleView = async (e) => {
         e.preventDefault();
-        if (!formData.class || !formData.section) return alert('Select class and section');
+        if (!formData.class || !formData.section) return await customAlert('Select class and section');
         try {
             // Load students
             const res = await fetch(`${API}/attendance/students?class=${encodeURIComponent(formData.class)}&section=${formData.section}`);
@@ -33,7 +34,7 @@ export default function Attendance() {
             setShowListing(true);
         } catch (err) {
             console.error(err);
-            alert('Failed to load students. Check backend.');
+            await customAlert('Failed to load students. Check backend.');
         }
     };
 
@@ -46,8 +47,8 @@ export default function Attendance() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ date: formData.date, class: formData.class, section: formData.section, period: formData.period, entries })
             });
-            alert('Attendance saved!');
-        } catch (err) { alert('Failed to save'); }
+            await customAlert('Attendance saved!');
+        } catch (err) { await customAlert('Failed to save'); }
         finally { setSaving(false); }
     };
 
@@ -68,7 +69,7 @@ export default function Attendance() {
         try {
             const res = await fetch(`${API}/attendance/report/monthly?class=${encodeURIComponent(reportForm.class)}&section=${reportForm.section}&month=${reportForm.month}&year=${reportForm.year}`);
             setReportData(await res.json());
-        } catch { alert('Failed to load report'); }
+        } catch { await customAlert('Failed to load report'); }
     };
 
     return (

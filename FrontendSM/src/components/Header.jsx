@@ -5,6 +5,7 @@ import {
     Menu, X, Bell, Search, User, Grid3X3, LogOut, ChevronRight,
 } from 'lucide-react';
 import { SIDEBAR_MODULES } from './Sidebar';
+import { customAlert } from '../utils/dialogs';
 import './Header.css';
 
 const SEARCHABLE_ITEMS = SIDEBAR_MODULES.flatMap(module => {
@@ -68,8 +69,8 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
         }
     };
 
-    const handleFeatureAlert = (featureName) => {
-        alert(`${featureName} feature is under development and will be available soon.`);
+    const handleFeatureAlert = async (featureName) => {
+        await customAlert(`${featureName} feature is under development and will be available soon.`);
     };
 
     return (

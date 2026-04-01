@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, FileEdit, FileText, Eye, Printer } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
 import './TC.css';
 
 const API = '/api';
@@ -27,9 +28,14 @@ export default function TC() {
             if (formData.section) url += `&section=${formData.section}`;
             const res = await fetch(url);
             let data = await res.json();
+            
+            if (formData.batch) {
+                data = data.filter(s => s.batch === formData.batch || s.academicYear === formData.batch);
+            }
+            
             if (formData.keyword) {
                 const kw = formData.keyword.toLowerCase();
-                data = data.filter(s => `${s.firstName} ${s.lastName} ${s.admissionNo} ${s.rollNo} ${s.fatherName}`.toLowerCase().includes(kw));
+                data = data.filter(s => `${s.firstName || ''} ${s.lastName || ''} ${s.admissionNo || ''} ${s.rollNo || ''} ${s.fatherName || ''}`.toLowerCase().includes(kw));
             }
             setResults(data);
             setHasSearched(true);
@@ -43,7 +49,7 @@ export default function TC() {
     };
 
     const handleGenerate = async () => {
-        if (!tcForm.dateOfLeaving || !tcForm.reasonForLeaving) return alert('Fill all required fields');
+        if (!tcForm.dateOfLeaving || !tcForm.reasonForLeaving) return await customAlert('Fill all required fields');
         setGenerating(true);
         try {
             const body = {
@@ -60,11 +66,11 @@ export default function TC() {
             };
             const res = await fetch(`${API}/tc`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const tc = await res.json();
-            alert(`TC Generated! TC No: ${tc.tcNo}`);
+            await customAlert(`TC Generated! TC No: ${tc.tcNo}`);
             setActiveView('search');
             setResults(results.filter(r => r.id !== selectedStudent.id));
             setTcList([tc, ...tcList]);
-        } catch { alert('Failed to generate TC'); }
+        } catch { await customAlert('Failed to generate TC'); }
         finally { setGenerating(false); }
     };
 

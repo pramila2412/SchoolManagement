@@ -5,6 +5,7 @@ import {
     BookOpen, FileText, BarChart3, Settings, Trash2, CheckCircle2,
     XCircle, Award, ChevronRight, Users, Eye, Download, Send
 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Examination.css';
 
 const API = '/api/exam';
@@ -48,12 +49,12 @@ function ExamSetupTab() {
         setForm({ name:'', academicYear:'2025-2026', type:'Theory', startDate:'', endDate:'', classes:[] });
         refresh();
     };
-    const handleDelete = async (id) => { if(!confirm('Delete?')) return; await fetch(`${API}/${id}`,{method:'DELETE'}); refresh(); };
+    const handleDelete = async (id) => { if(!await customConfirm('Delete?')) return; await fetch(`${API}/${id}`,{method:'DELETE'}); refresh(); };
     const handleAddSubject = async (e) => {
         e.preventDefault(); if(!selectedExam) return;
         const exam = exams.find(x=>x._id===selectedExam);
         const cls = exam?.classes?.[0];
-        if(!cls) return alert('No class in this exam');
+        if(!cls) return await customAlert('No class in this exam');
         await fetch(`${API}/${selectedExam}/subjects`, { method:'POST', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({ className:cls.className, sections:cls.sections, subjects:[...cls.subjects||[], subForm] }) });
         setSubForm({ name:'', code:'', type:'Theory', totalMarks:100, passingMarks:33, theoryMarks:100, practicalMarks:0 });
@@ -204,10 +205,10 @@ function MarksEntryTab() {
     const addRow = () => setStudents(s=>[...s,{studentName:'',rollNo:'',theoryMarks:0,practicalMarks:0}]);
     const updateRow = (i,field,val) => setStudents(s=>s.map((r,j)=>j===i?{...r,[field]:val}:r));
     const handleSave = async () => {
-        if(!sel.exam||!sel.className||!sel.subject) return alert('Select all filters');
+        if(!sel.exam||!sel.className||!sel.subject) return await customAlert('Select all filters');
         const entries = students.filter(s=>s.studentName).map(s=>({...s, theoryMarks:+s.theoryMarks, practicalMarks:+s.practicalMarks, totalMarks:(+s.theoryMarks)+(+s.practicalMarks)}));
         const res = await fetch(`${API}/marks`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exam:sel.exam,className:sel.className,section:sel.section,subject:sel.subject,subjectCode:selSubject?.code,maxTheoryMarks:selSubject?.theoryMarks||selSubject?.totalMarks,maxPracticalMarks:selSubject?.practicalMarks||0,maxTotalMarks:selSubject?.totalMarks,entries})});
-        if(res.ok) alert('Marks saved!'); else { const err = await res.json(); alert(err.error); }
+        if(res.ok) await customAlert('Marks saved!'); else { const err = await res.json(); await customAlert(err.error); }
     };
 
     return (
@@ -237,16 +238,16 @@ function ResultsTab() {
     const [processing, setProcessing] = useState(false);
 
     const handleProcess = async () => {
-        if(!sel.exam||!sel.className) return alert('Select exam and class');
+        if(!sel.exam||!sel.className) return await customAlert('Select exam and class');
         setProcessing(true);
         const res = await fetch(`${API}/results/process`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({examId:sel.exam,className:sel.className,section:sel.section})});
         const data = await res.json();
-        if(res.ok) { setResults(data.results||[]); alert(data.message); } else alert(data.error);
+        if(res.ok) { setResults(data.results||[]); await customAlert(data.message); } else await customAlert(data.error);
         setProcessing(false);
     };
     const handlePublish = async () => {
         await fetch(`${API}/results/publish`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({examId:sel.exam,className:sel.className,section:sel.section})});
-        alert('Results published!');
+        await customAlert('Results published!');
     };
     const fetchResults = async () => { const res = await fetch(`${API}/results?exam=${sel.exam}&className=${sel.className}&section=${sel.section}`); setResults(await res.json()); };
     const selExam = exams.find(e=>e._id===sel.exam);

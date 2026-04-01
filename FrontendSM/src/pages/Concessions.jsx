@@ -51,7 +51,7 @@ export default function ConcessionPage() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this concession?")) {
+        if (await customConfirm("Are you sure you want to delete this concession?")) {
             try {
                 await api.deleteConcession(id);
                 fetchConcessions();

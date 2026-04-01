@@ -10,7 +10,7 @@ export const api = {
 
     // Students
     getStudents: async () => {
-        const res = await fetch(`${API_BASE_URL}/students`);
+        const res = await fetch(`${API_BASE_URL}/students?status=All`);
         if (!res.ok) throw new Error('Failed to fetch students');
         return res.json();
     },
@@ -44,6 +44,20 @@ export const api = {
     },
 
     // Finance
+    getFeeCategories: async () => {
+        const res = await fetch(`${API_BASE_URL}/finance/categories`);
+        if (!res.ok) throw new Error('Failed to fetch fee categories');
+        return res.json();
+    },
+    createFeeCategory: async (data) => {
+        const res = await fetch(`${API_BASE_URL}/finance/categories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to create fee category');
+        return res.json();
+    },
     getInvoices: async () => {
         const res = await fetch(`${API_BASE_URL}/finance/invoices`);
         if (!res.ok) throw new Error('Failed to fetch invoices');

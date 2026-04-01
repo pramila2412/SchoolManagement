@@ -311,7 +311,7 @@ export const SIDEBAR_MODULES = [
 
 export default function Sidebar({ open, onClose }) {
     const location = useLocation();
-    const [expandedModules, setExpandedModules] = useState(['student', 'finance']);
+    const [expandedModules, setExpandedModules] = useState([]);
 
     const toggleModule = (moduleId) => {
         setExpandedModules(prev =>
@@ -365,7 +365,6 @@ export default function Sidebar({ open, onClose }) {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <div className="nav-section-label">Main Menu</div>
                     {SIDEBAR_MODULES.map((mod) => {
                         const Icon = iconMap[mod.icon] || LayoutDashboard;
                         const hasChildren = mod.subModules && mod.subModules.length > 0;
@@ -401,24 +400,26 @@ export default function Sidebar({ open, onClose }) {
                                     </NavLink>
                                 )}
 
-                                {hasChildren && isExpanded && (
-                                    <div className="nav-sub-items">
-                                        {mod.subModules.map((sub) => {
-                                            const SubIcon = subIconMap[sub.name] || FileText;
-                                            return (
-                                                <NavLink
-                                                    key={sub.path}
-                                                    to={sub.path}
-                                                    className={() =>
-                                                        `nav-sub-item ${isSubModuleActive(sub, mod) ? 'active' : ''}`
-                                                    }
-                                                    onClick={() => window.innerWidth < 1024 && onClose()}
-                                                >
-                                                    <SubIcon size={16} className="nav-sub-icon" />
-                                                    <span>{sub.name}</span>
-                                                </NavLink>
-                                            );
-                                        })}
+                                {hasChildren && (
+                                    <div className={`nav-sub-container ${isExpanded ? 'expanded' : ''}`}>
+                                        <div className="nav-sub-items">
+                                            {mod.subModules.map((sub) => {
+                                                const SubIcon = subIconMap[sub.name] || FileText;
+                                                return (
+                                                    <NavLink
+                                                        key={sub.path}
+                                                        to={sub.path}
+                                                        className={() =>
+                                                            `nav-sub-item ${isSubModuleActive(sub, mod) ? 'active' : ''}`
+                                                        }
+                                                        onClick={() => window.innerWidth < 1024 && onClose()}
+                                                    >
+                                                        <SubIcon size={16} className="nav-sub-icon" />
+                                                        <span>{sub.name}</span>
+                                                    </NavLink>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>

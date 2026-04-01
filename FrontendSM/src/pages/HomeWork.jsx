@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Calendar } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
 import './HomeWork.css';
 
 export default function HomeWork() {
@@ -12,9 +13,9 @@ export default function HomeWork() {
         { id: 3, class: 'VI', section: 'C', subject: 'English', topic: 'Reported Speech', date: '2026-03-15', status: 'Assigned' }
     ]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        alert('Homework saved successfully!');
+        await customAlert('Homework saved successfully!');
     };
 
     return (

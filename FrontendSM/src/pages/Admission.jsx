@@ -12,6 +12,7 @@ import { getInitials, getAvatarColor, formatDate } from '../utils/helpers';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
+import { customAlert } from '../utils/dialogs';
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
@@ -388,7 +389,7 @@ function IDCardTab() {
             pdf.save(`${student.firstName}_${student.lastName}_IDCard.pdf`);
         } catch (error) {
             console.error("Error generating ID card PDF", error);
-            alert("Failed to generate ID card.");
+            await customAlert("Failed to generate ID card.");
         } finally {
             setDownloadingId(null);
         }
@@ -396,11 +397,11 @@ function IDCardTab() {
 
     const downloadBulkZip = async () => {
         if (students.length === 0) {
-            alert("No students to download.");
+            await customAlert("No students to download.");
             return;
         }
         if (classFilter === 'All Classes' || sectionFilter === 'All Sections') {
-            alert("Please select a specific Class and Section for bulk ZIP download.");
+            await customAlert("Please select a specific Class and Section for bulk ZIP download.");
             return;
         }
 
@@ -442,7 +443,7 @@ function IDCardTab() {
             
         } catch (error) {
             console.error("Error generating ZIP", error);
-            alert("Failed to generate bulk ZIP.");
+            await customAlert("Failed to generate bulk ZIP.");
         } finally {
             setBulkDownloading(false);
         }

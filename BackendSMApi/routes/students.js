@@ -10,8 +10,8 @@ router.get('/', async (req, res) => {
         if (cls) filter.class = cls;
         if (section) filter.section = section;
         if (gender) filter.gender = gender;
-        if (status) filter.status = status;
-        else filter.status = { $ne: 'Left' }; // default: hide left students
+        if (status && status !== 'All') filter.status = status;
+        else if (!status) filter.status = { $ne: 'Left' }; // default: hide left students
         const students = await Student.find(filter).sort({ createdAt: -1 });
         res.json(students);
     } catch (err) {

@@ -6,6 +6,7 @@ import {
     LogIn, LogOut, CheckCircle, Clock, Eye, Edit, X, Search,
     ArrowRight, Phone, HelpCircle, Trash2
 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './FrontOffice.css';
 
 const API = '/api/frontoffice';
@@ -127,7 +128,7 @@ function VisitorTab() {
 
     const handleSave = async e => {
         e.preventDefault();
-        if (!form.name.trim() || !form.phone.trim()) return alert('Name and Phone are required');
+        if (!form.name.trim() || !form.phone.trim()) return await customAlert('Name and Phone are required');
         await fetch(`${API}/visitors`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
         setForm({ name:'', phone:'', purpose:'Meeting', staffMeeting:'', note:'' });
         setShowForm(false); load();
@@ -200,8 +201,8 @@ function CallLogTab() {
 
     const handleSave = async e => {
         e.preventDefault();
-        if (!form.callerName.trim() || !form.phone.trim()) return alert('Name and Phone required');
-        if (form.followUpRequired && !form.followUpDate) return alert('Follow-up date is required');
+        if (!form.callerName.trim() || !form.phone.trim()) return await customAlert('Name and Phone required');
+        if (form.followUpRequired && !form.followUpDate) return await customAlert('Follow-up date is required');
         await fetch(`${API}/calls`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
         setForm({ callType:'Incoming', callerName:'', phone:'', purpose:'General Inquiry', notes:'', followUpRequired:false, followUpDate:'', assignedTo:'' }); setShowForm(false); load();
     };
@@ -289,7 +290,7 @@ function EnquiryTab() {
 
     const handleSave = async e => {
         e.preventDefault();
-        if (!form.name.trim() || !form.phone.trim()) return alert('Name and Phone required');
+        if (!form.name.trim() || !form.phone.trim()) return await customAlert('Name and Phone required');
         await fetch(`${API}/enquiries`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
         setForm({ name:'', phone:'', email:'', enquiryType:'General', source:'Walk-in', message:'', assignedTo:'', followUpDate:'', studentName:'', parentName:'', classInterested:'', academicYear:'' });
         setShowForm(false); load();
@@ -301,7 +302,7 @@ function EnquiryTab() {
     };
 
     const handleConvert = async id => {
-        if (!confirm('Convert this enquiry to Admission?')) return;
+        if (!await customConfirm('Convert this enquiry to Admission?')) return;
         await fetch(`${API}/enquiries/${id}/convert`, { method:'PUT' });
         load();
     };
@@ -390,7 +391,7 @@ function ComplaintTab() {
 
     const handleSave = async e => {
         e.preventDefault();
-        if (!form.complainantName.trim() || !form.description.trim()) return alert('Name and Description required');
+        if (!form.complainantName.trim() || !form.description.trim()) return await customAlert('Name and Description required');
         await fetch(`${API}/complaints`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
         setForm({ complainantName:'', phone:'', complainantType:'Parent', category:'Other', description:'', priority:'Medium' });
         setShowForm(false); load();
@@ -568,7 +569,7 @@ function AppointmentTab() {
 
     const handleSave = async e => {
         e.preventDefault();
-        if (!form.visitorName.trim()||!form.staffMember.trim()||!form.date||!form.time) return alert('All required fields must be filled');
+        if (!form.visitorName.trim()||!form.staffMember.trim()||!form.date||!form.time) return await customAlert('All required fields must be filled');
         await fetch(`${API}/appointments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
         setForm({ visitorName:'', phone:'', staffMember:'', date:'', time:'', purpose:'', notes:'' }); setShowForm(false); load();
     };

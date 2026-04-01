@@ -7,6 +7,8 @@ import {
     CheckCircle2, XCircle, Clock, Eye, Printer, UploadCloud,
     TrendingUp, Calculator, Grid
 } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
+import { api } from '../utils/api';
 import './Finance.css';
 
 // ======================== DASHBOARD ========================
@@ -52,22 +54,92 @@ function DashboardTab() {
 
 // ======================== FEE STRUCTURE ========================
 function FeeStructureTab() {
-    const structures = [
-        { id: 1, name: 'Annual Fee', amount: '₹ 10,000', frequency: 'One-time', classes: 'All Classes' },
-        { id: 2, name: 'Grade 10 - Annual Package', amount: '₹ 85,000', frequency: 'Installments (4)', classes: '10-A, 10-B' },
-        { id: 3, name: 'Grade 1 to 5 - Tuition Fee', amount: '₹ 45,000', frequency: 'Installments (4)', classes: '1 to 5 all' },
-        { id: 4, name: 'Transport - Route A', amount: '₹ 12,000', frequency: 'Monthly (₹ 1,000)', classes: 'All Routes' },
+    const defaultStructures = [
+        { _id: '1', name: 'Annual Fee', amount: 10000, frequency: 'One-time', classes: 'All Classes' },
+        { _id: '2', name: 'Grade 10 - Annual Package', amount: 85000, frequency: 'Installments (4)', classes: '10-A, 10-B' },
+        { _id: '3', name: 'Grade 1 to 5 - Tuition Fee', amount: 45000, frequency: 'Installments (4)', classes: '1 to 5 all' },
+        { _id: '4', name: 'Transport - Route A', amount: 12000, frequency: 'Monthly (₹ 1,000)', classes: 'All Routes' },
     ];
+    
+    const [structures, setStructures] = useState(defaultStructures);
+    const [isAdding, setIsAdding] = useState(false);
+    const [newCategory, setNewCategory] = useState({ name: '', amount: '', frequency: 'One-time', classes: '' });
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        api.getFeeCategories().then(data => {
+            if (data && data.length > 0) setStructures(data);
+        }).catch(() => {});
+    }, []);
+
+    const handleSave = async () => {
+        if (!newCategory.name || !newCategory.amount || !newCategory.classes) {
+            return customAlert('Please fill all required fields: Name, Amount, Classes');
+        }
+        setSaving(true);
+        try {
+            const added = await api.createFeeCategory(newCategory);
+            setStructures([added, ...structures]);
+            setIsAdding(false);
+            setNewCategory({ name: '', amount: '', frequency: 'One-time', classes: '' });
+            await customAlert('Fee Category successfully added!');
+        } catch (err) {
+            await customAlert('Failed to create fee category. It might already exist.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><SlidersHorizontal size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Fee Structure & Categories</h3>
-                <button className="btn btn-primary"><PlusCircle size={16}/> New Fee Category</button>
+                {!isAdding && <button className="btn btn-primary" onClick={() => setIsAdding(true)}><PlusCircle size={16}/> New Fee Category</button>}
             </div>
+            
+            {isAdding && (
+                <div className="card animate-slide-up" style={{ padding: 20, marginBottom: 24, border: '1px solid var(--border)' }}>
+                    <h4 style={{ marginBottom: 16 }}>Add New Fee Category</h4>
+                    <div className="form-row two-cols">
+                        <div className="form-group">
+                            <label className="form-label">Category Name <span className="required">*</span></label>
+                            <input type="text" className="form-input" placeholder="e.g. Activity Fee" value={newCategory.name} onChange={e => setNewCategory({...newCategory, name: e.target.value})} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Amount (₹) <span className="required">*</span></label>
+                            <input type="number" className="form-input" placeholder="e.g. 5000" value={newCategory.amount} onChange={e => setNewCategory({...newCategory, amount: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="form-row two-cols">
+                        <div className="form-group">
+                            <label className="form-label">Frequency</label>
+                            <select className="form-select" value={newCategory.frequency} onChange={e => setNewCategory({...newCategory, frequency: e.target.value})}>
+                                <option value="One-time">One-time</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Annually">Annually</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Assigned Classes <span className="required">*</span></label>
+                            <select className="form-select" value={newCategory.classes} onChange={e => setNewCategory({...newCategory, classes: e.target.value})}>
+                                <option value="" disabled>Select Class</option>
+                                <option value="All Classes">All Classes</option>
+                                {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => <option key={c} value={c}>Class {c}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+                        <button className="btn btn-outline" onClick={() => setIsAdding(false)}>Cancel</button>
+                        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Category'}</button>
+                    </div>
+                </div>
+            )}
+
             <div className="table-responsive">
                 <table className="data-table"><thead><tr><th>Category Name</th><th>Total Amount</th><th>Frequency</th><th>Assigned Classes</th><th>Actions</th></tr></thead>
                     <tbody>{structures.map(s => (
-                        <tr key={s.id}><td className="fw-600">{s.name}</td><td>{s.amount}</td><td>{s.frequency}</td><td><span className="badge badge-draft">{s.classes}</span></td>
+                        <tr key={s._id || s.id}><td className="fw-600">{s.name}</td><td>₹ {s.amount}</td><td>{s.frequency}</td><td><span className="badge badge-draft">{s.classes}</span></td>
                         <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon"><Settings size={16}/></button><button className="btn-icon"><Calculator size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>

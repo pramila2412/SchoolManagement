@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import GlobalDialog from './components/GlobalDialog';
 import LoginPage from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
@@ -47,6 +48,7 @@ function AppLayout() {
 
   return (
     <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <GlobalDialog />
       <Header
         onToggleSidebar={handleToggleSidebar}
       />

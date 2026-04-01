@@ -7,6 +7,7 @@ import {
     ChevronRight, CheckCircle2, XCircle, Search, Filter, Download,
     Wrench, Shield, Calendar, Phone, CreditCard, Eye
 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Transport.css';
 
 const API = '/api/transport';
@@ -93,7 +94,7 @@ function VehiclesTab() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Delete this vehicle?')) return;
+        if (!await customConfirm('Delete this vehicle?')) return;
         await fetch(`${API}/vehicles/${id}`, { method: 'DELETE' });
         refresh();
     };
@@ -277,7 +278,7 @@ function DriversTab() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Delete this driver?')) return;
+        if (!await customConfirm('Delete this driver?')) return;
         await fetch(`${API}/drivers/${id}`, { method: 'DELETE' });
         refresh();
     };
@@ -430,7 +431,7 @@ function RoutesTab() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Delete this route?')) return;
+        if (!await customConfirm('Delete this route?')) return;
         await fetch(`${API}/routes/${id}`, { method: 'DELETE' });
         if (selectedRoute === id) setSelectedRoute(null);
         refresh();
@@ -574,7 +575,7 @@ function StudentsTab() {
     };
 
     const handleUnassign = async (id) => {
-        if (!confirm('Unassign this student from transport?')) return;
+        if (!await customConfirm('Unassign this student from transport?')) return;
         await fetch(`${API}/students/${id}`, { method: 'DELETE' });
         refresh();
     };
@@ -718,7 +719,7 @@ function AttendanceTab() {
     };
 
     const handleSave = async () => {
-        if (!filters.route) return alert('Please select a route.');
+        if (!filters.route) return await customAlert('Please select a route.');
         const attendanceRecords = filteredStudents.map(s => ({
             studentId: s.studentId || s._id,
             studentName: s.studentName,
@@ -730,7 +731,7 @@ function AttendanceTab() {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ route: filters.route, date: filters.date, trip: filters.trip, records: attendanceRecords })
         });
-        alert('Attendance saved!');
+        await customAlert('Attendance saved!');
     };
 
     return (

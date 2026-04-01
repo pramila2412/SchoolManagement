@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Printer, FileText, Award, Plus, Trash2 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Certificates.css';
 
 const API = '/api';
@@ -38,7 +39,7 @@ export default function Certificates() {
     };
 
     const handleGenerate = async (student) => {
-        if (!certType) return alert('Select a certificate type');
+        if (!certType) return await customAlert('Select a certificate type');
         setGenerating(true);
         try {
             const body = {
@@ -52,14 +53,14 @@ export default function Certificates() {
             };
             const res = await fetch(`${API}/certificates`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const cert = await res.json();
-            alert(`Certificate generated! No: ${cert.certificateNo}`);
+            await customAlert(`Certificate generated! No: ${cert.certificateNo}`);
             setCertificates([cert, ...certificates]);
-        } catch { alert('Failed to generate certificate'); }
+        } catch { await customAlert('Failed to generate certificate'); }
         finally { setGenerating(false); }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Delete this certificate?')) return;
+        if (!await customConfirm('Delete this certificate?')) return;
         await fetch(`${API}/certificates/${id}`, { method: 'DELETE' });
         setCertificates(certificates.filter(c => c._id !== id));
     };

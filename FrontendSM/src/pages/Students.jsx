@@ -29,7 +29,7 @@ export default function StudentsPage() {
     }, []);
 
     const filteredStudents = students.filter(s => {
-        const matchSearch = `${s.firstName} ${s.lastName} ${s.admissionNo} ${s.rollNo}`
+        const matchSearch = `${s.firstName || ''} ${s.lastName || ''} ${s.admissionNo || ''} ${s.rollNo || ''}`
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
         const matchClass = classFilter === 'All Classes' || s.class === classFilter;
@@ -100,34 +100,34 @@ export default function StudentsPage() {
                 <div style={{ padding: '40px', textAlign: 'center' }}>Loading students...</div>
             ) : (
                 <div className="students-grid">
-                    {filteredStudents.map(student => (
-                        <Link to={`/students/${student.id}`} className="student-card card" key={student.id}>
+                    {filteredStudents.map(s => (
+                        <Link to={`/students/${s.id}`} className="student-card card" key={s._id || s.id}>
                             <div className="student-card-top">
-                                <div className="student-avatar" style={{ background: getAvatarColor(student.firstName + student.lastName) }}>
-                                    {getInitials(student.firstName, student.lastName)}
+                                <div className="student-avatar" style={{ background: getAvatarColor((s.firstName || '') + (s.lastName || '')) }}>
+                                    {getInitials(s.firstName || '', s.lastName || '')}
                                 </div>
                                 <div className="student-basic">
-                                    <h3>{student.firstName} {student.lastName}</h3>
-                                    <span>Class {student.class} - Section {student.section}</span>
+                                    <h3>{s.firstName || ''} {s.lastName || ''}</h3>
+                                    <span>Class {s.class} - Section {s.section}</span>
                                     <div className="student-meta">
-                                        <span>Roll: <strong>{student.rollNo}</strong></span>
-                                        <span>Adm: <strong>{student.admissionNo}</strong></span>
+                                        <span>Roll: <strong>{s.rollNo}</strong></span>
+                                        <span>Adm: <strong>{s.admissionNo}</strong></span>
                                     </div>
                                 </div>
                             </div>
                             <div className="student-contact">
-                                <Phone size={14} /> {student.contactNo}
+                                <Phone size={14} /> {s.contactNo}
                             </div>
                             <div className="student-badges">
-                                {(student.status === 'Inactive' || student.status === 'Left') && (
-                                    <span className="badge badge-danger">{student.status}</span>
+                                {(s.status === 'Inactive' || s.status === 'Left') && (
+                                    <span className="badge badge-danger">{s.status}</span>
                                 )}
-                                {student.paidFees >= student.totalFees && student.totalFees > 0 ? (
+                                {s.paidFees >= s.totalFees && s.totalFees > 0 ? (
                                     <span className="badge badge-success">Fees Paid</span>
                                 ) : (
                                     <span className="badge badge-warning">Fees Pending</span>
                                 )}
-                                {student.newStudent && <span className="badge badge-info">New</span>}
+                                {s.newStudent && <span className="badge badge-info">New</span>}
                             </div>
                         </Link>
                     ))}

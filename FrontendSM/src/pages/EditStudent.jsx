@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
 import { classes, sections, batches, categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import './AddStudent.css';
 
-export default function AddStudent() {
+export default function EditStudent() {
+    const { id } = useParams();
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState('');
@@ -41,6 +42,59 @@ export default function AddStudent() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStudent = async () => {
+            try {
+                const data = await api.getStudentById(id);
+                const formatDateFn = (dateStr) => {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+                };
+                
+                setFormData({
+                    batch: data.batch || '2024-2025',
+                    class: data.class || '',
+                    section: data.section || '',
+                    firstName: data.firstName || '',
+                    lastName: data.lastName || '',
+                    gender: data.gender || 'Male',
+                    dateOfBirth: formatDateFn(data.dateOfBirth),
+                    bloodGroup: data.bloodGroup || '',
+                    religion: data.religion || '',
+                    fatherName: data.fatherName || '',
+                    motherName: data.motherName || '',
+                    guardianPhone: data.guardianPhone || '',
+                    guardianOccupation: data.guardianOccupation || '',
+                    contactNo: data.contactNo || '',
+                    email: data.email || '',
+                    address: data.address || '',
+                    rollNo: data.rollNo || '',
+                    admissionNo: data.admissionNo || '',
+                    admissionDate: formatDateFn(data.admissionDate),
+                    feesStartDate: formatDateFn(data.feesStartDate),
+                    applicationNo: data.applicationNo || '',
+                    facility: data.facility || [],
+                    newStudent: data.newStudent || false,
+                    category: data.category || 'General',
+                    photo: null, 
+                    birthCertificate: null,
+                    previousTC: null,
+                    existingPhotoUrl: data.photoUrl,
+                    existingBirthCertificateUrl: data.birthCertificateUrl,
+                    existingPreviousTcUrl: data.previousTcUrl
+                });
+            } catch (err) {
+                console.error("Failed to load student details", err);
+                customAlert("Failed to load student details.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchStudent();
+    }, [id]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -90,8 +144,8 @@ export default function AddStudent() {
             }
         });
 
-        if (!formData.photo) { newErrors.photo = true; hasMissing = true; }
-        if (!formData.birthCertificate) { newErrors.birthCertificate = true; hasMissing = true; }
+        if (!formData.photo && !formData.existingPhotoUrl) { newErrors.photo = true; hasMissing = true; }
+        if (!formData.birthCertificate && !formData.existingBirthCertificateUrl) { newErrors.birthCertificate = true; hasMissing = true; }
 
         if (hasMissing) {
             setFormError('Please fill the required fields');
@@ -132,32 +186,31 @@ export default function AddStudent() {
             const birthCertificateUrl = await convertToBase64(formData.birthCertificate);
             const previousTcUrl = await convertToBase64(formData.previousTC);
 
-            const newId = `STU-${formData.batch.split('-')[0]}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-            const newStudent = {
+            const studentUpdate = {
                 ...formData,
-                id: newId,
-                status: 'Active',
-                totalFees: 45000,
-                paidFees: 0,
-                attendance: 100,
-                photoUrl,
-                birthCertificateUrl,
-                previousTcUrl
+                photoUrl: photoUrl || formData.existingPhotoUrl,
+                birthCertificateUrl: birthCertificateUrl || formData.existingBirthCertificateUrl,
+                previousTcUrl: previousTcUrl || formData.existingPreviousTcUrl
             };
             
-            delete newStudent.photo;
-            delete newStudent.birthCertificate;
-            delete newStudent.previousTC;
+            delete studentUpdate.photo;
+            delete studentUpdate.birthCertificate;
+            delete studentUpdate.previousTC;
+            delete studentUpdate.existingPhotoUrl;
+            delete studentUpdate.existingBirthCertificateUrl;
+            delete studentUpdate.existingPreviousTcUrl;
 
-            await api.createStudent(newStudent);
-            navigate('/students');
+            await api.updateStudent(id, studentUpdate);
+            navigate(`/students/${id}`);
         } catch (err) {
-            console.error("Failed to add student", err);
-            await customAlert("Failed to add student to DB. Check server.");
+            console.error("Failed to update student", err);
+            await customAlert("Failed to update student in DB. Check server.");
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading student details...</div>;
 
     return (
         <div className="add-student-page animate-fade-in">
@@ -168,9 +221,11 @@ export default function AddStudent() {
                         <span className="separator">/</span>
                         <Link to="/students">Students</Link>
                         <span className="separator">/</span>
-                        <span>Add Student</span>
+                        <Link to={`/students/${id}`}>Student Profile</Link>
+                        <span className="separator">/</span>
+                        <span>Edit Student</span>
                     </div>
-                    <h1>Add New Student</h1>
+                    <h1>Edit Student</h1>
                 </div>
                 <Link to="/students" className="btn btn-outline" style={{ background: '#fff' }}>
                     <ArrowLeft size={16} /> Back to Students
@@ -337,14 +392,17 @@ export default function AddStudent() {
                             <div className="form-group">
                                 <label className="form-label">Photo <span className="required">*</span></label>
                                 <input type="file" className={`form-input ${errors.photo ? 'error' : ''}`} name="photo" onChange={handleFileChange} accept="image/*" />
+                                {formData.existingPhotoUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Birth Certificate <span className="required">*</span></label>
                                 <input type="file" className={`form-input ${errors.birthCertificate ? 'error' : ''}`} name="birthCertificate" onChange={handleFileChange} />
+                                {formData.existingBirthCertificateUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Previous TC <span style={{fontSize: '0.8rem', color: 'var(--text-light)', marginLeft: '4px'}}>(Optional)</span></label>
                                 <input type="file" className="form-input" name="previousTC" onChange={handleFileChange} />
+                                {formData.existingPreviousTcUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
                             </div>
                         </div>
                     </div>

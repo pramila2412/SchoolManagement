@@ -33,6 +33,8 @@ const studentSchema = new mongoose.Schema({
     // Facility & status
     facility: [String],
     photoUrl: String,
+    birthCertificateUrl: String,
+    previousTcUrl: String,
     status: { type: String, enum: ['Active', 'Inactive', 'Left'], default: 'Active' },
     newStudent: { type: Boolean, default: false },
 

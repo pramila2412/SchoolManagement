@@ -8,6 +8,7 @@ import LoginPage from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
+import EditStudent from './pages/EditStudent';
 import StudentDetail from './pages/StudentDetail';
 import PlaceholderPage from './pages/PlaceholderPage';
 import Academics from './pages/Academics';
@@ -59,6 +60,7 @@ function AppLayout() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/students" element={<StudentsPage />} />
             <Route path="/students/add" element={<AddStudent />} />
+            <Route path="/students/edit/:id" element={<EditStudent />} />
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/attendance" element={<Attendance />} />
             

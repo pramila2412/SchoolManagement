@@ -82,7 +82,7 @@ export default function StudentDetail() {
                     <h1>Student Profile</h1>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                    <button className="btn btn-outline"><Edit size={16} /> Edit</button>
+                    <Link to={`/students/edit/${student.id}`} className="btn btn-outline"><Edit size={16} /> Edit</Link>
                     <Link to="/students" className="btn btn-outline"><ArrowLeft size={16} /> Back</Link>
                 </div>
             </div>
@@ -241,11 +241,44 @@ export default function StudentDetail() {
                 {activeTab === 'documents' && (
                     <div className="card detail-section">
                         <h3 className="detail-section-title"><FileText size={18} /> Documents</h3>
-                        <div className="empty-state" style={{ padding: 40 }}>
-                            <FileText size={48} />
-                            <h3>No Documents Uploaded</h3>
-                            <p>Upload photo, birth certificate, or previous TC from the Edit page.</p>
-                        </div>
+                        {(student.photoUrl || student.birthCertificateUrl || student.previousTcUrl) ? (
+                            <div className="document-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px', padding: '20px' }}>
+                                {student.photoUrl && (
+                                    <div className="doc-card" style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                                        <img src={student.photoUrl} alt="Photo" style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', marginBottom: '8px' }} />
+                                        <div style={{ fontWeight: 600 }}>Photo</div>
+                                    </div>
+                                )}
+                                {student.birthCertificateUrl && (
+                                    <div className="doc-card" style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                                        {student.birthCertificateUrl.startsWith('data:image') ? (
+                                            <img src={student.birthCertificateUrl} alt="Birth Certificate" style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', marginBottom: '8px' }} />
+                                        ) : (
+                                            <div style={{ padding: '40px 0' }}><FileText size={40} style={{ color: 'var(--text-light)' }}/></div>
+                                        )}
+                                        <div style={{ fontWeight: 600 }}>Birth Certificate</div>
+                                        <a href={student.birthCertificateUrl} download="birth-certificate" style={{ display: 'inline-block', marginTop: '8px', color: 'var(--primary)', fontSize: '0.8rem' }}>Download</a>
+                                    </div>
+                                )}
+                                {student.previousTcUrl && (
+                                    <div className="doc-card" style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                                        {student.previousTcUrl.startsWith('data:image') ? (
+                                            <img src={student.previousTcUrl} alt="Previous TC" style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', marginBottom: '8px' }} />
+                                        ) : (
+                                            <div style={{ padding: '40px 0' }}><FileText size={40} style={{ color: 'var(--text-light)' }}/></div>
+                                        )}
+                                        <div style={{ fontWeight: 600 }}>Previous TC</div>
+                                        <a href={student.previousTcUrl} download="previous-tc" style={{ display: 'inline-block', marginTop: '8px', color: 'var(--primary)', fontSize: '0.8rem' }}>Download</a>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="empty-state" style={{ padding: 40 }}>
+                                <FileText size={48} />
+                                <h3>No Documents Uploaded</h3>
+                                <p>Upload photo, birth certificate, or previous TC from the Edit page.</p>
+                            </div>
+                        )}
                     </div>
                 )}
 

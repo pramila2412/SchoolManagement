@@ -204,7 +204,7 @@ export default function EditStudent() {
             navigate(`/students/${id}`);
         } catch (err) {
             console.error("Failed to update student", err);
-            await customAlert("Failed to update student in DB. Check server.");
+            await customAlert(err.message || "Failed to update student in DB. Please check your network connection.");
         } finally {
             setIsSubmitting(false);
         }

@@ -103,8 +103,12 @@ export default function StudentsPage() {
                     {filteredStudents.map(s => (
                         <Link to={`/students/${s.id}`} className="student-card card" key={s._id || s.id}>
                             <div className="student-card-top">
-                                <div className="student-avatar" style={{ background: getAvatarColor((s.firstName || '') + (s.lastName || '')) }}>
-                                    {getInitials(s.firstName || '', s.lastName || '')}
+                                <div className="student-avatar" style={!s.photoUrl ? { background: getAvatarColor((s.firstName || '') + (s.lastName || '')) } : { background: 'transparent' }}>
+                                    {s.photoUrl ? (
+                                        <img src={s.photoUrl} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                                    ) : (
+                                        getInitials(s.firstName || '', s.lastName || '')
+                                    )}
                                 </div>
                                 <div className="student-basic">
                                     <h3>{s.firstName || ''} {s.lastName || ''}</h3>

@@ -39,7 +39,22 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        if (!res.ok) throw new Error('Failed to create student');
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => null);
+            throw new Error(errorData?.message || errorData?.error || 'Failed to create student');
+        }
+        return res.json();
+    },
+    updateStudent: async (id, data) => {
+        const res = await fetch(`${API_BASE_URL}/students/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => null);
+            throw new Error(errorData?.message || errorData?.error || 'Failed to update student');
+        }
         return res.json();
     },
 

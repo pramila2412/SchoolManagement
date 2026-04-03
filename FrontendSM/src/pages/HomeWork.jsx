@@ -6,6 +6,7 @@ import './HomeWork.css';
 
 export default function HomeWork() {
     const [activeTab, setActiveTab] = useState('assign'); // 'assign', 'custom', 'reports'
+    const [reportSearch, setReportSearch] = useState('');
     const [assignForm, setAssignForm] = useState({ class: '', section: '', date: new Date().toISOString().split('T')[0], description: '' });
     const [reports, setReports] = useState([
         { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Quadratic Equations', date: '2026-03-16', status: 'Assigned' },
@@ -111,7 +112,7 @@ export default function HomeWork() {
                     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ fontSize: '1rem', color: 'var(--primary)' }}>Homework Report</h3>
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <input type="text" placeholder="Search report..." className="form-input" style={{ width: 200, padding: '6px 12px' }} />
+                            <input type="text" placeholder="Search report..." className="form-input" style={{ width: 200, padding: '6px 12px' }} value={reportSearch} onChange={e => setReportSearch(e.target.value)} />
                         </div>
                     </div>
                     <div className="table-wrapper">
@@ -128,7 +129,7 @@ export default function HomeWork() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {reports.map(r => (
+                                {reports.filter(r => !reportSearch || `${r.class} ${r.section} ${r.subject} ${r.topic}`.toLowerCase().includes(reportSearch.toLowerCase())).map(r => (
                                     <tr key={r.id}>
                                         <td className="td-bold">{r.class}</td>
                                         <td>{r.section}</td>

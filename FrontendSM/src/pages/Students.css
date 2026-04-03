@@ -100,122 +100,146 @@
 .students-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    gap: 20px;
 }
 
 .student-card {
-    padding: 20px;
+    padding: 0;
     cursor: pointer;
     position: relative;
     animation: slideInUp 0.4s ease forwards;
     opacity: 0;
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
 }
 
 .student-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     border-color: var(--accent);
 }
 
-.student-card:hover .student-card-arrow {
-    opacity: 1;
-    right: 16px;
-}
-
+/* Card Header - Avatar + Name */
 .student-card-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 14px;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 20px 16px;
 }
 
 .student-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     letter-spacing: 1px;
     overflow: hidden;
 }
 
-.student-menu {
-    opacity: 0;
-    transition: opacity 0.2s;
+.student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.student-card:hover .student-menu {
-    opacity: 1;
-}
-
-.student-card-body {
-    margin-bottom: 14px;
+.student-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .student-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
+    color: #1a1a2e;
+    margin: 0 0 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .student-class {
-    font-size: 0.82rem;
-    color: var(--text-light);
+    font-size: 0.8rem;
+    color: #8898aa;
     font-weight: 500;
+}
+
+/* Card Body - Meta + Contact */
+.student-card-body {
+    padding: 0 20px 16px;
 }
 
 .student-meta {
     display: flex;
-    gap: 16px;
-    margin-top: 8px;
+    align-items: center;
+    gap: 0;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 0;
+    margin-bottom: 12px;
 }
 
 .meta-item {
-    font-size: 0.78rem;
-    color: var(--text-muted);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
 }
 
-.meta-item strong {
-    color: var(--text);
+.meta-label {
+    font-size: 0.7rem;
+    color: #8898aa;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
+.meta-value {
+    font-size: 0.88rem;
+    color: #1a1a2e;
+    font-weight: 700;
+}
+
+.meta-divider {
+    width: 1px;
+    height: 28px;
+    background: #dee2e6;
+}
+
+.student-contact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.student-contact svg {
+    color: #8898aa;
+}
+
+/* Card Footer - Badges */
 .student-card-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-light);
-    flex-wrap: wrap;
     gap: 8px;
-}
-
-.contact-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    color: var(--text-muted);
+    padding: 12px 20px;
+    border-top: 1px solid #f0f0f5;
+    background: #fafbfc;
 }
 
 .student-badges {
     display: flex;
     gap: 6px;
-}
-
-.student-card-arrow {
-    position: absolute;
-    right: 24px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    opacity: 0;
-    transition: var(--transition);
 }
 
 @media (max-width: 768px) {

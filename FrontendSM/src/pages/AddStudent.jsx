@@ -4,6 +4,7 @@ import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
 import { classes, sections, batches, categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
+import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
 export default function AddStudent() {
@@ -63,17 +64,6 @@ export default function AddStudent() {
         }
     };
 
-    const handleContactChange = (e) => {
-        const val = e.target.value.replace(/\D/g, ''); // Ensure only numbers
-        setFormData({ ...formData, contactNo: val });
-        
-        if (val.length > 0 && (val.length < 9 || val.length > 11)) {
-            setErrors(prev => ({ ...prev, contactNoMsg: 'Please enter valid mobile number', contactNo: null }));
-        } else {
-            setErrors(prev => ({ ...prev, contactNoMsg: null, contactNo: null }));
-        }
-    };
-
     const validate = () => {
         const newErrors = {};
         const requiredStrFields = [
@@ -99,15 +89,15 @@ export default function AddStudent() {
             setFormError('');
         }
 
-        if (formData.contactNo && (formData.contactNo.length < 9 || formData.contactNo.length > 11)) {
-            newErrors.contactNoMsg = 'Please enter valid mobile number';
+        if (formData.contactNo && formData.contactNo.length !== 10) {
+            newErrors.contactNoMsg = 'Please enter exact 10 digits mobile number';
         }
         if (formData.email && formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.emailMsg = 'Invalid email format';
             if (!newErrors.email) newErrors.email = true;
         }
 
-        setErrors({ ...newErrors, contactNoMsg: newErrors.contactNoMsg || errors.contactNoMsg });
+        setErrors(newErrors);
         return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg;
     };
 
@@ -251,7 +241,7 @@ export default function AddStudent() {
                         <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Guardian Phone</label>
-                                <input type="text" className="form-input" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Enter guardian phone" />
+                                <PhoneInput className="form-input" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Enter guardian phone" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Guardian Occupation</label>
@@ -262,8 +252,7 @@ export default function AddStudent() {
                         <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Contact No <span className="required">*</span></label>
-                                <input type="text" className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleContactChange} placeholder="10-digit mobile number" />
-                                {errors.contactNoMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.contactNoMsg}</span>}
+                                <PhoneInput className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="10-digit mobile number" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">E-mail ID <span className="required">*</span></label>

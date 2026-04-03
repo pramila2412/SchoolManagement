@@ -8,6 +8,7 @@ import {
     Wrench, Shield, Calendar, Phone, CreditCard, Eye
 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import PhoneInput from '../components/PhoneInput';
 import './Transport.css';
 
 const API = '/api/transport';
@@ -305,7 +306,7 @@ function DriversTab() {
                     </div>
                     <div className="form-group">
                         <label className="form-label">Mobile <span className="required">*</span></label>
-                        <input type="text" className="form-input" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} />
+                        <PhoneInput className="form-input" required value={form.mobile} onChange={e => setForm({ ...form, mobile: e.target.value })} />
                     </div>
                     <div className="form-row">
                         <div className="form-group">

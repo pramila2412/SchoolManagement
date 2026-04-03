@@ -7,6 +7,7 @@ import {
     CheckCircle2, XCircle, Send, Plus, Key, Link as LinkIcon, PieChart,
     UserCheck, FolderOpen, Mail, UploadCloud, ToggleRight
 } from 'lucide-react';
+import PhoneInput from '../components/PhoneInput';
 import './Addons.css';
 
 // ======================== VISITORS ========================
@@ -30,7 +31,7 @@ function VisitorsTab() {
                     <h3>New Visitor Entry</h3>
                     <div className="ado-form form-row-3">
                         <div className="form-group"><label className="form-label">Visitor Name *</label><input type="text" className="form-input"/></div>
-                        <div className="form-group"><label className="form-label">Mobile Number *</label><input type="tel" className="form-input"/></div>
+                        <div className="form-group"><label className="form-label">Mobile Number *</label><PhoneInput className="form-input"/></div>
                         <div className="form-group"><label className="form-label">Purpose of Visit *</label><select className="form-select"><option>Meeting</option><option>Delivery</option><option>Parent Visit</option><option>Interview</option><option>Other</option></select></div>
                         <div className="form-group"><label className="form-label">Person to Meet</label><input type="text" className="form-input"/></div>
                         <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" defaultValue={new Date().toISOString().split('T')[0]}/></div>

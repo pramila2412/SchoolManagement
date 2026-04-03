@@ -7,6 +7,7 @@ import {
     ArrowRight, Phone, HelpCircle, Trash2
 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import PhoneInput from '../components/PhoneInput';
 import './FrontOffice.css';
 
 const API = '/api/frontoffice';
@@ -152,7 +153,7 @@ function VisitorTab() {
                             <div className="form-group"><label className="form-label">Visitor Name <span className="required">*</span></label>
                                 <input className="form-input" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name"/></div>
                             <div className="form-group"><label className="form-label">Phone <span className="required">*</span></label>
-                                <input className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="10-digit mobile"/></div>
+                                <PhoneInput className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="10-digit mobile"/></div>
                             <div className="form-group"><label className="form-label">Purpose <span className="required">*</span></label>
                                 <select className="form-select" value={form.purpose} onChange={e=>setForm({...form,purpose:e.target.value})}>
                                     {['Meeting','Admission Enquiry','Delivery','Parent Visit','Interview','Other'].map(p=><option key={p}>{p}</option>)}
@@ -230,7 +231,7 @@ function CallLogTab() {
                             <div className="form-group"><label className="form-label">Caller/Receiver Name <span className="required">*</span></label>
                                 <input className="form-input" value={form.callerName} onChange={e=>setForm({...form,callerName:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Phone <span className="required">*</span></label>
-                                <input className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+                                <PhoneInput className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Purpose</label>
                                 <select className="form-select" value={form.purpose} onChange={e=>setForm({...form,purpose:e.target.value})}>
                                     {['General Inquiry','Admission','Complaint','Follow-up','Emergency','Other'].map(p=><option key={p}>{p}</option>)}
@@ -320,7 +321,7 @@ function EnquiryTab() {
                             <div className="form-group"><label className="form-label">Enquirer Name <span className="required">*</span></label>
                                 <input className="form-input" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Phone <span className="required">*</span></label>
-                                <input className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+                                <PhoneInput className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Email</label>
                                 <input className="form-input" type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Enquiry Type</label>
@@ -426,7 +427,7 @@ function ComplaintTab() {
                             <div className="form-group"><label className="form-label">Complainant Name <span className="required">*</span></label>
                                 <input className="form-input" value={form.complainantName} onChange={e=>setForm({...form,complainantName:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Phone</label>
-                                <input className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+                                <PhoneInput className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Complainant Type</label>
                                 <select className="form-select" value={form.complainantType} onChange={e=>setForm({...form,complainantType:e.target.value})}>
                                     {['Parent','Student','Staff','External'].map(t=><option key={t}>{t}</option>)}</select></div>
@@ -592,7 +593,7 @@ function AppointmentTab() {
                             <div className="form-group"><label className="form-label">Visitor Name <span className="required">*</span></label>
                                 <input className="form-input" value={form.visitorName} onChange={e=>setForm({...form,visitorName:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Phone</label>
-                                <input className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+                                <PhoneInput className="form-input" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Staff Member <span className="required">*</span></label>
                                 <input className="form-input" value={form.staffMember} onChange={e=>setForm({...form,staffMember:e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Date <span className="required">*</span></label>

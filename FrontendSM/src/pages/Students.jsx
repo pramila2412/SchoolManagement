@@ -102,27 +102,37 @@ export default function StudentsPage() {
                 <div className="students-grid">
                     {filteredStudents.map(s => (
                         <Link to={`/students/${s.id}`} className="student-card card" key={s._id || s.id}>
-                            <div className="student-card-top">
-                                <div className="student-avatar" style={!s.photoUrl ? { background: getAvatarColor((s.firstName || '') + (s.lastName || '')) } : { background: 'transparent' }}>
+                            <div className="student-card-header">
+                                <div className="student-avatar" style={!s.photoUrl ? { background: getAvatarColor((s.firstName || '') + (s.lastName || '')) } : {}}>
                                     {s.photoUrl ? (
-                                        <img src={s.photoUrl} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                                        <img src={s.photoUrl} alt="Photo" />
                                     ) : (
                                         getInitials(s.firstName || '', s.lastName || '')
                                     )}
                                 </div>
-                                <div className="student-basic">
-                                    <h3>{s.firstName || ''} {s.lastName || ''}</h3>
-                                    <span>Class {s.class} - Section {s.section}</span>
-                                    <div className="student-meta">
-                                        <span>Roll: <strong>{s.rollNo}</strong></span>
-                                        <span>Adm: <strong>{s.admissionNo}</strong></span>
-                                    </div>
+                                <div className="student-info">
+                                    <h3 className="student-name">{s.firstName || ''} {s.lastName || ''}</h3>
+                                    <span className="student-class">Class {s.class} &middot; Section {s.section}</span>
                                 </div>
                             </div>
-                            <div className="student-contact">
-                                <Phone size={14} /> {s.contactNo}
+                            <div className="student-card-body">
+                                <div className="student-meta">
+                                    <div className="meta-item">
+                                        <span className="meta-label">Roll No</span>
+                                        <span className="meta-value">{s.rollNo}</span>
+                                    </div>
+                                    <div className="meta-divider" />
+                                    <div className="meta-item">
+                                        <span className="meta-label">Adm No</span>
+                                        <span className="meta-value">{s.admissionNo}</span>
+                                    </div>
+                                </div>
+                                <div className="student-contact">
+                                    <Phone size={14} />
+                                    <span>{s.contactNo}</span>
+                                </div>
                             </div>
-                            <div className="student-badges">
+                            <div className="student-card-footer">
                                 {(s.status === 'Inactive' || s.status === 'Left') && (
                                     <span className="badge badge-danger">{s.status}</span>
                                 )}

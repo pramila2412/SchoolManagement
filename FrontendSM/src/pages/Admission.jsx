@@ -13,6 +13,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 import { customAlert } from '../utils/dialogs';
+import PhoneInput from '../components/PhoneInput';
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
@@ -59,7 +60,7 @@ function EnquiryTab() {
                             <div className="form-group"><label className="form-label">Parent Name <span className="required">*</span></label>
                                 <input type="text" className="form-input" required value={form.parentName} onChange={e => setForm({ ...form, parentName: e.target.value })} /></div>
                             <div className="form-group"><label className="form-label">Phone <span className="required">*</span></label>
-                                <input type="tel" className="form-input" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+                                <PhoneInput required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
                         </div>
                         <div className="adm-form form-row-3">
                             <div className="form-group"><label className="form-label">Email</label>
@@ -146,7 +147,7 @@ function ApplicationTab() {
                             <div className="form-group"><label className="form-label">Mother's Occupation</label><input type="text" className="form-input" value={form.motherOccupation} onChange={e => u('motherOccupation', e.target.value)} /></div>
                         </div>
                         <div className="form-row">
-                            <div className="form-group"><label className="form-label">Primary Contact <span className="required">*</span></label><input type="tel" className="form-input" value={form.primaryContact} onChange={e => u('primaryContact', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Primary Contact <span className="required">*</span></label><PhoneInput value={form.primaryContact} onChange={e => u('primaryContact', e.target.value)} /></div>
                             <div className="form-group"><label className="form-label">Email <span className="required">*</span></label><input type="email" className="form-input" value={form.email} onChange={e => u('email', e.target.value)} /></div>
                         </div>
                         <div className="form-group"><label className="form-label">Annual Income</label><input type="text" className="form-input" value={form.annualIncome} onChange={e => u('annualIncome', e.target.value)} /></div>

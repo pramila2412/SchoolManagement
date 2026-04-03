@@ -7,19 +7,22 @@ import {
     IndianRupee, ClipboardCheck, UserCheck, AlertTriangle, Mail,
     Calendar, Upload, Timer, Filter
 } from 'lucide-react';
+import { customAlert } from '../utils/dialogs';
+import PhoneInput from '../components/PhoneInput';
 import './HR.css';
 
 // ======================== DASHBOARD ========================
 function DashboardTab() {
+    const [, setSearchParams] = useSearchParams();
     return (
         <div className="animate-fade-in">
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><BarChart3 size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> HR Overview</h3>
             <div className="hr-quick-actions">
-                <button className="hr-quick-btn"><UserPlus size={16} color="var(--primary)"/> Add Staff</button>
-                <button className="hr-quick-btn"><CalendarCheck size={16} color="var(--success)"/> Mark Attendance</button>
-                <button className="hr-quick-btn"><FileText size={16} color="var(--info)"/> Apply Leave</button>
-                <button className="hr-quick-btn"><IndianRupee size={16} color="var(--warning)"/> Run Payroll</button>
-                <button className="hr-quick-btn"><Briefcase size={16} color="var(--danger)"/> Post Job</button>
+                <button className="hr-quick-btn" onClick={() => setSearchParams({ tab: 'staff', action: 'add' })}><UserPlus size={16} color="var(--primary)"/> Add Staff</button>
+                <button className="hr-quick-btn" onClick={() => setSearchParams({ tab: 'attendance' })}><CalendarCheck size={16} color="var(--success)"/> Mark Attendance</button>
+                <button className="hr-quick-btn" onClick={() => setSearchParams({ tab: 'leave' })}><FileText size={16} color="var(--info)"/> Apply Leave</button>
+                <button className="hr-quick-btn" onClick={() => setSearchParams({ tab: 'payroll' })}><IndianRupee size={16} color="var(--warning)"/> Run Payroll</button>
+                <button className="hr-quick-btn" onClick={() => setSearchParams({ tab: 'recruitment' })}><Briefcase size={16} color="var(--danger)"/> Post Job</button>
             </div>
             <div className="hr-dashboard-grid">
                 <div className="hr-kpi-card">
@@ -53,35 +56,112 @@ function DashboardTab() {
 
 // ======================== STAFF MANAGEMENT ========================
 function StaffTab() {
-    const staff = [
+    const [searchParams, setSearchParams] = useSearchParams();
+    const allStaff = [
         { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15' },
         { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01' },
         { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10' },
         { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20' },
+        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01' },
+        { id: 'EMP-2024-006', name: 'Kavitha Rao', role: 'Teacher', dept: 'English', type: 'Full-time', status: 'Active', joined: '2023-04-15' },
+        { id: 'EMP-2024-007', name: 'Vijay Singh', role: 'Peon', dept: 'Support', type: 'Contract', status: 'Active', joined: '2022-01-05' },
     ];
+    const [searchTerm, setSearchTerm] = useState('');
+    const [deptFilter, setDeptFilter] = useState('All Departments');
+    const [typeFilter, setTypeFilter] = useState('All Types');
+    const [filteredStaff, setFilteredStaff] = useState([]);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [showSearch, setShowSearch] = useState(false);
+
+    const handleSearch = () => {
+        const term = searchTerm.toLowerCase();
+        const results = allStaff.filter(s => {
+            const matchSearch = !term || `${s.name} ${s.id} ${s.role}`.toLowerCase().includes(term);
+            const matchDept = deptFilter === 'All Departments' || s.dept === deptFilter;
+            const matchType = typeFilter === 'All Types' || s.type === typeFilter;
+            return matchSearch && matchDept && matchType;
+        });
+        setFilteredStaff(results);
+        setHasSearched(true);
+    };
+
+    const [isAdding, setIsAdding] = useState(searchParams.get('action') === 'add');
+
+    const closeAdd = () => {
+        setIsAdding(false);
+        setSearchParams({ tab: 'staff' });
+    };
+
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><Users size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Staff Directory</h3>
-                <button className="btn btn-primary"><UserPlus size={16}/> Add Staff</button>
+                {isAdding ? (
+                    <button className="btn btn-outline" onClick={closeAdd}>Back to List</button>
+                ) : (
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="btn btn-outline" onClick={() => { setShowSearch(!showSearch); if (showSearch) { setHasSearched(false); } }}><Search size={16}/> {showSearch ? 'Hide Search' : 'Search'}</button>
+                        <button className="btn btn-primary" onClick={() => setIsAdding(true)}><UserPlus size={16}/> Add Staff</button>
+                    </div>
+                )}
             </div>
-            <div className="hr-form-panel" style={{ padding: 16 }}>
-                <div className="ado-form form-row-4">
-                    <div className="form-group"><label className="form-label">Search</label><input type="text" className="form-input" placeholder="Name or Employee ID"/></div>
-                    <div className="form-group"><label className="form-label">Department</label><select className="form-select"><option>All Departments</option><option>Mathematics</option><option>Administration</option><option>Transport</option></select></div>
-                    <div className="form-group"><label className="form-label">Employment Type</label><select className="form-select"><option>All Types</option><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ width: '100%', height: 40 }}><Search size={16}/> Search</button></div>
+
+            {isAdding ? (
+                <div className="hr-form-panel animate-fade-in" style={{ padding: 24 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Staff Member</h3>
+                    <div className="ado-form form-row-2">
+                        <div className="form-group"><label className="form-label">Full Name *</label><input type="text" className="form-input" placeholder="Enter full name"/></div>
+                        <div className="form-group"><label className="form-label">Email Address</label><input type="email" className="form-input" placeholder="Enter email address"/></div>
+                        <div className="form-group"><label className="form-label">Phone Number *</label><PhoneInput className="form-input" placeholder="Enter phone number"/></div>
+                        <div className="form-group"><label className="form-label">Date of Birth</label><input type="date" className="form-input"/></div>
+                        
+                        <div className="form-group"><label className="form-label">Department *</label><select className="form-select"><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option></select></div>
+                        <div className="form-group"><label className="form-label">Role / Designation *</label><input type="text" className="form-input" placeholder="e.g. Senior Teacher"/></div>
+                        <div className="form-group"><label className="form-label">Employment Type *</label><select className="form-select"><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
+                        <div className="form-group"><label className="form-label">Date of Joining</label><input type="date" className="form-input"/></div>
+                        
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                            <label className="form-label">Address</label>
+                            <textarea className="form-input" rows={2} placeholder="Full address"></textarea>
+                        </div>
+                    </div>
+                    <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                        <button className="btn btn-outline" onClick={closeAdd}>Cancel</button>
+                        <button className="btn btn-primary" onClick={async () => {
+                            if (window.customAlert) await window.customAlert('Staff member added successfully!', 'Success', 'success');
+                            else await customAlert('Staff member added successfully!', 'Success', 'success');
+                            closeAdd();
+                        }}>Save Staff Member</button>
+                    </div>
                 </div>
-            </div>
-            <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Employee ID</th><th>Name</th><th>Role</th><th>Department</th><th>Type</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody>{staff.map(s => (
-                        <tr key={s.id}><td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.id}</td><td className="fw-600">{s.name}</td><td>{s.role}</td><td>{s.dept}</td>
-                            <td><span className={`badge ${s.type === 'Full-time' ? 'badge-success' : s.type === 'Contract' ? 'badge-warning' : 'badge-draft'}`}>{s.type}</span></td>
-                            <td>{s.joined}</td><td><span className="badge badge-success">Active</span></td>
-                            <td><button className="btn-icon" title="View Profile"><Eye size={16}/></button></td></tr>
-                    ))}</tbody></table>
-            </div>
+            ) : (
+                <>
+                    {showSearch && (
+                        <div className="hr-form-panel animate-fade-in" style={{ padding: 16 }}>
+                            <div className="ado-form form-row-4">
+                                <div className="form-group"><label className="form-label">Search</label><input type="text" className="form-input" placeholder="Name or Employee ID" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()}/></div>
+                                <div className="form-group"><label className="form-label">Department</label><select className="form-select" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}><option>All Departments</option><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select></div>
+                                <div className="form-group"><label className="form-label">Employment Type</label><select className="form-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}><option>All Types</option><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
+                                <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ width: '100%', height: 40 }} onClick={handleSearch}><Search size={16}/> Search</button></div>
+                            </div>
+                        </div>
+                    )}
+                    {hasSearched && (
+                        <div className="table-responsive">
+                            <div style={{ padding: '8px 0', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 4 }}><Filter size={14} style={{ verticalAlign: 'middle', marginRight: 4 }}/> {filteredStaff.length} staff member(s) found</div>
+                            <table className="data-table"><thead><tr><th>Employee ID</th><th>Name</th><th>Role</th><th>Department</th><th>Type</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody>{filteredStaff.length > 0 ? filteredStaff.map(s => (
+                                    <tr key={s.id}><td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.id}</td><td className="fw-600">{s.name}</td><td>{s.role}</td><td>{s.dept}</td>
+                                        <td><span className={`badge ${s.type === 'Full-time' ? 'badge-success' : s.type === 'Contract' ? 'badge-warning' : 'badge-draft'}`}>{s.type}</span></td>
+                                        <td>{s.joined}</td><td><span className="badge badge-success">Active</span></td>
+                                        <td><button className="btn-icon" title="View Profile"><Eye size={16}/></button></td></tr>
+                                )) : (
+                                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No staff members match your search criteria</td></tr>
+                                )}</tbody></table>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
@@ -95,40 +175,51 @@ function AttendanceTab() {
         { name: 'Anita Verma', dept: 'Student Welfare', status: 'Absent' },
         { name: 'Mohan Das', dept: 'Science', status: 'On Leave' },
     ];
+    const [showFilter, setShowFilter] = useState(false);
+    const [loaded, setLoaded] = useState(false);
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><CalendarCheck size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Mark Daily Attendance</h3>
-                <button className="btn btn-success"><CheckCircle2 size={16}/> Mark All Present</button>
-            </div>
-            <div className="hr-form-panel" style={{ padding: 16, marginBottom: 20 }}>
-                <div className="ado-form form-row-3">
-                    <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" defaultValue="2026-03-26"/></div>
-                    <div className="form-group"><label className="form-label">Department</label><select className="form-select"><option>All Departments</option></select></div>
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ height: 40 }}><Filter size={16}/> Load Staff</button></div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                    <button className="btn btn-outline" onClick={() => { setShowFilter(!showFilter); if (showFilter) setLoaded(false); }}><Search size={16}/> {showFilter ? 'Hide Filter' : 'Filter'}</button>
+                    <button className="btn btn-success"><CheckCircle2 size={16}/> Mark All Present</button>
                 </div>
             </div>
-            <div className="hr-attendance-grid">
-                <div className="att-header">Staff Name</div>
-                <div className="att-header">Department</div>
-                <div className="att-header">Status</div>
-                <div className="att-header">Remarks</div>
-                {staffList.map((s, i) => (
-                    <React.Fragment key={i}>
-                        <div className="att-cell fw-600">{s.name}</div>
-                        <div className="att-cell">{s.dept}</div>
-                        <div className="att-cell">
-                            <select className="form-select" defaultValue={s.status} style={{ fontSize: '0.85rem', padding: '4px 8px' }}>
-                                <option>Present</option><option>Absent</option><option>Late</option><option>Half Day</option><option>On Leave</option>
-                            </select>
-                        </div>
-                        <div className="att-cell"><input type="text" className="form-input" placeholder="Optional remark" style={{ fontSize: '0.85rem', padding: '4px 8px' }}/></div>
-                    </React.Fragment>
-                ))}
-            </div>
-            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="btn btn-primary"><CalendarCheck size={16}/> Save Attendance</button>
-            </div>
+            {showFilter && (
+                <div className="hr-form-panel animate-fade-in" style={{ padding: 16, marginBottom: 20 }}>
+                    <div className="ado-form form-row-3">
+                        <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" defaultValue="2026-03-26"/></div>
+                        <div className="form-group"><label className="form-label">Department</label><select className="form-select"><option>All Departments</option></select></div>
+                        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ height: 40 }} onClick={() => setLoaded(true)}><Filter size={16}/> Load Staff</button></div>
+                    </div>
+                </div>
+            )}
+            {loaded && (
+                <>
+                    <div className="hr-attendance-grid">
+                        <div className="att-header">Staff Name</div>
+                        <div className="att-header">Department</div>
+                        <div className="att-header">Status</div>
+                        <div className="att-header">Remarks</div>
+                        {staffList.map((s, i) => (
+                            <React.Fragment key={i}>
+                                <div className="att-cell fw-600">{s.name}</div>
+                                <div className="att-cell">{s.dept}</div>
+                                <div className="att-cell">
+                                    <select className="form-select" defaultValue={s.status} style={{ fontSize: '0.85rem', padding: '4px 8px' }}>
+                                        <option>Present</option><option>Absent</option><option>Late</option><option>Half Day</option><option>On Leave</option>
+                                    </select>
+                                </div>
+                                <div className="att-cell"><input type="text" className="form-input" placeholder="Optional remark" style={{ fontSize: '0.85rem', padding: '4px 8px' }}/></div>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                        <button className="btn btn-primary"><CalendarCheck size={16}/> Save Attendance</button>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
@@ -179,21 +270,30 @@ function LeaveTab() {
 
 // ======================== PAYROLL ========================
 function PayrollTab() {
+    const [showFilter, setShowFilter] = useState(false);
+    const [loaded, setLoaded] = useState(false);
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><IndianRupee size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Payroll Management</h3>
-                <div style={{ display: 'flex', gap: 10 }}><button className="btn btn-outline"><Settings size={16}/> Salary Setup</button><button className="btn btn-primary"><IndianRupee size={16}/> Run Payroll</button></div>
-            </div>
-
-            <div className="hr-form-panel" style={{ padding: 16 }}>
-                <div className="ado-form form-row-3">
-                    <div className="form-group"><label className="form-label">Month</label><select className="form-select"><option>March 2026</option><option>February 2026</option></select></div>
-                    <div className="form-group"><label className="form-label">Department</label><select className="form-select"><option>All Departments</option></select></div>
-                    <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ height: 40 }}><Search size={16}/> Load Payroll</button></div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                    <button className="btn btn-outline" onClick={() => { setShowFilter(!showFilter); if (showFilter) setLoaded(false); }}><Search size={16}/> {showFilter ? 'Hide Filter' : 'Filter'}</button>
+                    <button className="btn btn-outline"><Settings size={16}/> Salary Setup</button>
+                    <button className="btn btn-primary"><IndianRupee size={16}/> Run Payroll</button>
                 </div>
             </div>
 
+            {showFilter && (
+                <div className="hr-form-panel animate-fade-in" style={{ padding: 16 }}>
+                    <div className="ado-form form-row-3">
+                        <div className="form-group"><label className="form-label">Month</label><select className="form-select"><option>March 2026</option><option>February 2026</option></select></div>
+                        <div className="form-group"><label className="form-label">Department</label><select className="form-select"><option>All Departments</option></select></div>
+                        <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ height: 40 }} onClick={() => setLoaded(true)}><Search size={16}/> Load Payroll</button></div>
+                    </div>
+                </div>
+            )}
+
+            {loaded && <>
             <div className="table-responsive">
                 <table className="data-table"><thead><tr><th>Employee</th><th>Basic</th><th>HRA</th><th>DA</th><th>Gross</th><th>PF</th><th>ESI</th><th>PT</th><th>LOP</th><th>Total Ded.</th><th>Net Pay</th><th>Status</th></tr></thead>
                     <tbody>
@@ -236,6 +336,7 @@ function PayrollTab() {
                     </div>
                 </div>
             </div>
+            </>}
         </div>
     );
 }

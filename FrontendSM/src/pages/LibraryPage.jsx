@@ -5,11 +5,18 @@ import './LibraryPage.css';
 
 export default function LibraryPage() {
     const [activeTab, setActiveTab] = useState('books'); // 'books', 'distributed'
+    const [bookSearch, setBookSearch] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('');
     const [books, setBooks] = useState([
         { id: 1, title: 'Concept of Physics Vol 1', author: 'H.C. Verma', category: 'Science', shelf: 'S-12', accNo: 'B-1024', status: 'Available' },
         { id: 2, title: 'Higher Engineering Mathematics', author: 'B.S. Grewal', category: 'Math', shelf: 'M-05', accNo: 'B-1085', status: 'Issued' },
         { id: 3, title: 'Wings of Fire', author: 'A.P.J. Abdul Kalam', category: 'Biography', shelf: 'G-01', accNo: 'B-1120', status: 'Available' }
     ]);
+    const filteredBooks = books.filter(b => {
+        const matchSearch = !bookSearch || `${b.title} ${b.author} ${b.accNo}`.toLowerCase().includes(bookSearch.toLowerCase());
+        const matchCat = !categoryFilter || b.category === categoryFilter;
+        return matchSearch && matchCat;
+    });
 
     const [issuedBooks, setIssuedBooks] = useState([
         { id: 1, bookTitle: 'Higher Engineering Mathematics', issuedTo: 'Rahul Kumar', type: 'Student', class: 'XII-A', issueDate: '2026-03-10', dueDate: '2026-03-25' },
@@ -47,14 +54,15 @@ export default function LibraryPage() {
                     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                         <h3 style={{ fontSize: '1rem', color: 'var(--primary)' }}>Library Inventory</h3>
                         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                            <select className="form-select" style={{ width: 130, padding: '6px' }}>
-                                <option value="">Category</option>
+                            <select className="form-select" style={{ width: 130, padding: '6px' }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                                <option value="">All Categories</option>
                                 <option value="Science">Science</option>
                                 <option value="Math">Math</option>
+                                <option value="Biography">Biography</option>
                             </select>
                             <div style={{ position: 'relative' }}>
                                 <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-grey)' }} />
-                                <input type="text" placeholder="Search title, author..." className="form-input" style={{ paddingLeft: 32, padding: '6px 12px 6px 32px', width: 220 }} />
+                                <input type="text" placeholder="Search title, author..." className="form-input" style={{ paddingLeft: 32, padding: '6px 12px 6px 32px', width: 220 }} value={bookSearch} onChange={e => setBookSearch(e.target.value)} />
                             </div>
                         </div>
                     </div>
@@ -71,7 +79,7 @@ export default function LibraryPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {books.map(b => (
+                                {filteredBooks.length > 0 ? filteredBooks.map(b => (
                                     <tr key={b.id}>
                                         <td>{b.accNo}</td>
                                         <td className="td-bold">{b.title}</td>
@@ -82,7 +90,9 @@ export default function LibraryPage() {
                                             <span className={`badge ${b.status === 'Available' ? 'badge-success' : 'badge-warning'}`}>{b.status}</span>
                                         </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No books match your search</td></tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

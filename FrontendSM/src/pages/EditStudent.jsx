@@ -391,18 +391,45 @@ export default function EditStudent() {
                         <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                             <div className="form-group">
                                 <label className="form-label">Photo <span className="required">*</span></label>
+                                {formData.existingPhotoUrl && (
+                                    <div style={{ marginBottom: 12 }}>
+                                        <img src={formData.existingPhotoUrl} alt="Photo" style={{ maxWidth: '100%', maxHeight: 120, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--border)' }} />
+                                    </div>
+                                )}
                                 <input type="file" className={`form-input ${errors.photo ? 'error' : ''}`} name="photo" onChange={handleFileChange} accept="image/*" />
-                                {formData.existingPhotoUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
+                                {formData.existingPhotoUrl && <span style={{fontSize:'0.8rem', color:'var(--text-light)', display:'block', marginTop:4}}>Upload new file to replace existing</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Birth Certificate <span className="required">*</span></label>
+                                {formData.existingBirthCertificateUrl && (
+                                    <div style={{ marginBottom: 12 }}>
+                                        {formData.existingBirthCertificateUrl.startsWith('data:image') || formData.existingBirthCertificateUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
+                                            <img src={formData.existingBirthCertificateUrl} alt="Birth Certificate" style={{ maxWidth: '100%', maxHeight: 120, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--border)' }} />
+                                        ) : (
+                                            <div style={{ padding: '20px', background: 'var(--bg)', borderRadius: 6, textAlign: 'center', border: '1px solid var(--border)' }}>
+                                                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Document Uploaded</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <input type="file" className={`form-input ${errors.birthCertificate ? 'error' : ''}`} name="birthCertificate" onChange={handleFileChange} />
-                                {formData.existingBirthCertificateUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
+                                {formData.existingBirthCertificateUrl && <span style={{fontSize:'0.8rem', color:'var(--text-light)', display:'block', marginTop:4}}>Upload new file to replace existing</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Previous TC <span style={{fontSize: '0.8rem', color: 'var(--text-light)', marginLeft: '4px'}}>(Optional)</span></label>
+                                {formData.existingPreviousTcUrl && (
+                                    <div style={{ marginBottom: 12 }}>
+                                        {formData.existingPreviousTcUrl.startsWith('data:image') || formData.existingPreviousTcUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
+                                            <img src={formData.existingPreviousTcUrl} alt="Previous TC" style={{ maxWidth: '100%', maxHeight: 120, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--border)' }} />
+                                        ) : (
+                                            <div style={{ padding: '20px', background: 'var(--bg)', borderRadius: 6, textAlign: 'center', border: '1px solid var(--border)' }}>
+                                                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Document Uploaded</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 <input type="file" className="form-input" name="previousTC" onChange={handleFileChange} />
-                                {formData.existingPreviousTcUrl && <span style={{fontSize:'0.8rem', color:'var(--success)', display:'block', marginTop:4}}>Document uploaded (Choose to replace)</span>}
+                                {formData.existingPreviousTcUrl && <span style={{fontSize:'0.8rem', color:'var(--text-light)', display:'block', marginTop:4}}>Upload new file to replace existing</span>}
                             </div>
                         </div>
                     </div>

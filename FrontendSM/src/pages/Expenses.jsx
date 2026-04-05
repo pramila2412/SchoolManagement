@@ -1,24 +1,62 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Search, Paperclip, IndianRupee, FileText } from 'lucide-react';
+import { PlusCircle, Search, Paperclip, IndianRupee, FileText, Trash2, Eye } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Expenses.css';
 
 export default function Expenses() {
     const [activeTab, setActiveTab] = useState('add');
-    const [formData, setFormData] = useState({
-        expenseHead: '',
-        name: '',
-        invoiceNo: '',
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        description: ''
-    });
+    const [expenses, setExpenses] = useLocalStorage('expenses_list', [
+        { id: 1, expenseHead: 'Electricity', name: 'Electricity Board', invoiceNo: 'INV-1029', date: '2026-03-18', amount: '12500.00', description: 'March 2026 Bill' }
+    ]);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        console.log("Saving Expense:", formData);
-        // Add save logic here
+        const newExpense = {
+            ...formData,
+            id: Date.now()
+        };
+        setExpenses(prev => [newExpense, ...prev]);
+        setFormData({
+            expenseHead: '',
+            name: '',
+            invoiceNo: '',
+            date: new Date().toISOString().split('T')[0],
+            amount: '',
+            description: ''
+        });
+        await customAlert('Expense saved successfully!');
+        setActiveTab('search');
     };
+
+    const handleDelete = async (id) => {
+        if (await customConfirm("Are you sure you want to delete this expense record?")) {
+            setExpenses(prev => prev.filter(exp => exp.id !== id));
+            await customAlert('Expense deleted successfully!');
+        }
+    };
+
+    const handleView = (exp) => {
+        customAlert(`
+            Expense Details
+            ----------------
+            Name: ${exp.name}
+            Head: ${exp.expenseHead}
+            Invoice: ${exp.invoiceNo}
+            Date: ${exp.date}
+            Amount: ₹${Number(exp.amount).toLocaleString()}
+            Description: ${exp.description || 'N/A'}
+        `);
+    };
+
+    const filteredExpenses = expenses.filter(exp => 
+        !searchTerm || 
+        exp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exp.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exp.expenseHead.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="expenses-page animate-fade-in">
@@ -109,8 +147,8 @@ export default function Expenses() {
                     {activeTab === 'search' && (
                         <div className="animate-fade-in">
                             <div className="filter-row" style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-                                <input type="text" className="form-input" placeholder="Search by Keyword" style={{ maxWidth: '300px' }} />
-                                <button className="btn btn-primary"><Search size={18} /> Search</button>
+                                <input type="text" className="form-input" placeholder="Search by Keyword" style={{ maxWidth: '300px' }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                                <button className="btn btn-primary" onClick={() => {}}><Search size={18} /> Search</button>
                             </div>
                             <div className="table-responsive">
                                 <table className="data-table">
@@ -125,16 +163,26 @@ export default function Expenses() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td className="fw-600">Electricity Board</td>
-                                            <td>INV-1029</td>
-                                            <td>Electricity Bill</td>
-                                            <td>18 Mar 2026</td>
-                                            <td className="fw-600">12,500.00</td>
+                                    {filteredExpenses.map(exp => (
+                                        <tr key={exp.id}>
+                                            <td className="fw-600">{exp.name}</td>
+                                            <td>{exp.invoiceNo}</td>
+                                            <td>{exp.expenseHead}</td>
+                                            <td>{exp.date}</td>
+                                            <td className="fw-600">{Number(exp.amount).toLocaleString()}</td>
                                             <td>
-                                                <button className="btn-icon text-info" title="View"><FileText size={18} /></button>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button className="btn-icon text-info" title="View" onClick={() => handleView(exp)}><Eye size={18} /></button>
+                                                    <button className="btn-icon text-danger" title="Delete" onClick={() => handleDelete(exp.id)}><Trash2 size={18} /></button>
+                                                </div>
                                             </td>
                                         </tr>
+                                    ))}
+                                    {filteredExpenses.length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>No expenses found.</td>
+                                        </tr>
+                                    )}
                                     </tbody>
                                 </table>
                             </div>

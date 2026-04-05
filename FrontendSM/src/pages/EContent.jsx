@@ -1,19 +1,51 @@
 import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Search, FileText, Upload, Video, FileDigit } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { ArrowLeft, Plus, Search, FileText, Upload, Video, FileDigit, Trash2 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './EContent.css';
 
 export default function EContent() {
     const [activeTab, setActiveTab] = useState('add'); // 'add', 'custom', 'view'
-    const [eContentList, setEContentList] = useState([
+    const [eContentList, setEContentList] = useLocalStorage('econtent_list', [
         { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Algebra Basics', type: 'Video', date: '2026-03-16' },
         { id: 2, class: 'VIII', section: 'B', subject: 'English', topic: 'Tenses', type: 'PDF', date: '2026-03-15' },
     ]);
+    const [addForm, setAddForm] = useState({ class: '', section: '', subject: '', topic: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const newItem = {
+            id: Date.now(),
+            class: addForm.class,
+            section: addForm.section,
+            subject: addForm.subject,
+            topic: addForm.topic,
+            type: 'Document',
+            date: new Date().toISOString().split('T')[0]
+        };
+        setEContentList(prev => [newItem, ...prev]);
+        setAddForm({ class: '', section: '', subject: '', topic: '' });
         await customAlert('E-Content saved successfully!');
+    };
+
+    const handleDelete = async (id) => {
+        if (await customConfirm("Are you sure you want to delete this E-Content?")) {
+            setEContentList(prev => prev.filter(item => item.id !== id));
+            await customAlert('E-Content deleted successfully!');
+        }
+    };
+
+    const handleView = (item) => {
+        customAlert(`
+            E-Content Details
+            ------------------
+            Topic: ${item.topic}
+            Subject: ${item.subject}
+            Class: ${item.class}-${item.section}
+            Type: ${item.type}
+            Date: ${item.date}
+        `);
     };
 
     return (
@@ -62,7 +94,7 @@ export default function EContent() {
                         <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
                             <div className="form-group">
                                 <label className="form-label">Class <span className="required">*</span></label>
-                                <select className="form-select" required>
+                                <select className="form-select" required value={addForm.class} onChange={e => setAddForm({ ...addForm, class: e.target.value })}>
                                     <option value="">Select Class</option>
                                     <option value="VI">Class VI</option>
                                     <option value="VII">Class VII</option>
@@ -70,7 +102,7 @@ export default function EContent() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section <span className="required">*</span></label>
-                                <select className="form-select" required>
+                                <select className="form-select" required value={addForm.section} onChange={e => setAddForm({ ...addForm, section: e.target.value })}>
                                     <option value="">Select Section</option>
                                     <option value="A">A</option>
                                     <option value="B">B</option>
@@ -78,7 +110,7 @@ export default function EContent() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Subject <span className="required">*</span></label>
-                                <select className="form-select" required>
+                                <select className="form-select" required value={addForm.subject} onChange={e => setAddForm({ ...addForm, subject: e.target.value })}>
                                     <option value="">Select Subject</option>
                                     <option value="Math">Math</option>
                                     <option value="Science">Science</option>
@@ -86,7 +118,7 @@ export default function EContent() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Topic <span className="required">*</span></label>
-                                <input type="text" className="form-input" required placeholder="e.g. Algebra" />
+                                <input type="text" className="form-input" required placeholder="e.g. Algebra" value={addForm.topic} onChange={e => setAddForm({ ...addForm, topic: e.target.value })} />
                             </div>
                         </div>
 
@@ -177,7 +209,10 @@ export default function EContent() {
                                         <td><span className="badge badge-info">{item.type}</span></td>
                                         <td>{item.date}</td>
                                         <td>
-                                            <button className="btn-icon" style={{ color: 'var(--info)' }}><FileText size={16} /></button>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className="btn-icon" style={{ color: 'var(--info)' }} onClick={() => handleView(item)}><FileText size={16} /></button>
+                                                <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(item.id)}><Trash2 size={16} /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

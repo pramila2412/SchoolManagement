@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, UserCheck, Plus } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, UserCheck, Plus, Trash2 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './TimeTable.css';
 
 export default function TimeTable() {
     const [activeTab, setActiveTab] = useState('view'); // 'view', 'generate', 'substitution'
-    const [timetable, setTimetable] = useState({
+    const [timetable, setTimetable] = useLocalStorage('timetable_schedule', {
         class: 'VII-A',
         schedule: [
             { period: 1, time: '08:30 - 09:15', monday: 'Math', tuesday: 'English', wednesday: 'Science', thursday: 'SST', friday: 'Hindi' },
@@ -15,10 +17,33 @@ export default function TimeTable() {
         ]
     });
 
-    const [substitutions, setSubstitutions] = useState([
+    const [substitutions, setSubstitutions] = useLocalStorage('timetable_substitutions', [
         { id: 1, absentTeacher: 'Mr. Sharma', class: 'VII-A', period: 1, substitute: 'Ms. Verma', status: 'Approved' },
         { id: 2, absentTeacher: 'Mrs. Gupta', class: 'VIII-B', period: 3, substitute: 'Mr. Roy', status: 'Pending' }
     ]);
+
+    const handleDeleteSubstitution = async (id) => {
+        if (await customConfirm("Delete this substitution record?")) {
+            setSubstitutions(prev => prev.filter(s => s.id !== id));
+            await customAlert('Substitution deleted.');
+        }
+    };
+
+    const handleViewSubstitution = (s) => {
+        customAlert(`
+            Substitution Details
+            ---------------------
+            Absent Teacher: ${s.absentTeacher}
+            Class: ${s.class}
+            Period: ${s.period}
+            Substitute: ${s.substitute}
+            Status: ${s.status}
+        `);
+    };
+
+    const handleGenerate = () => {
+        customAlert("Timetable generation algorithm initiated! This will take a few seconds to optimize teacher-period constraints...");
+    };
 
     return (
         <div className="timetable-page animate-fade-in">
@@ -110,7 +135,7 @@ export default function TimeTable() {
                                 </select>
                             </div>
                         </div>
-                        <button type="button" className="btn btn-primary" style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 8 }}><Plus size={16} /> Generate Now</button>
+                        <button type="button" className="btn btn-primary" style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 8 }} onClick={handleGenerate}><Plus size={16} /> Generate Now</button>
                     </form>
                 </div>
             )}
@@ -142,7 +167,10 @@ export default function TimeTable() {
                                         <td><span style={{ color: 'var(--primary)', fontWeight: 500 }}>{s.substitute}</span></td>
                                         <td><span className={`badge ${s.status === 'Approved' ? 'badge-success' : 'badge-warning'}`}>{s.status}</span></td>
                                         <td>
-                                            <button className="btn-icon" style={{ color: 'var(--info)' }}><Clock size={16} /></button>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className="btn-icon" style={{ color: 'var(--info)' }} onClick={() => handleViewSubstitution(s)} title="View Detail"><Clock size={16} /></button>
+                                                <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteSubstitution(s.id)} title="Delete"><Trash2 size={16} /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

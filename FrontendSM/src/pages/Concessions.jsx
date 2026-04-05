@@ -4,18 +4,21 @@ import {
     ArrowLeft, Plus, Edit, Trash2, Wallet, Search,
 } from 'lucide-react';
 import { api } from '../utils/api';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Concessions.css';
 
 // Mock student concessions as they are not mapped to DB yet
-const studentConcessions = [
-    { id: 1, studentName: 'Ananya Singh', class: 'VII-C', concessionType: 'EWS Concession', value: '100%' },
-    { id: 2, studentName: 'Priya Joshi', class: 'Nursery-A', concessionType: 'Staff Ward', value: '50%' }
+const DEFAULT_STUDENT_CONCESSIONS = [
+    { id: 1, studentName: 'Ananya Singh', class: 'VII-C', concessionType: 'EWS Concession', value: '100%', reason: 'Financial need' },
+    { id: 2, studentName: 'Priya Joshi', class: 'Nursery-A', concessionType: 'Staff Ward', value: '50%', reason: 'Staff benefit' }
 ];
 
 export default function ConcessionPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [form, setForm] = useState({ title: '', type: 'Percentage', value: '', status: 'Active' });
-    const [concessions, setConcessions] = useState([]);
+    const [concessions, setConcessions] = useLocalStorage('concessions_types', []);
+    const [studentConcessions, setStudentConcessions] = useLocalStorage('student_concessions', DEFAULT_STUDENT_CONCESSIONS);
     const [loading, setLoading] = useState(true);
 
     const fetchConcessions = async () => {
@@ -51,14 +54,29 @@ export default function ConcessionPage() {
     };
 
     const handleDelete = async (id) => {
-        if (await customConfirm("Are you sure you want to delete this concession?")) {
-            try {
-                await api.deleteConcession(id);
-                fetchConcessions();
-            } catch (err) {
-                console.error("Failed to delete concession", err);
-            }
+        if (await customConfirm("Are you sure you want to delete this concession type?")) {
+            setConcessions(prev => prev.filter(c => c._id !== id));
+            await customAlert("Concession type deleted successfully!");
         }
+    };
+
+    const handleDeleteStudentConcession = async (id) => {
+        if (await customConfirm("Remove this student's concession?")) {
+            setStudentConcessions(prev => prev.filter(sc => sc.id !== id));
+            await customAlert("Student concession removed.");
+        }
+    };
+
+    const handleViewStudentConcession = (sc) => {
+        customAlert(`
+            Student Concession Details
+            ---------------------------
+            Student: ${sc.studentName}
+            Class: ${sc.class}
+            Type: ${sc.concessionType}
+            Value: ${sc.value}
+            Reason: ${sc.reason || 'N/A'}
+        `);
     };
 
     return (
@@ -194,8 +212,8 @@ export default function ConcessionPage() {
                                             <td className="td-bold">{sc.value}</td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
-                                                    <button className="btn-icon" style={{ color: 'var(--info)' }}><Edit size={16} /></button>
-                                                    <button className="btn-icon" style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>
+                                                    <button className="btn-icon" style={{ color: 'var(--info)' }} onClick={() => handleViewStudentConcession(sc)}><Edit size={16} /></button>
+                                                    <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteStudentConcession(sc.id)}><Trash2 size={16} /></button>
                                                 </div>
                                             </td>
                                         </tr>

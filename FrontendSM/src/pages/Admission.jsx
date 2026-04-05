@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     Users, UserPlus, FileText, ClipboardCheck, Save, PlusCircle,
@@ -12,13 +13,13 @@ import { getInitials, getAvatarColor, formatDate } from '../utils/helpers';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
-import { customAlert } from '../utils/dialogs';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
 function EnquiryTab() {
-    const [enquiries, setEnquiries] = useState([
+    const [enquiries, setEnquiries] = useLocalStorage('admission_enquiries', [
         { id: 1, studentName: 'Rahul Kumar', parentName: 'Mr. Suresh Kumar', phone: '9876543210', email: 'suresh@email.com', class: 'Grade 1', source: 'Walk-in', status: 'New', date: '2026-03-20' },
         { id: 2, studentName: 'Priya Singh', parentName: 'Mrs. Anita Singh', phone: '9876543211', email: 'anita@email.com', class: 'Grade 3', source: 'Online', status: 'Contacted', date: '2026-03-18' },
         { id: 3, studentName: 'Arjun Patel', parentName: 'Mr. Rajesh Patel', phone: '9876543212', email: 'rajesh@email.com', class: 'Grade 2', source: 'Referral', status: 'Follow-up', date: '2026-03-15' },
@@ -34,6 +35,9 @@ function EnquiryTab() {
         setShowForm(false);
     };
     const statusBadge = (s) => s === 'New' ? 'badge-info' : s === 'Contacted' ? 'badge-warning' : s === 'Follow-up' ? 'badge-draft' : s === 'Converted' ? 'badge-success' : 'badge-danger';
+    const handleFollowUp = (id) => setEnquiries(prev => prev.map(e => e.id === id ? { ...e, status: 'Follow-up' } : e));
+    const handleConvert = (id) => setEnquiries(prev => prev.map(e => e.id === id ? { ...e, status: 'Converted' } : e));
+    const handleDeleteEnquiry = async (id) => { if (await customConfirm('Delete this enquiry?')) setEnquiries(prev => prev.filter(e => e.id !== id)); };
 
     return (
         <div className="animate-fade-in">
@@ -83,8 +87,9 @@ function EnquiryTab() {
                         <tr key={e.id}><td className="fw-600">{e.studentName}</td><td>{e.parentName}</td><td>{e.phone}</td><td>{e.class}</td><td>{e.source}</td><td>{e.date}</td>
                             <td><span className={`badge ${statusBadge(e.status)}`}>{e.status}</span></td>
                             <td style={{ display: 'flex', gap: 2 }}>
-                                <button className="btn-icon" title="Follow-up"><MessageSquare size={16}/></button>
-                                {e.status !== 'Converted' && <button className="btn-icon" title="Convert to Application" style={{ color: 'var(--accent)' }}><ArrowRight size={16}/></button>}
+                                <button className="btn-icon" title="Follow-up" onClick={() => handleFollowUp(e.id)}><MessageSquare size={16}/></button>
+                                {e.status !== 'Converted' && <button className="btn-icon" title="Convert to Application" style={{ color: 'var(--accent)' }} onClick={() => handleConvert(e.id)}><ArrowRight size={16}/></button>}
+                                <button className="btn-icon" title="Delete" onClick={() => handleDeleteEnquiry(e.id)} style={{ color: 'var(--danger)' }}><Trash2 size={16}/></button>
                             </td></tr>
                     ))}</tbody></table>
             </div>
@@ -211,7 +216,7 @@ function ApplicationTab() {
 
 // ======================== DOCUMENTS ========================
 function DocumentsTab() {
-    const docs = [
+    const [docs, setDocs] = useLocalStorage('admission_documents', [
         { name: 'Birth Certificate', format: 'PDF / JPG / PNG', mandatory: true, status: 'Verified' },
         { name: 'Student Photograph', format: 'JPG / PNG', mandatory: true, status: 'Uploaded' },
         { name: 'ID Proof (Parent)', format: 'PDF / JPG', mandatory: true, status: 'Pending' },
@@ -219,8 +224,10 @@ function DocumentsTab() {
         { name: 'Address Proof', format: 'PDF / JPG', mandatory: false, status: 'Not Uploaded' },
         { name: 'Previous Marksheet', format: 'PDF / JPG', mandatory: false, status: 'Uploaded' },
         { name: 'Caste Certificate', format: 'PDF / JPG', mandatory: false, status: 'Not Uploaded' },
-    ];
+    ]);
     const statusBadge = (s) => s === 'Verified' ? 'badge-success' : s === 'Uploaded' ? 'badge-info' : s === 'Pending' ? 'badge-warning' : 'badge-draft';
+    const handleUpload = (idx) => { const input = document.createElement('input'); input.type='file'; input.accept='.pdf,.jpg,.jpeg,.png'; input.onchange = async () => { if(input.files[0]) { setDocs(prev => prev.map((d,i) => i===idx ? {...d, status:'Uploaded'} : d)); await customAlert(`"${docs[idx].name}" uploaded successfully!`); } }; input.click(); };
+    const handleVerify = async (idx) => { setDocs(prev => prev.map((d,i) => i===idx ? {...d, status:'Verified'} : d)); await customAlert(`"${docs[idx].name}" has been verified.`); };
 
     return (
         <div className="animate-fade-in">
@@ -233,8 +240,8 @@ function DocumentsTab() {
                         <tr key={i}><td className="fw-600">{d.name}</td><td style={{ fontSize: '0.82rem', color: 'var(--text-light)' }}>{d.format}</td>
                             <td>{d.mandatory ? <span className="badge badge-danger">Mandatory</span> : <span className="badge badge-draft">Optional</span>}</td>
                             <td><span className={`badge ${statusBadge(d.status)}`}>{d.status}</span></td>
-                            <td><button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }}><Upload size={14}/> Upload</button>
-                                {d.status === 'Uploaded' && <button className="btn-icon" title="Verify" style={{ color: 'var(--success)' }}><CheckCircle2 size={16}/></button>}
+                            <td><button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => handleUpload(i)}><Upload size={14}/> Upload</button>
+                                {d.status === 'Uploaded' && <button className="btn-icon" title="Verify" style={{ color: 'var(--success)' }} onClick={() => handleVerify(i)}><CheckCircle2 size={16}/></button>}
                             </td></tr>
                     ))}</tbody></table>
             </div>
@@ -244,13 +251,16 @@ function DocumentsTab() {
 
 // ======================== REVIEW ========================
 function ReviewTab() {
-    const [applications] = useState([
+    const [applications, setApplications] = useLocalStorage('admission_applications', [
         { id: 1, name: 'Rahul Kumar', class: 'Grade 1', date: '2026-03-20', status: 'Submitted', docs: '3/3' },
         { id: 2, name: 'Priya Singh', class: 'Grade 3', date: '2026-03-18', status: 'Under Review', docs: '5/5' },
         { id: 3, name: 'Arjun Patel', class: 'Grade 2', date: '2026-03-15', status: 'Approved', docs: '4/5' },
         { id: 4, name: 'Sneha Reddy', class: 'Grade 1', date: '2026-03-12', status: 'Rejected', docs: '2/3' },
     ]);
     const statusBadge = (s) => s === 'Submitted' ? 'badge-info' : s === 'Under Review' ? 'badge-warning' : s === 'Approved' ? 'badge-success' : 'badge-danger';
+    const handleView = async (a) => await customAlert(`Application Details\n\nStudent: ${a.name}\nClass: ${a.class}\nApplied: ${a.date}\nDocuments: ${a.docs}\nStatus: ${a.status}`);
+    const handleApprove = async (id) => { if(await customConfirm('Approve this application?')) setApplications(prev => prev.map(a => a.id===id ? {...a, status:'Approved'} : a)); };
+    const handleReject = async (id) => { if(await customConfirm('Reject this application?')) setApplications(prev => prev.map(a => a.id===id ? {...a, status:'Rejected'} : a)); };
 
     return (
         <div className="animate-fade-in">
@@ -267,10 +277,10 @@ function ReviewTab() {
                         <tr key={a.id}><td className="fw-600">{a.name}</td><td>{a.class}</td><td>{a.date}</td><td>{a.docs}</td>
                             <td><span className={`badge ${statusBadge(a.status)}`}>{a.status}</span></td>
                             <td style={{ display: 'flex', gap: 2 }}>
-                                <button className="btn-icon" title="View"><Eye size={16}/></button>
+                                <button className="btn-icon" title="View" onClick={() => handleView(a)}><Eye size={16}/></button>
                                 {(a.status === 'Submitted' || a.status === 'Under Review') && <>
-                                    <button className="btn-icon" title="Approve" style={{ color: 'var(--success)' }}><CheckCircle2 size={16}/></button>
-                                    <button className="btn-icon" title="Reject" style={{ color: 'var(--danger)' }}><XCircle size={16}/></button>
+                                    <button className="btn-icon" title="Approve" style={{ color: 'var(--success)' }} onClick={() => handleApprove(a.id)}><CheckCircle2 size={16}/></button>
+                                    <button className="btn-icon" title="Reject" style={{ color: 'var(--danger)' }} onClick={() => handleReject(a.id)}><XCircle size={16}/></button>
                                 </>}
                             </td></tr>
                     ))}</tbody></table>
@@ -281,10 +291,12 @@ function ReviewTab() {
 
 // ======================== FEES ========================
 function FeesTab() {
-    const [feeRecords] = useState([
+    const [feeRecords, setFeeRecords] = useLocalStorage('admission_fee_records', [
         { id: 1, name: 'Arjun Patel', class: 'Grade 2-A', admissionFee: 5000, tuitionFee: 25000, transportFee: 8000, total: 38000, paid: 38000, status: 'Paid' },
         { id: 2, name: 'Rahul Kumar', class: 'Grade 1-A', admissionFee: 5000, tuitionFee: 22000, transportFee: 0, total: 27000, paid: 5000, status: 'Partial' },
     ]);
+    const handleRecordPayment = async (f) => { const bal = f.total - f.paid; if(bal <= 0) return await customAlert('No balance due.'); if(await customConfirm(`Record full payment of ₹${bal.toLocaleString()} for ${f.name}?`)) setFeeRecords(prev => prev.map(r => r.id === f.id ? {...r, paid: r.total, status: 'Paid'} : r)); };
+    const handleDownloadReceipt = (f) => { const txt = `MOUNT ZION SCHOOL\nFEE RECEIPT\n${'='.repeat(40)}\nStudent: ${f.name}\nClass: ${f.class}\nAdmission Fee: ₹${f.admissionFee}\nTuition Fee: ₹${f.tuitionFee}\nTransport Fee: ₹${f.transportFee}\nTotal: ₹${f.total}\nPaid: ₹${f.paid}\nBalance: ₹${f.total - f.paid}\nStatus: ${f.status}\nDate: ${new Date().toLocaleDateString('en-IN')}\n${'='.repeat(40)}`; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Receipt_${f.name.replace(/\s/g,'_')}.txt`; a.click(); };
 
     return (
         <div className="animate-fade-in">
@@ -297,7 +309,7 @@ function FeesTab() {
                             <td>₹{f.transportFee.toLocaleString()}</td><td className="fw-600">₹{f.total.toLocaleString()}</td>
                             <td>₹{f.paid.toLocaleString()}</td><td style={{ color: f.total - f.paid > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 600 }}>₹{(f.total - f.paid).toLocaleString()}</td>
                             <td><span className={`badge ${f.status === 'Paid' ? 'badge-success' : 'badge-warning'}`}>{f.status}</span></td>
-                            <td><button className="btn-icon" title="Record Payment"><CreditCard size={16}/></button><button className="btn-icon" title="Receipt"><Download size={16}/></button></td>
+                            <td><button className="btn-icon" title="Record Payment" onClick={() => handleRecordPayment(f)}><CreditCard size={16}/></button><button className="btn-icon" title="Download Receipt" onClick={() => handleDownloadReceipt(f)}><Download size={16}/></button></td>
                         </tr>
                     ))}</tbody></table>
             </div>
@@ -307,11 +319,11 @@ function FeesTab() {
 
 // ======================== CONFIRMATION ========================
 function ConfirmationTab() {
-    const [confirmed] = useState([
+    const [confirmed] = useLocalStorage('admission_confirmed', [
         { id: 1, admNo: 'ADM-2026-0001', name: 'Arjun Patel', class: 'Grade 2-A', rollNo: 1, date: '2026-03-16', feePaid: true },
         { id: 2, admNo: 'ADM-2026-0002', name: 'Meera Joshi', class: 'Grade 1-B', rollNo: 5, date: '2026-03-11', feePaid: true },
     ]);
-    const [pending] = useState([
+    const [pending] = useLocalStorage('admission_pending', [
         { id: 3, name: 'Rahul Kumar', class: 'Grade 1', status: 'Approved', feePaid: false },
     ]);
 
@@ -334,7 +346,7 @@ function ConfirmationTab() {
                 <table className="data-table"><thead><tr><th>Admission No</th><th>Student</th><th>Class</th><th>Roll No</th><th>Confirmed Date</th><th>Actions</th></tr></thead>
                     <tbody>{confirmed.map(c => (
                         <tr key={c.id}><td className="fw-600" style={{ color: 'var(--accent)' }}>{c.admNo}</td><td className="fw-600">{c.name}</td><td>{c.class}</td><td>{c.rollNo}</td><td>{c.date}</td>
-                            <td><button className="btn-icon" title="View"><Eye size={16}/></button><button className="btn-icon" title="ID Card"><IdCard size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Admission: ${c.admNo}\nStudent: ${c.name}\nClass: ${c.class}\nRoll No: ${c.rollNo}\nConfirmed: ${c.date}`)}><Eye size={16}/></button><button className="btn-icon" title="ID Card"><IdCard size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>

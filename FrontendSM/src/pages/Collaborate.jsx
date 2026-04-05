@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
@@ -161,9 +162,9 @@ function FilesTab() {
 
 // ===== MESSAGES =====
 function MessagesTab() {
-    const [conversations] = useState([{id:1,name:'John Teacher',preview:'Hi, regarding the meeting...'},{id:2,name:'Science Dept.',preview:'New curriculum updates'},{id:3,name:'Parent Group',preview:'Annual day schedule'}]);
+    const [conversations] = useLocalStorage('collab_conversations', [{id:1,name:'John Teacher',preview:'Hi, regarding the meeting...'},{id:2,name:'Science Dept.',preview:'New curriculum updates'},{id:3,name:'Parent Group',preview:'Annual day schedule'}]);
     const [activeCon, setActiveCon] = useState(1);
-    const [messages, setMessages] = useState([{text:'Hi, regarding the meeting tomorrow.',sent:false},{text:'Yes, I will be there at 10 AM.',sent:true},{text:'Great, please bring the reports.',sent:false}]);
+    const [messages, setMessages] = useLocalStorage('collab_messages', [{text:'Hi, regarding the meeting tomorrow.',sent:false},{text:'Yes, I will be there at 10 AM.',sent:true},{text:'Great, please bring the reports.',sent:false}]);
     const [input, setInput] = useState('');
     const sendMsg = () => { if(!input.trim()) return; setMessages(m=>[...m,{text:input,sent:true}]); setInput(''); };
 

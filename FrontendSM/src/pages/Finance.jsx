@@ -401,7 +401,7 @@ function OnlinePaymentsTab() {
                         <tr key={t.id}><td><span style={{ fontFamily: 'monospace', color: 'var(--text-light)' }}>{t.id}</span></td>
                             <td className="fw-600">{t.student}</td><td>{t.amount}</td><td>{t.gateway}</td>
                             <td>{t.status === 'Success' ? <span className="badge badge-success"><CheckCircle2 size={12}/> Success</span> : t.status === 'Failed' ? <span className="badge badge-danger"><XCircle size={12}/> Failed</span> : <span className="badge badge-warning"><Clock size={12}/> Pending</span>}</td>
-                            <td>{t.date}</td><td><button className="btn-icon" title="View Details"><Eye size={16}/></button></td></tr>
+                            <td>{t.date}</td><td><button className="btn-icon" title="View Details" onClick={() => customAlert(`Transaction Details\n\nTxn ID: ${t.id}\nStudent: ${t.student}\nAmount: ${t.amount}\nGateway: ${t.gateway}\nStatus: ${t.status}\nDate: ${t.date}`)}><Eye size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -456,9 +456,9 @@ function ExpensesTab() {
                 <table className="data-table"><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Vendor / Payee</th><th>Payment Mode</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr><td>25-03-2026</td><td>Maintenance</td><td className="fw-600">₹ 4,500</td><td>Plumbing Services Ltd</td><td>Bank Transfer</td><td><span className="badge badge-warning">Pending Approval</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Bill"><Eye size={16}/></button><button className="btn btn-success" style={{ padding: '2px 8px', fontSize: '0.75rem' }}>Approve</button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Bill" onClick={() => customAlert('Expense Bill\n\nDate: 25-03-2026\nCategory: Maintenance\nAmount: ₹ 4,500\nVendor: Plumbing Services Ltd\nPayment: Bank Transfer\nStatus: Pending Approval')}><Eye size={16}/></button><button className="btn btn-success" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => customAlert('Expense approved successfully!')}>Approve</button></td></tr>
                         <tr><td>20-03-2026</td><td>Supplies</td><td className="fw-600">₹ 15,200</td><td>A1 Stationers</td><td>Cheque</td><td><span className="badge badge-success">Approved</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Bill"><Eye size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Bill" onClick={() => customAlert('Expense Bill\n\nDate: 20-03-2026\nCategory: Supplies\nAmount: ₹ 15,200\nVendor: A1 Stationers\nPayment: Cheque\nStatus: Approved')}><Eye size={16}/></button></td></tr>
                     </tbody></table>
             </div>
         </div>
@@ -477,9 +477,9 @@ function InvoicesTab() {
                 <table className="data-table"><thead><tr><th>Invoice #</th><th>Billed To</th><th>Type</th><th>Issue Date</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr><td className="fw-600">INV-2026-001</td><td>Ajay Transport</td><td>Vendor</td><td>2026-03-20</td><td>2026-04-05</td><td>₹ 45,000</td><td><span className="badge badge-warning">Sent</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View PDF"><FileText size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download Invoice" onClick={() => { const txt = 'MOUNT ZION SCHOOL\nINVOICE\n'+('=').repeat(40)+'\nInvoice #: INV-2026-001\nBilled To: Ajay Transport\nType: Vendor\nIssue Date: 2026-03-20\nDue Date: 2026-04-05\nAmount: ₹ 45,000\nStatus: Sent'; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INV-2026-001.txt'; a.click(); }}><FileText size={16}/></button></td></tr>
                         <tr><td className="fw-600">INV-2026-002</td><td>Ritika Singh</td><td>Student</td><td>2026-03-22</td><td>2026-03-30</td><td>₹ 2,500</td><td><span className="badge badge-success">Paid</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View PDF"><FileText size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download Invoice" onClick={() => { const txt = 'MOUNT ZION SCHOOL\nINVOICE\n'+('=').repeat(40)+'\nInvoice #: INV-2026-002\nBilled To: Ritika Singh\nType: Student\nIssue Date: 2026-03-22\nDue Date: 2026-03-30\nAmount: ₹ 2,500\nStatus: Paid'; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INV-2026-002.txt'; a.click(); }}><FileText size={16}/></button></td></tr>
                     </tbody></table>
             </div>
         </div>

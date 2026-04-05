@@ -154,7 +154,7 @@ function StaffTab() {
                                     <tr key={s.id}><td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.id}</td><td className="fw-600">{s.name}</td><td>{s.role}</td><td>{s.dept}</td>
                                         <td><span className={`badge ${s.type === 'Full-time' ? 'badge-success' : s.type === 'Contract' ? 'badge-warning' : 'badge-draft'}`}>{s.type}</span></td>
                                         <td>{s.joined}</td><td><span className="badge badge-success">Active</span></td>
-                                        <td><button className="btn-icon" title="View Profile"><Eye size={16}/></button></td></tr>
+                                        <td><button className="btn-icon" title="View Profile" onClick={() => customAlert(`Staff Profile\n\nID: ${s.id}\nName: ${s.name}\nRole: ${s.role}\nDepartment: ${s.dept}\nType: ${s.type}\nJoined: ${s.joined}\nStatus: ${s.status}`)}><Eye size={16}/></button></td></tr>
                                 )) : (
                                     <tr><td colSpan="8" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No staff members match your search criteria</td></tr>
                                 )}</tbody></table>
@@ -399,11 +399,11 @@ function DocumentsTab() {
                 <table className="data-table"><thead><tr><th>Staff</th><th>Document Type</th><th>Reference</th><th>Uploaded</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr><td className="fw-600">Rajesh Kumar</td><td>ID Proof (Aadhaar)</td><td>XXXX-XXXX-1234</td><td>2024-06-15</td><td>—</td><td><span className="badge badge-success">Valid</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon"><Eye size={16}/></button><button className="btn-icon"><Download size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View" onClick={() => customAlert('Document: ID Proof (Aadhaar)\nStaff: Rajesh Kumar\nRef: XXXX-XXXX-1234\nUploaded: 2024-06-15\nStatus: Valid')}><Eye size={16}/></button><button className="btn-icon" title="Download" onClick={() => { const txt='Staff Document\nRajesh Kumar\nID Proof (Aadhaar)\nRef: XXXX-XXXX-1234\nStatus: Valid'; const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Rajesh_Kumar_Aadhaar.txt'; a.click(); }}><Download size={16}/></button></td></tr>
                         <tr><td className="fw-600">Priya Sharma</td><td>Employment Contract</td><td>CON-2019-002</td><td>2019-04-01</td><td className="warning fw-600">2026-04-01</td><td><span className="badge badge-warning">Expiring Soon</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon"><Eye size={16}/></button><button className="btn-icon"><Upload size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View" onClick={() => customAlert('Document: Employment Contract\nStaff: Priya Sharma\nRef: CON-2019-002\nExpiry: 2026-04-01\nStatus: Expiring Soon')}><Eye size={16}/></button><button className="btn-icon" title="Upload Renewal" onClick={() => { const input=document.createElement('input'); input.type='file'; input.accept='.pdf,.jpg,.png'; input.onchange=()=>{ if(input.files[0]) customAlert(`"${input.files[0].name}" uploaded as renewal for Priya Sharma's contract.`); }; input.click(); }}><Upload size={16}/></button></td></tr>
                         <tr><td className="fw-600">Suresh Babu</td><td>Driving License</td><td>DL-09-XXXXXX</td><td>2023-01-10</td><td>2028-01-10</td><td><span className="badge badge-success">Valid</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon"><Eye size={16}/></button><button className="btn-icon"><Download size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View" onClick={() => customAlert('Document: Driving License\nStaff: Suresh Babu\nRef: DL-09-XXXXXX\nExpiry: 2028-01-10\nStatus: Valid')}><Eye size={16}/></button><button className="btn-icon" title="Download" onClick={() => { const txt='Staff Document\nSuresh Babu\nDriving License\nRef: DL-09-XXXXXX\nExpiry: 2028-01-10\nStatus: Valid'; const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Suresh_Babu_DL.txt'; a.click(); }}><Download size={16}/></button></td></tr>
                     </tbody></table>
             </div>
         </div>

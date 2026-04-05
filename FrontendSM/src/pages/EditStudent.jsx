@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
-import { classes, sections, batches, categories } from '../data/mockData';
+import { classes, sections, getBatches, categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
@@ -159,10 +159,48 @@ export default function EditStudent() {
         return new Promise((resolve, reject) => {
             if (!file) return resolve(null);
             if (typeof file === 'string') return resolve(file); // Already a URL or base64
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
+            
+            if (file.type && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = (error) => reject(error);
+                };
+                reader.onerror = (error) => reject(error);
+            } else {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (error) => reject(error);
+            }
         });
     };
 
@@ -329,7 +367,7 @@ export default function EditStudent() {
                             <div className="form-group">
                                 <label className="form-label">Batch <span className="required">*</span></label>
                                 <select className={`form-select ${errors.batch ? 'error' : ''}`} name="batch" value={formData.batch} onChange={handleChange}>
-                                    {batches.map(b => <option key={b} value={b}>{b}</option>)}
+                                    {getBatches().map(b => <option key={b} value={b}>{b}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

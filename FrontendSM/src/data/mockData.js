@@ -210,7 +210,19 @@ export const classes = [
 
 export const sections = ['A', 'B', 'C', 'D'];
 
-export const batches = ['2024-2025', '2023-2024', '2022-2023'];
+export const getBatches = () => {
+    try {
+        const saved = localStorage.getItem('academic_years');
+        if (saved) {
+            return JSON.parse(saved).map(y => y.label);
+        }
+    } catch(e) {
+        console.error('Failed to parse academic_years from localStorage', e);
+    }
+    return ['2024-2025', '2023-2024', '2022-2023'];
+};
+
+export const batches = ['2024-2025', '2023-2024', '2022-2023']; // Keeping for legacy reference, but getBatches is preferred.
 
 export const categories = ['General', 'OBC', 'SC', 'ST', 'EWS'];
 

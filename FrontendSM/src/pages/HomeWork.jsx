@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Search, FileText, Calendar } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { ArrowLeft, Plus, Search, FileText, Calendar, Trash2 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './HomeWork.css';
 
 export default function HomeWork() {
     const [activeTab, setActiveTab] = useState('assign'); // 'assign', 'custom', 'reports'
     const [reportSearch, setReportSearch] = useState('');
     const [assignForm, setAssignForm] = useState({ class: '', section: '', date: new Date().toISOString().split('T')[0], description: '' });
-    const [reports, setReports] = useState([
+    const [reports, setReports] = useLocalStorage('homework_reports', [
         { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Quadratic Equations', date: '2026-03-16', status: 'Assigned' },
         { id: 2, class: 'VIII', section: 'B', subject: 'Science', topic: 'Plant Reproduction', date: '2026-03-16', status: 'Assigned' },
         { id: 3, class: 'VI', section: 'C', subject: 'English', topic: 'Reported Speech', date: '2026-03-15', status: 'Assigned' }
@@ -16,7 +17,37 @@ export default function HomeWork() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const newReport = {
+            id: Date.now(),
+            class: assignForm.class,
+            section: assignForm.section,
+            subject: 'General', 
+            topic: assignForm.description ? (assignForm.description.substring(0, 20) + '...') : 'New Assignment',
+            date: assignForm.date,
+            status: 'Assigned'
+        };
+        setReports(prev => [newReport, ...prev]);
+        setAssignForm({ class: '', section: '', date: new Date().toISOString().split('T')[0], description: '' });
         await customAlert('Homework saved successfully!');
+    };
+
+    const handleDelete = async (id) => {
+        if (await customConfirm("Are you sure you want to delete this homework record?")) {
+            setReports(prev => prev.filter(r => r.id !== id));
+            await customAlert('Homework deleted successfully!');
+        }
+    };
+
+    const handleView = (r) => {
+        customAlert(`
+            Homework Details
+            ----------------
+            Class: ${r.class}-${r.section}
+            Subject: ${r.subject}
+            Topic: ${r.topic}
+            Date: ${r.date}
+            Status: ${r.status}
+        `);
     };
 
     return (
@@ -138,7 +169,10 @@ export default function HomeWork() {
                                         <td>{r.date}</td>
                                         <td><span className="badge badge-success">{r.status}</span></td>
                                         <td>
-                                            <button className="btn-icon" style={{ color: 'var(--info)' }}><FileText size={16} /></button>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className="btn-icon" style={{ color: 'var(--info)' }} onClick={() => handleView(r)} title="View Detail"><FileText size={16} /></button>
+                                                <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(r.id)} title="Delete"><Trash2 size={16} /></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

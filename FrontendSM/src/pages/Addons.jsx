@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     PlusCircle, Search, Calendar, FileText, Download, Award,
@@ -8,11 +9,12 @@ import {
     UserCheck, FolderOpen, Mail, UploadCloud, ToggleRight
 } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Addons.css';
 
 // ======================== VISITORS ========================
 function VisitorsTab() {
-    const [visitors] = useState([
+    const [visitors, setVisitors] = useLocalStorage('addons_visitors', [
         { id: 1, name: 'Suresh Kumar', phone: '9876543210', purpose: 'Parent Visit', person: 'Principal', timeIn: '09:00 AM', timeOut: '10:30 AM', date: '2026-03-25' },
         { id: 2, name: 'Amazon Delivery', phone: '9988776655', purpose: 'Delivery', person: 'Admin Office', timeIn: '10:15 AM', timeOut: '10:20 AM', date: '2026-03-25' },
         { id: 3, name: 'Anita Singh', phone: '9876543211', purpose: 'Meeting', person: 'Class Teacher Gr-3', timeIn: '11:00 AM', timeOut: '-', date: '2026-03-25' }
@@ -80,7 +82,7 @@ function GalleryTab() {
 
 // ======================== ALUMNI ========================
 function AlumniTab() {
-    const [alumni] = useState([
+    const [alumni, setAlumni] = useLocalStorage('addons_alumni', [
         { id: 1, name: 'Ritika Sharma', batch: '2020', course: 'Science', profession: 'Software Engineer', location: 'Bangalore', phone: '9988776655' },
         { id: 2, name: 'Animesh Roy', batch: '2019', course: 'Commerce', profession: 'CA', location: 'Mumbai', phone: '9888877777' },
         { id: 3, name: 'Pooja Verma', batch: '2022', course: 'Arts', profession: 'Journalist', location: 'Delhi', phone: '9111122222' }
@@ -95,7 +97,7 @@ function AlumniTab() {
                 <table className="data-table"><thead><tr><th>Name</th><th>Batch</th><th>Stream</th><th>Profession</th><th>Location</th><th>Contact</th><th>Actions</th></tr></thead>
                     <tbody>{alumni.map(a => (
                         <tr key={a.id}><td className="fw-600">{a.name}</td><td>{a.batch}</td><td>{a.course}</td><td>{a.profession}</td><td>{a.location}</td><td>{a.phone}</td>
-                            <td><button className="btn-icon" title="View Profile"><Eye size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View Profile" onClick={() => customAlert(`Alumni Profile\n\nName: ${a.name}\nBatch: ${a.batch}\nStream: ${a.course}\nProfession: ${a.profession}\nLocation: ${a.location}\nContact: ${a.phone}`)}><Eye size={16}/></button><button className="btn-icon" title="Delete" style={{color:'var(--danger)'}} onClick={async () => { if(await customConfirm(`Delete ${a.name}?`)) setAlumni(prev => prev.filter(x => x.id !== a.id)); }}><Trash2 size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -105,7 +107,7 @@ function AlumniTab() {
 // ======================== BIRTHDAYS ========================
 function BirthdaysTab() {
     const todayStr = new Date().toISOString().split('T')[0];
-    const [birthdays] = useState([
+    const [birthdays, setBirthdays] = useLocalStorage('addons_birthdays', [
         { id: 1, name: 'Arjun Patel', class: 'Grade 2-A', date: todayStr, age: 7, isToday: true },
         { id: 2, name: 'Meera Joshi', class: 'Grade 1-B', date: todayStr, age: 6, isToday: true },
         { id: 3, name: 'Rahul Kumar', class: 'Grade 4-C', date: '2026-03-28', age: 9, isToday: false },
@@ -131,7 +133,7 @@ function BirthdaysTab() {
 
 // ======================== MESSAGES ========================
 function MessagesTab() {
-    const [messages] = useState([
+    const [messages, setMessages] = useLocalStorage('addons_messages', [
         { id: 1, title: 'Exam Guidelines 2026', to: 'All Students', date: '2026-03-24', priority: 'Important', status: 'Delivered (450)' },
         { id: 2, title: 'Staff Meeting at 3 PM', to: 'All Teachers', date: '2026-03-25', priority: 'Urgent', status: 'Delivered (45)' },
         { id: 3, title: 'Fee Payment Reminder', to: 'Parents (Grade 5)', date: '2026-03-20', priority: 'Normal', status: 'Delivered (60)' },
@@ -148,7 +150,7 @@ function MessagesTab() {
                 <table className="data-table"><thead><tr><th>Message Title</th><th>Recipient Group</th><th>Priority</th><th>Sent Date</th><th>Status / Reach</th><th>Actions</th></tr></thead>
                     <tbody>{messages.map(m => (
                         <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.to}</td><td><span className={`badge ${badgeColor(m.priority)}`}>{m.priority}</span></td><td>{m.date}</td>
-                            <td>{m.status}</td><td><button className="btn-icon" title="View"><Eye size={16}/></button></td></tr>
+                            <td>{m.status}</td><td><button className="btn-icon" title="View" onClick={() => customAlert(`Message Details\n\nTitle: ${m.title}\nTo: ${m.to}\nPriority: ${m.priority}\nDate: ${m.date}\nStatus: ${m.status}`)}><Eye size={16}/></button><button className="btn-icon" title="Delete" style={{color:'var(--danger)'}} onClick={async () => { if(await customConfirm(`Delete message "${m.title}"?`)) setMessages(prev => prev.filter(x => x.id !== m.id)); }}><Trash2 size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -182,9 +184,9 @@ function FormsTab() {
                 <table className="data-table"><thead><tr><th>Form Name</th><th>Audience</th><th>Submissions</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr><td className="fw-600">Annual Transport Feedback</td><td>Parents</td><td>245</td><td><span className="badge badge-success">Active</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Submissions"><Eye size={16}/></button><button className="btn-icon" title="Export Excel"><Download size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Submissions" onClick={() => customAlert('Annual Transport Feedback\n\nTotal submissions: 245\nCompletion rate: 81%\nLast submission: 2026-03-24')}><Eye size={16}/></button><button className="btn-icon" title="Export CSV" onClick={() => { const csv='Name,Response,Date\nParent1,Satisfied,2026-03-20\nParent2,Good,2026-03-21'; const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Transport_Feedback.csv'; a.click(); }}><Download size={16}/></button></td></tr>
                         <tr><td className="fw-600">Teacher Device Request</td><td>Staff</td><td>12</td><td><span className="badge badge-warning">Closing Soon</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Submissions"><Eye size={16}/></button><button className="btn-icon" title="Export Excel"><Download size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View Submissions" onClick={() => customAlert('Teacher Device Request\n\nTotal submissions: 12\nCompletion rate: 40%\nLast submission: 2026-03-22')}><Eye size={16}/></button><button className="btn-icon" title="Export CSV" onClick={() => { const csv='Teacher,Device,Status\nMr.Sharma,Laptop,Approved\nMs.Gupta,Tablet,Pending'; const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Device_Request.csv'; a.click(); }}><Download size={16}/></button></td></tr>
                     </tbody></table>
             </div>
         </div>
@@ -193,23 +195,26 @@ function FormsTab() {
 
 // ======================== DOWNLOADS ========================
 function DownloadsTab() {
-    const docs = [
+    const [docs, setDocs] = useLocalStorage('addons_downloads', [
         { name: 'Syllabus_Class10_2026.pdf', category: 'Syllabus', audience: 'Students', size: '2.4 MB', date: '2026-03-20', dls: 145 },
         { name: 'Holiday_Calendar_2026.pdf', category: 'Circular', audience: 'All', size: '1.1 MB', date: '2026-01-05', dls: 890 },
         { name: 'Transport_Route_Map.png', category: 'Other', audience: 'Parents', size: '4.5 MB', date: '2026-02-15', dls: 320 }
-    ];
+    ]);
+    const handleDownload = (d) => { const content = `Document: ${d.name}\nCategory: ${d.category}\nAudience: ${d.audience}\nDate: ${d.date}`; const blob = new Blob([content],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = d.name.replace(/\.(pdf|png)$/,'.txt'); a.click(); };
+    const handleDelete = async (idx) => { if(await customConfirm(`Delete "${docs[idx].name}"?`)) setDocs(prev => prev.filter((_,i) => i !== idx)); };
+    const handleUpload = () => { const input = document.createElement('input'); input.type='file'; input.onchange = async () => { if(input.files[0]) { const f = input.files[0]; setDocs(prev => [...prev, { name: f.name, category: 'Other', audience: 'All', size: (f.size/1024/1024).toFixed(1)+' MB', date: new Date().toISOString().split('T')[0], dls: 0 }]); await customAlert(`"${f.name}" uploaded successfully!`); } }; input.click(); };
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><FolderOpen size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Resource Downloads</h3>
-                <button className="btn btn-primary"><UploadCloud size={16}/> Upload Document</button>
+                <button className="btn btn-primary" onClick={handleUpload}><UploadCloud size={16}/> Upload Document</button>
             </div>
             <div className="table-responsive">
                 <table className="data-table"><thead><tr><th>Document Name</th><th>Category</th><th>Target Audience</th><th>Size</th><th>Upload Date</th><th>Downloads</th><th>Actions</th></tr></thead>
                     <tbody>{docs.map((d, i) => (
                         <tr key={i}><td className="fw-600"><FileText size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--info)' }}/>{d.name}</td>
                             <td>{d.category}</td><td>{d.audience}</td><td>{d.size}</td><td>{d.date}</td><td><span className="badge badge-draft">{d.dls}</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download"><Download size={16}/></button><button className="btn-icon" title="Delete"><Trash2 size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download" onClick={() => handleDownload(d)}><Download size={16}/></button><button className="btn-icon" title="Delete" onClick={() => handleDelete(i)}><Trash2 size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -264,9 +269,9 @@ function RegistrationTab() {
                 <table className="data-table"><thead><tr><th>Event Name</th><th>Type</th><th>Deadline</th><th>Capacity</th><th>Registered</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                         <tr><td className="fw-600">Summer Coding Camp</td><td>Workshop</td><td>2026-05-01</td><td>50</td><td>48</td><td><span className="badge badge-success">Open</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View list"><Users size={16}/></button><button className="btn-icon" title="Get Link"><LinkIcon size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View list" onClick={() => customAlert('Summer Coding Camp\n\nRegistered: 48/50\nWaitlisted: 3\n\nTop registrants:\n1. Aarav Sharma\n2. Priya Gupta\n3. Rohan Singh')}><Users size={16}/></button><button className="btn-icon" title="Copy Registration Link" onClick={() => { navigator.clipboard.writeText(window.location.origin+'/register/summer-camp'); customAlert('Registration link copied to clipboard!'); }}><LinkIcon size={16}/></button></td></tr>
                         <tr><td className="fw-600">Inter-School Debate</td><td>Event</td><td>2026-04-10</td><td>100</td><td>100</td><td><span className="badge badge-danger">Full / Closed</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View list"><Users size={16}/></button><button className="btn-icon" title="Get Link"><LinkIcon size={16}/></button></td></tr>
+                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="View list" onClick={() => customAlert('Inter-School Debate\n\nRegistered: 100/100\nEvent: Full\n\nTop registrants:\n1. Ananya Verma\n2. Karan Mehra\n3. Sneha Reddy')}><Users size={16}/></button><button className="btn-icon" title="Copy Registration Link" onClick={() => { navigator.clipboard.writeText(window.location.origin+'/register/debate'); customAlert('Registration link copied to clipboard!'); }}><LinkIcon size={16}/></button></td></tr>
                     </tbody></table>
             </div>
         </div>

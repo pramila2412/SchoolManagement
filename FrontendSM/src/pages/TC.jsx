@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, FileEdit, FileText, Eye, Printer } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { Search, FileEdit, FileText, Eye, Printer, Trash2 } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './TC.css';
 
 const API = '/api';
@@ -14,11 +15,32 @@ export default function TC() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [tcForm, setTcForm] = useState({ dateOfLeaving: '', reasonForLeaving: '', conduct: 'Good', medium: 'English' });
     const [generating, setGenerating] = useState(false);
-    const [tcList, setTcList] = useState([]);
+    const [tcList, setTcList] = useLocalStorage('issued_tcs', []);
 
-    useEffect(() => {
-        fetch(`${API}/tc`).then(r => r.json()).then(setTcList).catch(() => {});
-    }, []);
+    const handleDeleteTc = async (id) => {
+        if (await customConfirm("Are you sure you want to delete this TC record?")) {
+            setTcList(prev => prev.filter(tc => tc.tcNo !== id));
+            await customAlert('TC record deleted.');
+        }
+    };
+
+    const handleViewTc = (tc) => {
+        customAlert(`
+            Transfer Certificate Details
+            -----------------------------
+            TC No: ${tc.tcNo}
+            Student: ${tc.studentName}
+            Class: ${tc.class}-${tc.section}
+            Date of Leaving: ${new Date(tc.dateOfLeaving).toLocaleDateString()}
+            Reason: ${tc.reasonForLeaving}
+            Conduct: ${tc.conduct}
+            Medium: ${tc.medium}
+        `);
+    };
+
+    const handlePrintTc = (tc) => {
+        customAlert(`Initiating print for TC #${tc.tcNo}...\n(In a real app, this would open a styled PDF printable view)`);
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -64,8 +86,11 @@ export default function TC() {
                 classLastStudied: selectedStudent.class,
                 ...tcForm,
             };
-            const res = await fetch(`${API}/tc`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const tc = await res.json();
+            const tc = {
+                ...body,
+                tcNo: `TC/${new Date().getFullYear()}/${tcList.length + 101}`,
+                _id: Date.now()
+            };
             await customAlert(`TC Generated! TC No: ${tc.tcNo}`);
             setActiveView('search');
             setResults(results.filter(r => r.id !== selectedStudent.id));
@@ -150,16 +175,23 @@ export default function TC() {
                             <h3 style={{marginBottom:16}}>Recently Issued TCs</h3>
                             <div className="table-responsive">
                                 <table className="data-table">
-                                    <thead><tr><th>TC No</th><th>Student</th><th>Class</th><th>Date of Leaving</th><th>Reason</th><th>Conduct</th></tr></thead>
+                                    <thead><tr><th>TC No</th><th>Student</th><th>Class</th><th>Date of Leaving</th><th>Reason</th><th>Conduct</th><th>Actions</th></tr></thead>
                                     <tbody>
                                         {tcList.map(tc=>(
-                                            <tr key={tc._id}>
+                                            <tr key={tc.tcNo}>
                                                 <td className="fw-600">{tc.tcNo}</td>
                                                 <td>{tc.studentName}</td>
                                                 <td>{tc.class} - {tc.section}</td>
                                                 <td>{new Date(tc.dateOfLeaving).toLocaleDateString('en-IN')}</td>
                                                 <td>{tc.reasonForLeaving}</td>
                                                 <td><span className="badge badge-success">{tc.conduct}</span></td>
+                                                <td>
+                                                    <div style={{ display: 'flex', gap: 8 }}>
+                                                        <button className="btn-icon" onClick={() => handleViewTc(tc)} title="View"><Eye size={16}/></button>
+                                                        <button className="btn-icon" onClick={() => handlePrintTc(tc)} title="Print"><Printer size={16}/></button>
+                                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={() => handleDeleteTc(tc.tcNo)} title="Delete"><Trash2 size={16}/></button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

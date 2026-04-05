@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     Calendar, BookOpen, Users, Clock, FileText, ClipboardCheck,
@@ -11,10 +12,11 @@ import './Academics.css';
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
-    const [years, setYears] = useState([
+    const [years, setYears] = useLocalStorage('academic_years', [
         { id: 1, label: '2025-2026', startDate: '2025-04-01', endDate: '2026-03-31', active: true },
         { id: 2, label: '2024-2025', startDate: '2024-04-01', endDate: '2025-03-31', active: false },
     ]);
+    
     const [form, setForm] = useState({ label: '', startDate: '', endDate: '', active: false });
 
     const handleSubmit = (e) => {
@@ -63,7 +65,7 @@ function AcademicYearTab() {
 
 // ======================== CLASS & SECTION ========================
 function ClassSectionTab() {
-    const [classes, setClasses] = useState([
+    const [classes, setClasses] = useLocalStorage('academic_classes', [
         { id: 1, name: 'Grade 1', sections: [{ label: 'A', teacher: 'Mrs. Sharma', capacity: 40 }, { label: 'B', teacher: 'Mr. Patel', capacity: 40 }] },
         { id: 2, name: 'Grade 2', sections: [{ label: 'A', teacher: 'Ms. Gupta', capacity: 35 }] },
         { id: 3, name: 'Grade 3', sections: [{ label: 'A', teacher: 'Mr. Roy', capacity: 38 }, { label: 'B', teacher: 'Mrs. Verma', capacity: 38 }, { label: 'C', teacher: 'Mr. Singh', capacity: 36 }] },
@@ -116,7 +118,7 @@ function ClassSectionTab() {
 
 // ======================== SUBJECTS ========================
 function SubjectsTab() {
-    const [subjects, setSubjects] = useState([
+    const [subjects, setSubjects] = useLocalStorage('academic_subjects', [
         { id: 1, name: 'Mathematics', code: 'MATH-01', type: 'Theory', classes: ['Grade 1', 'Grade 2', 'Grade 3'] },
         { id: 2, name: 'Science', code: 'SCI-01', type: 'Both', classes: ['Grade 2', 'Grade 3'] },
         { id: 3, name: 'English', code: 'ENG-01', type: 'Theory', classes: ['Grade 1', 'Grade 2', 'Grade 3'] },
@@ -166,7 +168,7 @@ function SubjectsTab() {
 
 // ======================== TEACHER ASSIGNMENT ========================
 function TeacherAssignmentTab() {
-    const [assignments, setAssignments] = useState([
+    const [assignments, setAssignments] = useLocalStorage('academic_teacher_assignments', [
         { id: 1, class: 'Grade 1', section: 'A', subject: 'Mathematics', teacher: 'Mrs. Sharma', type: 'Subject Teacher' },
         { id: 2, class: 'Grade 1', section: 'A', subject: 'English', teacher: 'Ms. Gupta', type: 'Subject Teacher' },
         { id: 3, class: 'Grade 2', section: 'A', subject: 'Science', teacher: 'Mr. Roy', type: 'Subject Teacher' },
@@ -218,7 +220,7 @@ function TeacherAssignmentTab() {
 function TimetableTab() {
     const [sel, setSel] = useState({ class: 'Grade 1', section: 'A' });
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const [schedule, setSchedule] = useState([
+    const [schedule, setSchedule] = useLocalStorage('academic_schedule', [
         { period: 1, time: '08:30-09:15', Monday: 'Math', Tuesday: 'English', Wednesday: 'Science', Thursday: 'Hindi', Friday: 'Math', Saturday: 'Games' },
         { period: 2, time: '09:15-10:00', Monday: 'English', Tuesday: 'Math', Wednesday: 'Hindi', Thursday: 'Science', Friday: 'English', Saturday: 'Art' },
         { period: 3, time: '10:15-11:00', Monday: 'Science', Tuesday: 'Hindi', Wednesday: 'Math', Thursday: 'English', Friday: 'Computer', Saturday: 'Library' },
@@ -253,7 +255,7 @@ function TimetableTab() {
 // ======================== SYLLABUS ========================
 function SyllabusTab() {
     const [expandedCh, setExpandedCh] = useState([1]);
-    const [syllabus] = useState([
+    const [syllabus] = useLocalStorage('academic_syllabus', [
         { id: 1, chapter: 1, title: 'Algebra', hours: 8, topics: ['Linear Equations', 'Quadratic Formula', 'Polynomials'] },
         { id: 2, chapter: 2, title: 'Geometry', hours: 10, topics: ['Triangles', 'Circles', 'Coordinate Geometry'] },
         { id: 3, chapter: 3, title: 'Trigonometry', hours: 6, topics: ['Sine & Cosine', 'Tan & Identities'] },
@@ -286,7 +288,7 @@ function SyllabusTab() {
 
 // ======================== LESSON PLAN ========================
 function LessonPlanTab() {
-    const [plans] = useState([
+    const [plans] = useLocalStorage('academic_lesson_plans', [
         { id: 1, title: 'Introduction to Linear Equations', chapter: 'Algebra', topic: 'Linear Equations', method: 'Lecture', date: '2026-03-20', status: 'Completed' },
         { id: 2, title: 'Solving Quadratic Equations', chapter: 'Algebra', topic: 'Quadratic Formula', method: 'Activity', date: '2026-03-22', status: 'Planned' },
         { id: 3, title: 'Properties of Triangles', chapter: 'Geometry', topic: 'Triangles', method: 'Discussion', date: '2026-03-25', status: 'Pending' },
@@ -322,7 +324,7 @@ function LessonPlanTab() {
 
 // ======================== ASSIGNMENTS ========================
 function AssignmentsTab() {
-    const [assignments] = useState([
+    const [assignments] = useLocalStorage('academic_assignments', [
         { id: 1, title: 'Algebra Practice Set 1', class: 'Grade 3-A', subject: 'Mathematics', dueDate: '2026-03-28', status: 'Published', submissions: 28, total: 35 },
         { id: 2, title: 'Essay on Environment', class: 'Grade 2-A', subject: 'English', dueDate: '2026-03-30', status: 'Draft', submissions: 0, total: 32 },
         { id: 3, title: 'Plant Cell Diagram', class: 'Grade 3-B', subject: 'Science', dueDate: '2026-03-26', status: 'Graded', submissions: 34, total: 34 },
@@ -341,7 +343,7 @@ function AssignmentsTab() {
                         <tr key={a.id}><td className="fw-600">{a.title}</td><td>{a.class}</td><td>{a.subject}</td><td>{a.dueDate}</td>
                             <td>{a.submissions}/{a.total}</td>
                             <td><span className={`badge ${statusBadge(a.status)}`}>{a.status}</span></td>
-                            <td><button className="btn-icon"><Eye size={16}/></button><button className="btn-icon"><Edit3 size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Assignment: ${a.title}\nClass: ${a.class}\nSubject: ${a.subject}\nDue: ${a.dueDate}\nSubmissions: ${a.submissions}/${a.total}\nStatus: ${a.status}`)}><Eye size={16}/></button><button className="btn-icon" title="Edit" onClick={() => customAlert(`Edit assignment "${a.title}"\n\nUse the Create Assignment form to update.`)}><Edit3 size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -350,7 +352,7 @@ function AssignmentsTab() {
 
 // ======================== ATTENDANCE ========================
 function AttendanceTab() {
-    const [students, setStudents] = useState([
+    const [students, setStudents] = useLocalStorage('academic_attendance', [
         { id: 1, name: 'Aarav Sharma', rollNo: '01', status: 'P' }, { id: 2, name: 'Diya Patel', rollNo: '02', status: 'P' },
         { id: 3, name: 'Kavya Gupta', rollNo: '03', status: 'A' }, { id: 4, name: 'Rohan Singh', rollNo: '04', status: 'P' },
         { id: 5, name: 'Ananya Verma', rollNo: '05', status: 'L' }, { id: 6, name: 'Ishaan Roy', rollNo: '06', status: 'P' },
@@ -387,7 +389,7 @@ function AttendanceTab() {
 
 // ======================== PERFORMANCE ========================
 function PerformanceTab() {
-    const [assessments] = useState([
+    const [assessments] = useLocalStorage('academic_assessments', [
         { id: 1, name: 'Unit Test 1', class: 'Grade 3-A', subject: 'Mathematics', maxMarks: 50, date: '2026-02-15', avgMarks: 38 },
         { id: 2, name: 'Mid-Term Class Test', class: 'Grade 3-A', subject: 'Science', maxMarks: 100, date: '2026-03-01', avgMarks: 72 },
         { id: 3, name: 'Unit Test 2', class: 'Grade 2-A', subject: 'English', maxMarks: 50, date: '2026-03-10', avgMarks: 41 },
@@ -404,7 +406,7 @@ function PerformanceTab() {
                     <tbody>{assessments.map(a => (
                         <tr key={a.id}><td className="fw-600">{a.name}</td><td>{a.class}</td><td>{a.subject}</td><td>{a.maxMarks}</td><td>{a.date}</td><td>{a.avgMarks}</td>
                             <td style={{ minWidth: 120 }}><div className="progress-bar"><div className="progress-bar-fill" style={{ width: `${(a.avgMarks / a.maxMarks) * 100}%` }}/></div></td>
-                            <td><button className="btn-icon"><ClipboardCheck size={16}/></button><button className="btn-icon"><Eye size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="Marks" onClick={() => customAlert(`Assessment: ${a.name}\nClass: ${a.class}\nSubject: ${a.subject}\nMax Marks: ${a.maxMarks}\nAvg: ${a.avgMarks}\nDate: ${a.date}`)}><ClipboardCheck size={16}/></button><button className="btn-icon" title="View" onClick={() => customAlert(`Performance Analysis\n\n${a.name} — ${a.class}\nAverage: ${a.avgMarks}/${a.maxMarks} (${Math.round(a.avgMarks/a.maxMarks*100)}%)`)}><Eye size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -413,7 +415,7 @@ function PerformanceTab() {
 
 // ======================== STUDY MATERIALS ========================
 function StudyMaterialsTab() {
-    const [materials] = useState([
+    const [materials] = useLocalStorage('academic_materials', [
         { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'PDF', uploadedBy: 'Mrs. Sharma', date: '2026-03-15' },
         { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', uploadedBy: 'Mr. Roy', date: '2026-03-18' },
         { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', uploadedBy: 'Ms. Gupta', date: '2026-03-20' },
@@ -432,7 +434,7 @@ function StudyMaterialsTab() {
                         <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.class}</td><td>{m.subject}</td>
                             <td><span className={`badge ${typeBadge(m.type)}`}>{m.type}</span></td>
                             <td>{m.uploadedBy}</td><td>{m.date}</td>
-                            <td><button className="btn-icon"><Eye size={16}/></button><button className="btn-icon"><Trash2 size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Study Material\n\nTitle: ${m.title}\nClass: ${m.class}\nSubject: ${m.subject}\nType: ${m.type}\nUploaded by: ${m.uploadedBy}\nDate: ${m.date}`)}><Eye size={16}/></button><button className="btn-icon" title="Delete" onClick={async () => { if(await customConfirm(`Delete "${m.title}"?`)) { /* setMaterials would be needed */ } }} style={{color:'var(--danger)'}}><Trash2 size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -441,7 +443,7 @@ function StudyMaterialsTab() {
 
 // ======================== PROMOTION ========================
 function PromotionTab() {
-    const [students, setStudents] = useState([
+    const [students, setStudents] = useLocalStorage('academic_promotion_students', [
         { id: 1, name: 'Aarav Sharma', rollNo: '01', result: 'Pass', attendance: '92%', selected: true },
         { id: 2, name: 'Diya Patel', rollNo: '02', result: 'Pass', attendance: '88%', selected: true },
         { id: 3, name: 'Kavya Gupta', rollNo: '03', result: 'Fail', attendance: '65%', selected: false },
@@ -463,7 +465,7 @@ function PromotionTab() {
                         <tr key={s.id}><td><input type="checkbox" checked={s.selected} onChange={() => toggleSelect(s.id)}/></td><td>{s.rollNo}</td><td className="fw-600">{s.name}</td>
                             <td><span className={`badge ${s.result === 'Pass' ? 'badge-success' : s.result === 'Fail' ? 'badge-danger' : 'badge-warning'}`}>{s.result}</span></td>
                             <td>{s.attendance}</td>
-                            <td>{!s.selected && <button className="btn-icon" title="Retain"><XCircle size={16} style={{ color: 'var(--danger)' }}/></button>}</td></tr>
+                            <td>{!s.selected && <button className="btn-icon" title="Retain" onClick={() => toggleSelect(s.id)}><XCircle size={16} style={{ color: 'var(--danger)' }}/></button>}</td></tr>
                     ))}</tbody></table>
             </div>
             <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>

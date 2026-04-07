@@ -18,53 +18,120 @@ const features = [
 export default function LoginPage() {
     const { login, user } = useAuth();
     const navigate = useNavigate();
+    const [loginType, setLoginType] = useState('admin'); // 'admin' or 'parent'
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [attempts, setAttempts] = useState(0);
+    const [lockout, setLockout] = useState(null); // Timestamp when lockout ends
 
     useEffect(() => {
         if (user) {
-            navigate('/', { replace: true });
+            if (user.role === 'Parent') {
+                if (user.children && user.children.length > 1) {
+                    navigate('/parent-selector', { replace: true });
+                } else {
+                    navigate('/parent-portal', { replace: true });
+                }
+            } else {
+                navigate('/', { replace: true });
+            }
         }
     }, [user, navigate]);
+
+    // Check for lockout on mount or change
+    useEffect(() => {
+        if (lockout && Date.now() > lockout) {
+            setLockout(null);
+            setAttempts(0);
+        }
+    }, [lockout]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        if (lockout && Date.now() < lockout) {
+            const timeLeft = Math.ceil((lockout - Date.now()) / 60000);
+            setError(`Account locked. Please wait ${timeLeft} minutes.`);
+            return;
+        }
+
         if (!email.trim() || !password.trim()) {
-            setError('Please enter both email and password');
+            setError(loginType === 'admin' ? 'Please enter both email and password' : 'Please enter both Parent ID and password');
             return;
         }
 
         setLoading(true);
         try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.message || 'Invalid credentials');
+            // Mocking API for Parent/Admin based on LoginType
+            if (loginType === 'parent') {
+                if (email === 'PAR-2025-00421' && password === 'parent123') {
+                    login({ 
+                        name: 'Anil Kumar', 
+                        id: email, 
+                        role: 'Parent', 
+                        children: [
+                            { name: 'Rahul Kumar', id: 'MZS-2025-014', class: 'Grade 10-A' },
+                            { name: 'Priya Kumar', id: 'MZS-2025-089', class: 'Grade 7-B' }
+                        ]
+                    });
+                } else {
+                    handleFailedAttempt();
+                }
                 return;
             }
 
-            login(data.user);
-            navigate('/', { replace: true });
-        } catch {
-            // Fallback: local credential check when backend is offline
-            if (email === 'admin@mountzion.edu' && password === 'admin123') {
-                login({ name: 'Admin', email, role: 'Super Admin' });
-                navigate('/', { replace: true });
-            } else {
-                setError('Invalid credentials. Try: admin@mountzion.edu / admin123');
+            // Check System Users from localStorage first
+            const savedUsers = localStorage.getItem('mzs_system_users');
+            if (savedUsers) {
+                const systemUsers = JSON.parse(savedUsers);
+                const portalUser = systemUsers.find(u => u.email === email && u.access === 'Enabled');
+                if (portalUser) {
+                    // For demo: match password 'admin123' for staff, or same as their role
+                    const validPassword = portalUser.role.toLowerCase().includes('teacher') ? 'teacher123' : 
+                                          portalUser.role.toLowerCase().includes('accountant') ? 'finance123' : 'admin123';
+                    
+                    if (password === validPassword) {
+                        login(portalUser);
+                        setAttempts(0);
+                        return;
+                    }
+                }
             }
+
+            // Fallback: local credential check when backend is offline
+            const mockUsers = [
+                { email: 'admin@mountzion.edu', password: 'admin123', name: 'Super Admin', role: 'Super Admin' },
+                { email: 'principal@mountzion.edu', password: 'admin123', name: 'Dr. Sarah', role: 'Admin / Principal' },
+                { email: 'teacher@mountzion.edu', password: 'teacher123', name: 'Rajesh Kumar', role: 'Staff / Teacher' },
+                { email: 'accountant@mountzion.edu', password: 'finance123', name: 'Vijay Singh', role: 'Accountant' }
+            ];
+
+            const found = mockUsers.find(u => u.email === email && u.password === password);
+            if (found) {
+                login(found);
+                setAttempts(0);
+            } else {
+                handleFailedAttempt();
+            }
+        } catch {
+            setError('System error. Please try again later.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFailedAttempt = () => {
+        const nextAttempts = attempts + 1;
+        setAttempts(nextAttempts);
+        if (nextAttempts >= 5) {
+            setLockout(Date.now() + 30 * 60 * 1000); // 30 mins lockout
+            setError('Too many failed attempts. Account locked for 30 minutes.');
+        } else {
+            setError(`Invalid credentials. Attempt ${nextAttempts} of 5.`);
         }
     };
 
@@ -75,7 +142,6 @@ export default function LoginPage() {
                 <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-sky-500/20 rounded-full blur-[120px] mix-blend-screen animate-blob" />
                 <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[140px] mix-blend-screen animate-blob animation-delay-2000" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-teal-500/10 rounded-full blur-[150px] mix-blend-screen animate-blob animation-delay-4000" />
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
                 
                 {/* Dot Grid */}
@@ -100,12 +166,12 @@ export default function LoginPage() {
                     <h1 className="text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]">
                         Welcome to <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-sky-400 to-indigo-400">
-                            School Canvas
+                            Mount Zion
                         </span>
                     </h1>
                     
                     <p className="text-lg text-white/60 max-w-md mb-12 font-medium">
-                        The ultimate operations platform for modern educational institutions. Fast, secure, and purely intuitive.
+                        Securely access your institution's infrastructure with our unified authentication system.
                     </p>
 
                     <div className="space-y-6 max-w-sm">
@@ -136,6 +202,31 @@ export default function LoginPage() {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="w-full max-w-[440px] mx-auto lg:mx-0"
                 >
+                    {/* Role Toggle */}
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-xl mb-6 relative">
+                        <div 
+                            className="absolute bg-gradient-to-r from-teal-500/20 to-sky-500/20 border border-teal-500/30 rounded-xl transition-all duration-300 ease-out"
+                            style={{ 
+                                width: 'calc(50% - 4px)', 
+                                height: 'calc(100% - 8px)',
+                                top: '4px',
+                                left: loginType === 'admin' ? '4px' : 'calc(50%)' 
+                            }}
+                        />
+                        <button 
+                            onClick={() => setLoginType('admin')}
+                            className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors relative z-10 ${loginType === 'admin' ? 'text-teal-400' : 'text-white/40 hover:text-white/60'}`}
+                        >
+                            Admin / Staff
+                        </button>
+                        <button 
+                            onClick={() => setLoginType('parent')}
+                            className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-colors relative z-10 ${loginType === 'parent' ? 'text-teal-400' : 'text-white/40 hover:text-white/60'}`}
+                        >
+                            Parent Login
+                        </button>
+                    </div>
+
                     {/* Glowing border wrapper */}
                     <div className="relative group rounded-3xl">
                         <div className="absolute -inset-[1px] bg-gradient-to-r from-teal-500 via-sky-500 to-indigo-500 rounded-3xl opacity-30 group-hover:opacity-60 blur-sm transition-opacity duration-500"></div>
@@ -144,24 +235,25 @@ export default function LoginPage() {
                             <CardContent className="p-8 pb-10">
                                 
                                 <div className="text-center mb-8">
-                                    {/* Mobile Branding */}
-                                    <h2 className="lg:hidden text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-sky-400">
-                                        School Canvas
+                                    <h2 className="text-2xl font-semibold text-white mb-2">
+                                        {loginType === 'admin' ? 'Institution Login' : 'Parent Access Portal'}
                                     </h2>
-                                    <h2 className="hidden lg:block text-2xl font-semibold text-white mb-2">Sign In</h2>
-                                    <p className="text-sm text-white/50">Enter your credentials to access the portal</p>
+                                    <p className="text-sm text-white/50">
+                                        {loginType === 'admin' ? 'Access your school management dashboard' : 'Enter your Parent ID to view child details'}
+                                    </p>
                                 </div>
 
-                                <AnimatePresence>
+                                <AnimatePresence mode="wait">
                                     {error && (
                                         <motion.div 
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="mb-6 overflow-hidden"
+                                            key={error}
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            className="mb-6"
                                         >
                                             <div className="p-3 text-sm bg-red-500/15 border border-red-500/30 text-red-400 rounded-xl flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                                <AlertTriangle size={16} />
                                                 {error}
                                             </div>
                                         </motion.div>
@@ -170,14 +262,16 @@ export default function LoginPage() {
 
                                 <form onSubmit={handleSubmit} className="space-y-5">
                                     <div className="space-y-2">
-                                        <Label className="text-white/70 text-xs uppercase tracking-wider font-semibold">Email</Label>
+                                        <Label className="text-white/70 text-xs uppercase tracking-wider font-semibold">
+                                            {loginType === 'admin' ? 'Work Email' : 'Parent ID'}
+                                        </Label>
                                         <div className="relative group/input">
                                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within/input:text-teal-400 transition-colors">
                                                 <User size={18} />
                                             </div>
                                             <Input
-                                                type="email"
-                                                placeholder="admin@mountzion.edu"
+                                                type="text"
+                                                placeholder={loginType === 'admin' ? 'admin@mountzion.edu' : 'PAR-2025-00421'}
                                                 value={email}
                                                 onChange={e => setEmail(e.target.value)}
                                                 className="pl-10 h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl focus-visible:ring-1 focus-visible:ring-teal-400 focus-visible:border-teal-400 transition-all hover:bg-white/10"
@@ -188,7 +282,7 @@ export default function LoginPage() {
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                             <Label className="text-white/70 text-xs uppercase tracking-wider font-semibold">Password</Label>
-                                            <a href="#" className="text-xs text-teal-400 hover:text-teal-300 transition-colors">Forgot?</a>
+                                            <a href="#" className="text-xs text-teal-400 hover:text-teal-300 transition-colors">Forgot Password?</a>
                                         </div>
                                         <div className="relative group/input">
                                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within/input:text-teal-400 transition-colors">
@@ -216,11 +310,10 @@ export default function LoginPage() {
                                         disabled={loading}
                                         className="w-full h-12 mt-4 bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-400 hover:to-sky-400 text-white rounded-xl font-medium shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_25px_rgba(20,184,166,0.4)] transition-all duration-300 relative overflow-hidden group/btn"
                                     >
-                                        {/* Shiny button effect */}
                                         <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
                                         
                                         <span className="relative flex items-center justify-center gap-2">
-                                            {loading ? 'Authenticating...' : 'Sign In'}
+                                            {loading ? 'Authenticating...' : loginType === 'admin' ? 'Staff Login' : 'Access Portal'}
                                             {!loading && <ArrowRight size={18} className="translate-x-0 group-hover/btn:translate-x-1 transition-transform" />}
                                         </span>
                                     </Button>
@@ -228,9 +321,9 @@ export default function LoginPage() {
 
                                 {/* Demo Hint */}
                                 <div className="mt-8 text-center pt-6 border-t border-white/10">
-                                    <p className="text-xs text-white/40 mb-2 font-medium">DEMO CREDENTIALS</p>
+                                    <p className="text-xs text-white/40 mb-2 font-medium">DEMO ACCESS</p>
                                     <div className="inline-block px-4 py-2 rounded-lg bg-black/50 border border-white/5 text-sm text-white/60 font-mono">
-                                        admin@mountzion.edu / admin123
+                                        {loginType === 'admin' ? 'admin@mountzion.edu / admin123' : 'PAR-2025-00421 / parent123'}
                                     </div>
                                 </div>
 

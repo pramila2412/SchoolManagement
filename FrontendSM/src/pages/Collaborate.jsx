@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
+import { classes } from '../data/mockData';
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
     Video, CheckSquare, Clipboard, Activity, Settings, Save, PlusCircle,
@@ -14,6 +15,15 @@ function useApi(ep) {
     const fetch_ = useCallback(async () => { try { setLoading(true); const r = await fetch(`${API}${ep}`); const d = await r.json(); setData(d); } catch(e){console.error(e);} finally {setLoading(false);} }, [ep]);
     useEffect(() => { fetch_(); }, [fetch_]); return { data, loading, refresh: fetch_ };
 }
+
+const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
 
 // ===== DASHBOARD =====
 function DashboardTab({ onNavigate }) {
@@ -108,13 +118,23 @@ function DiscussionsTab() {
 
 // ===== GROUPS =====
 function GroupsTab() {
-    const { data: list, refresh } = useApi('/groups');
-    const [form, setForm] = useState({name:'',description:'',type:'Custom',visibility:'Closed',members:[],groupAdmin:['Admin']});
+    const [list, setList] = useLocalStorage('collab_groups', []);
+    const [form, setForm] = useState({ name: '', description: '', type: 'Custom', visibility: 'Closed', members: [], groupAdmin: ['Admin'] });
     const [show, setShow] = useState(false);
     const [memberName, setMemberName] = useState('');
-    const addMember = () => { if(!memberName) return; setForm(f=>({...f,members:[...f.members,{name:memberName,role:'Teacher'}]})); setMemberName(''); };
-    const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/groups`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({name:'',description:'',type:'Custom',visibility:'Closed',members:[],groupAdmin:['Admin']}); setShow(false); refresh(); };
-    const handleDelete = async id => { await fetch(`${API}/groups/${id}`,{method:'DELETE'}); refresh(); };
+    const addMember = () => { if (!memberName) return; setForm(f => ({ ...f, members: [...f.members, { name: memberName, role: 'Teacher' }] })); setMemberName(''); };
+    const handleSubmit = async e => {
+        e.preventDefault();
+        const newGroup = { ...form, _id: Date.now().toString(), createdAt: new Date().toISOString() };
+        setList([...list, newGroup]);
+        setForm({ name: '', description: '', type: 'Custom', visibility: 'Closed', members: [], groupAdmin: ['Admin'] });
+        setShow(false);
+    };
+    const handleDelete = id => {
+        if (window.confirm("Are you sure you want to delete this group?")) {
+            setList(list.filter(g => g._id !== id));
+        }
+    };
 
     return (<div className="animate-fade-in">
         <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>Groups</h3><button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> Create Group</button></div>
@@ -136,27 +156,110 @@ function GroupsTab() {
 }
 
 // ===== FILES =====
+// ===== FILES =====
 function FilesTab() {
-    const { data: list, refresh } = useApi('/files');
-    const [form, setForm] = useState({title:'',description:'',fileName:'document.pdf',category:'Other',audience:'Everyone',accessLevel:'Download Allowed'});
+    const [list, setList] = useLocalStorage('collab_files', []);
+    const [existingGroups] = useLocalStorage('collab_groups', []);
+    const [form, setForm] = useState({ title: '', description: '', category: 'Study Material', audience: 'Everyone', targetId: '', accessLevel: 'Download Allowed', expiryDate: '', file: null });
     const [show, setShow] = useState(false);
-    const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/files`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({title:'',description:'',fileName:'document.pdf',category:'Other',audience:'Everyone',accessLevel:'Download Allowed'}); setShow(false); refresh(); };
-    const handleDelete = async id => { await fetch(`${API}/files/${id}`,{method:'DELETE'}); refresh(); };
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const selectedFile = e.target.files[0];
+            if (selectedFile.size > 5 * 1024 * 1024) {
+                alert("File too large! Max 5MB allowed for local storage.");
+                return;
+            }
+            setForm({ ...form, file: selectedFile });
+        }
+    };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        if (!form.file) { alert("Please select a file."); return; }
+        setIsUploading(true);
+        try {
+            const base64 = await convertToBase64(form.file);
+            const newFile = {
+                _id: Date.now().toString(),
+                title: form.title,
+                description: form.description,
+                fileName: form.file.name,
+                fileSize: (form.file.size / 1024 / 1024).toFixed(2) + ' MB',
+                category: form.category,
+                audience: form.audience,
+                targetId: form.targetId,
+                accessLevel: form.accessLevel,
+                expiryDate: form.expiryDate,
+                fileData: base64,
+                createdAt: new Date().toISOString(),
+                uploader: 'Admin'
+            };
+            setList([newFile, ...list]);
+            setForm({ title: '', description: '', category: 'Study Material', audience: 'Everyone', targetId: '', accessLevel: 'Download Allowed', expiryDate: '', file: null });
+            setShow(false);
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Failed to upload file.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleDelete = id => {
+        if (window.confirm("Are you sure you want to delete this file?")) {
+            setList(list.filter(f => f._id !== id));
+        }
+    };
+
+    const handleDownload = (file) => {
+        const link = document.createElement('a');
+        link.href = file.fileData;
+        link.download = file.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (<div className="animate-fade-in">
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>Shared Files</h3><button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> Upload File</button></div>
-        {show && <div className="collab-form-panel"><h3><FileUp size={18}/> Upload & Share</h3><form className="collab-form" onSubmit={handleSubmit}>
-            <div className="form-group"><label className="form-label">File Title *</label><input className="form-input" required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
-            <div className="form-group"><label className="form-label">File Name *</label><input className="form-input" required value={form.fileName} onChange={e=>setForm({...form,fileName:e.target.value})} /></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}><h3 style={{ margin: 0 }}>Shared Files</h3><button className="btn btn-primary" onClick={() => setShow(!show)}><PlusCircle size={16} /> Upload File</button></div>
+        {show && <div className="collab-form-panel"><h3><FileUp size={18} /> Upload & Share</h3><form className="collab-form" onSubmit={handleSubmit}>
+            <div className="form-group"><label className="form-label">File Title *</label><input className="form-input" required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Science Revision Notes" /></div>
+            <div className="form-group"><label className="form-label">Description (Optional)</label><textarea className="form-textarea" rows="2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Briefly describe the content..." /></div>
             <div className="form-row">
-                <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}><option>Study Material</option><option>Assignment</option><option>Notice</option><option>Event</option><option>Other</option></select></div>
-                <div className="form-group"><label className="form-label">Access Level</label><select className="form-select" value={form.accessLevel} onChange={e=>setForm({...form,accessLevel:e.target.value})}><option>View Only</option><option>Download Allowed</option><option>Restricted</option></select></div>
+                <div className="form-group"><label className="form-label">Select File *</label><input type="file" className="form-input" required onChange={handleFileChange} /></div>
+                <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option>Study Material</option><option>Assignment</option><option>Notice</option><option>Event</option><option>Other</option></select></div>
             </div>
-            <div className="form-group"><label className="form-label">Audience</label><select className="form-select" value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}><option>Everyone</option><option>All Staff</option><option>All Students</option><option>Specific Group</option><option>Specific Class</option></select></div>
-            <div className="form-actions"><button type="submit" className="btn btn-primary"><FileUp size={16}/> Share</button></div>
+            <div className="form-row">
+                <div className="form-group"><label className="form-label">Audience</label><select className="form-select" value={form.audience} onChange={e => setForm({ ...form, audience: e.target.value, targetId: '' })}><option>Everyone</option><option>All Staff</option><option>All Students</option><option>Specific Class</option><option>Specific Group</option></select></div>
+                <div className="form-group"><label className="form-label">Access Level</label><select className="form-select" value={form.accessLevel} onChange={e => setForm({ ...form, accessLevel: e.target.value })}><option>View Only</option><option>Download Allowed</option><option>Restricted</option></select></div>
+            </div>
+            {form.audience === 'Specific Class' && (
+                <div className="form-group"><label className="form-label">Select Class *</label><select className="form-select" required value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">Select Class</option>{classes.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+            )}
+            {form.audience === 'Specific Group' && (
+                <div className="form-group"><label className="form-label">Select Group *</label><select className="form-select" required value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">Select Group</option>{existingGroups.map(g => <option key={g._id} value={g.name}>{g.name}</option>)}</select></div>
+            )}
+            <div className="form-group"><label className="form-label">Expiry Date (Optional)</label><input type="date" className="form-input" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} /></div>
+            <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={isUploading}>{isUploading ? 'Uploading...' : <><FileUp size={16} /> Share File</>}</button></div>
         </form></div>}
-        {list.map(f=><div className="file-item" key={f._id}><div className="file-item-info"><h5>{f.title}</h5><p>{f.fileName} · {f.category} · {f.audience} · {f.accessLevel}</p></div><button className="btn-icon" onClick={()=>handleDelete(f._id)}><Trash2 size={14}/></button></div>)}
-        {list.length===0&&<div className="collab-empty"><FileUp size={40}/><p>No files shared yet</p></div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {list.map(f => <div className="file-item" key={f._id}>
+                <div className="file-item-info">
+                    <h5>{f.title}</h5>
+                    <p>{f.fileName} · {f.fileSize} · {f.category} · To: {f.audience === 'Specific Class' ? `Class ${f.targetId}` : f.audience === 'Specific Group' ? `Group: ${f.targetId}` : f.audience}</p>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: 4 }}>
+                        Uploaded: {new Date(f.createdAt).toLocaleDateString('en-IN')} {f.expiryDate && `· Expires: ${new Date(f.expiryDate).toLocaleDateString('en-IN')}`}
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn btn-outline btn-sm" onClick={() => handleDownload(f)} title="Download"><FileUp size={14} style={{ transform: 'rotate(180deg)' }} /> Download</button>
+                    <button className="btn-icon" onClick={() => handleDelete(f._id)}><Trash2 size={14} /></button>
+                </div>
+            </div>)}
+        </div>
+        {list.length === 0 && <div className="collab-empty"><FileUp size={40} /><p>No files shared yet</p></div>}
     </div>);
 }
 

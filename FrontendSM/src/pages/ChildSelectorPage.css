@@ -1,0 +1,132 @@
+.cs-page {
+    min-height: 100vh;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+.cs-container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+}
+
+.cs-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.cs-logo {
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+.cs-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.cs-header p {
+    font-size: 15px;
+    color: #64748b;
+}
+
+.cs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cs-card {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    background: white;
+    border: 2px solid #f1f5f9;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-align: left;
+}
+
+.cs-card:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+    transform: translateY(-2px);
+}
+
+.cs-avatar {
+    width: 56px;
+    height: 56px;
+    background: #e0f2fe;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0284c7;
+    margin-right: 16px;
+}
+
+.cs-info {
+    flex: 1;
+}
+
+.cs-info h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.cs-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.cs-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cs-chevron {
+    color: #cbd5e1;
+}
+
+.cs-footer {
+    margin-top: 32px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 24px;
+    text-align: center;
+}
+
+.cs-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ef4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.cs-logout:hover {
+    background: #fee2e2;
+}

@@ -172,8 +172,8 @@ export default function Dashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {feeInvoices.map((inv) => (
-                                    <tr key={inv.id}>
+                                {feeInvoices.map((inv, i) => (
+                                    <tr key={inv.id || i}>
                                         <td className="td-bold">{inv.studentName}</td>
                                         <td>{inv.class}</td>
                                         <td>{inv.invoiceNo}</td>

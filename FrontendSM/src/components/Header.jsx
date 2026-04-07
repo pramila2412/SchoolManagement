@@ -8,17 +8,6 @@ import { SIDEBAR_MODULES } from './Sidebar';
 import { customAlert } from '../utils/dialogs';
 import './Header.css';
 
-const SEARCHABLE_ITEMS = SIDEBAR_MODULES.flatMap(module => {
-    const items = [];
-    items.push({ id: `main-${module.id}`, name: module.name, path: module.path, category: 'Main Module' });
-    if (module.subModules) {
-        module.subModules.forEach((sub, idx) => {
-            items.push({ id: `sub-${module.id}-${idx}`, name: sub.name, path: sub.path, category: module.name });
-        });
-    }
-    return items;
-});
-
 export default function Header({ onToggleSidebar, sidebarOpen }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -27,8 +16,18 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
     const navigate = useNavigate();
 
     // Perform module search
-    useState(() => {
-        // Just mock initialization
+    const searchableItems = SIDEBAR_MODULES.filter(module => {
+        if (user?.role === 'Parent') return module.id === 'parent-portal';
+        return module.id !== 'parent-portal';
+    }).flatMap(module => {
+        const items = [];
+        items.push({ id: `main-${module.id}`, name: module.name, path: module.path, category: 'Main Module' });
+        if (module.subModules) {
+            module.subModules.forEach((sub, idx) => {
+                items.push({ id: `sub-${module.id}-${idx}`, name: sub.name, path: sub.path, category: module.name });
+            });
+        }
+        return items;
     });
 
     const handleSearchChange = (e) => {
@@ -42,7 +41,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
         }
 
         const lowerQuery = query.toLowerCase();
-        const results = SEARCHABLE_ITEMS.filter(item => 
+        const results = searchableItems.filter(item => 
             item.name.toLowerCase().includes(lowerQuery) || 
             item.category.toLowerCase().includes(lowerQuery)
         ).slice(0, 6);

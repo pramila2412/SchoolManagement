@@ -146,11 +146,20 @@ export default function EContent() {
 
                         <div className="form-group" style={{ marginTop: 20 }}>
                             <label className="form-label">Upload File</label>
-                            <div className="upload-box" style={{ border: '2px dashed var(--border-light)', padding: 24, textAlign: 'center', borderRadius: 8, cursor: 'pointer', background: 'var(--bg-light)', transition: 'border-color 0.2s' }}>
+                            <div className="upload-box" 
+                                 onClick={() => {
+                                     const input = document.createElement('input');
+                                     input.type = 'file';
+                                     input.onchange = (e) => {
+                                         const file = e.target.files[0];
+                                         if (file) customAlert(`File "${file.name}" uploaded successfully!`);
+                                     };
+                                     input.click();
+                                 }}
+                                 style={{ border: '2px dashed var(--border-light)', padding: 24, textAlign: 'center', borderRadius: 8, cursor: 'pointer', background: 'var(--bg-light)', transition: 'border-color 0.2s' }}>
                                 <Upload size={32} style={{ color: 'var(--text-grey)', marginBottom: 8 }} />
                                 <p style={{ color: 'var(--text-dark)', fontWeight: 500 }}>Drop files here or click to upload</p>
                                 <p style={{ color: 'var(--text-grey)', fontSize: '0.8rem', marginTop: 4 }}>Maximum file size: 50MB</p>
-                                <input type="file" style={{ display: 'none' }} />
                             </div>
                         </div>
 

@@ -4,8 +4,9 @@ import {
     Users, PhoneCall, BookOpen, Send, AlertTriangle, Save, Plus,
     LayoutDashboard, Package, CalendarClock, FileText, BarChart3,
     LogIn, LogOut, CheckCircle, Clock, Eye, Edit, X, Search,
-    ArrowRight, Phone, HelpCircle, Trash2
+    ArrowRight, Phone, HelpCircle, Trash2, Printer
 } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './FrontOffice.css';
@@ -70,17 +71,30 @@ export default function FrontOffice() {
 
 /* ═══════════════════  DASHBOARD  ═══════════════════ */
 function FODashboard({ switchTab }) {
-    const [kpi, setKpi] = useState(null);
-    useEffect(() => { fetch(`${API}/dashboard`).then(r=>r.json()).then(setKpi).catch(()=>{}); }, []);
+    const [visitors] = useLocalStorage('fo_visitors', []);
+    const [calls] = useLocalStorage('fo_calls', []);
+    const [enquiries] = useLocalStorage('fo_enquiries', []);
+    const [complaints] = useLocalStorage('fo_complaints', []);
+    const [postal] = useLocalStorage('fo_postal', []);
+    const [appointments] = useLocalStorage('fo_appointments', []);
 
-    const cards = kpi ? [
+    const kpi = {
+        visitorsToday: visitors.filter(v => new Date(v.checkInTime).toDateString() === new Date().toDateString()).length,
+        callsToday: calls.filter(c => new Date(c.createdAt).toDateString() === new Date().toDateString()).length,
+        enquiriesOpen: enquiries.filter(e => e.status !== 'Closed' && e.status !== 'Converted').length,
+        complaintsPending: complaints.filter(c => c.status === 'Pending' || c.status === 'Assigned').length,
+        postalToday: postal.filter(p => new Date(p.date).toDateString() === new Date().toDateString()).length,
+        appointmentsUpcoming: appointments.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length,
+    };
+
+    const cards = [
         { label: 'Visitors Today', value: kpi.visitorsToday, color: '#3b82f6' },
         { label: 'Calls Received', value: kpi.callsToday, color: '#8b5cf6' },
         { label: 'Open Enquiries', value: kpi.enquiriesOpen, color: '#f59e0b' },
         { label: 'Pending Complaints', value: kpi.complaintsPending, color: '#ef4444' },
         { label: 'Postal Items', value: kpi.postalToday, color: '#10b981' },
         { label: 'Upcoming Appts', value: kpi.appointmentsUpcoming, color: '#6366f1' },
-    ] : [];
+    ];
 
     const actions = [
         { label: 'Add Visitor', icon: LogIn, tab: 'visitors' },
@@ -100,7 +114,6 @@ function FODashboard({ switchTab }) {
                         <div className="fo-kpi-label">{c.label}</div>
                     </div>
                 ))}
-                {!kpi && <div className="empty-state" style={{gridColumn:'1/-1',padding:40}}><Clock size={48}/><h3>Loading Dashboard...</h3></div>}
             </div>
             <h3 style={{margin:'28px 0 16px',fontSize:'1rem',fontWeight:600}}>Quick Actions</h3>
             <div className="fo-quick-actions">
@@ -117,27 +130,48 @@ function FODashboard({ switchTab }) {
 
 /* ═══════════════════  VISITORS  ═══════════════════ */
 function VisitorTab() {
-    const [visitors, setVisitors] = useState([]);
+    const [visitors, setVisitors] = useLocalStorage('fo_visitors', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ name:'', phone:'', purpose:'Meeting', staffMeeting:'', note:'' });
-
-    const load = useCallback(() => {
-        const today = new Date().toISOString().split('T')[0];
-        fetch(`${API}/visitors?date=${today}`).then(r=>r.json()).then(setVisitors).catch(()=>{});
-    }, []);
-    useEffect(load, [load]);
 
     const handleSave = async e => {
         e.preventDefault();
         if (!form.name.trim() || !form.phone.trim()) return await customAlert('Name and Phone are required');
-        await fetch(`${API}/visitors`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
+        const newVisitor = {
+            ...form,
+            _id: Date.now(),
+            checkInTime: new Date().toISOString(),
+            status: 'Checked In'
+        };
+        setVisitors([newVisitor, ...visitors]);
         setForm({ name:'', phone:'', purpose:'Meeting', staffMeeting:'', note:'' });
-        setShowForm(false); load();
+        setShowForm(false);
+        await customAlert('Visitor Checked In Successfully');
     };
 
     const handleCheckout = async id => {
-        await fetch(`${API}/visitors/${id}/checkout`, { method:'PUT' });
-        load();
+        if (!await customConfirm('Confirm Check Out?')) return;
+        setVisitors(prev => prev.map(v => v._id === id ? { ...v, checkOutTime: new Date().toISOString(), status: 'Checked Out' } : v));
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this visitor record?')) return;
+        setVisitors(prev => prev.filter(v => v._id !== id));
+    };
+
+    const handleView = (v) => {
+        customAlert(`
+            Visitor Details
+            ---------------
+            Name: ${v.name}
+            Phone: ${v.phone}
+            Purpose: ${v.purpose}
+            Meeting With: ${v.staffMeeting || 'N/A'}
+            Check-In: ${fmtTime(v.checkInTime)}
+            Check-Out: ${v.checkOutTime ? fmtTime(v.checkOutTime) : 'N/A'}
+            Status: ${v.status}
+            Note: ${v.note || 'None'}
+        `);
     };
 
     return (
@@ -180,7 +214,13 @@ function VisitorTab() {
                                     <td className="fw-600">{v.name}</td><td>{v.phone}</td><td>{v.purpose}</td><td>{v.staffMeeting||'—'}</td>
                                     <td>{fmtTime(v.checkInTime)}</td><td>{v.checkOutTime ? fmtTime(v.checkOutTime) : '—'}</td>
                                     <td><Badge text={v.status} variant={statusColor(v.status)}/></td>
-                                    <td>{v.status==='Checked In' && <button className="btn btn-sm btn-outline" onClick={()=>handleCheckout(v._id)}><LogOut size={14}/> Check Out</button>}</td>
+                                    <td>
+                                        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                            <button className="btn-icon" onClick={()=>handleView(v)} title="View"><Eye size={16}/></button>
+                                            {v.status==='Checked In' && <button className="btn-icon" style={{color:'var(--primary)'}} onClick={()=>handleCheckout(v._id)} title="Check Out"><LogOut size={16}/></button>}
+                                            <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(v._id)} title="Delete"><Trash2 size={16}/></button>
+                                        </div>
+                                    </td>
                                 </tr>
                             )) : <tr><td colSpan="8"><div className="empty-state" style={{padding:30}}><Users size={40}/><h3>No Visitors Today</h3></div></td></tr>}
                         </tbody>
@@ -193,26 +233,51 @@ function VisitorTab() {
 
 /* ═══════════════════  CALL LOGS  ═══════════════════ */
 function CallLogTab() {
-    const [calls, setCalls] = useState([]);
+    const [calls, setCalls] = useLocalStorage('fo_calls', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ callType:'Incoming', callerName:'', phone:'', purpose:'General Inquiry', notes:'', followUpRequired:false, followUpDate:'', assignedTo:'' });
-
-    const load = useCallback(() => { fetch(`${API}/calls`).then(r=>r.json()).then(setCalls).catch(()=>{}); }, []);
-    useEffect(load, [load]);
 
     const handleSave = async e => {
         e.preventDefault();
         if (!form.callerName.trim() || !form.phone.trim()) return await customAlert('Name and Phone required');
         if (form.followUpRequired && !form.followUpDate) return await customAlert('Follow-up date is required');
-        await fetch(`${API}/calls`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
-        setForm({ callType:'Incoming', callerName:'', phone:'', purpose:'General Inquiry', notes:'', followUpRequired:false, followUpDate:'', assignedTo:'' }); setShowForm(false); load();
+        
+        const newCall = {
+            ...form,
+            _id: Date.now(),
+            createdAt: new Date().toISOString(),
+            status: form.followUpRequired ? 'Pending Follow-up' : 'Logged'
+        };
+        setCalls([newCall, ...calls]);
+        setForm({ callType:'Incoming', callerName:'', phone:'', purpose:'General Inquiry', notes:'', followUpRequired:false, followUpDate:'', assignedTo:'' }); setShowForm(false);
+        await customAlert('Call logged successfully');
     };
 
     const handleComplete = async id => {
         const notes = prompt('Enter completion notes:');
         if (notes === null) return;
-        await fetch(`${API}/calls/${id}/complete`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ completionNotes: notes }) });
-        load();
+        setCalls(prev => prev.map(c => c._id === id ? { ...c, status: 'Completed', completionNotes: notes } : c));
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this call log?')) return;
+        setCalls(prev => prev.filter(c => c._id !== id));
+    };
+
+    const handleView = (c) => {
+        customAlert(`
+            Call Log Details
+            ----------------
+            Type: ${c.callType}
+            Name: ${c.callerName}
+            Phone: ${c.phone}
+            Purpose: ${c.purpose}
+            Notes: ${c.notes || 'N/A'}
+            Date: ${fmt(c.createdAt)} ${fmtTime(c.createdAt)}
+            Follow-up: ${c.followUpDate ? fmt(c.followUpDate) : 'No'}
+            Assigned: ${c.assignedTo || 'N/A'}
+            Status: ${c.status}
+        `);
     };
 
     return (
@@ -267,7 +332,13 @@ function CallLogTab() {
                                 <td>{c.notes ? c.notes.substring(0,40) : '—'}</td>
                                 <td>{c.followUpDate ? fmt(c.followUpDate) : '—'}</td>
                                 <td><Badge text={c.status} variant={statusColor(c.status)}/></td>
-                                <td>{(c.status==='Pending Follow-up'||c.status==='Overdue') && <button className="btn btn-sm btn-primary" onClick={()=>handleComplete(c._id)}><CheckCircle size={14}/> Complete</button>}</td>
+                                <td>
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(c)} title="View"><Eye size={16}/></button>
+                                        {(c.status==='Pending Follow-up'||c.status==='Overdue') && <button className="btn-icon" style={{color:'var(--success)'}} onClick={()=>handleComplete(c._id)} title="Mark Complete"><CheckCircle size={16}/></button>}
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(c._id)} title="Delete"><Trash2 size={16}/></button>
+                                    </div>
+                                </td>
                             </tr>
                         )) : <tr><td colSpan="8"><div className="empty-state" style={{padding:30}}><PhoneCall size={40}/><h3>No Calls Logged</h3></div></td></tr>}
                     </tbody>
@@ -279,33 +350,56 @@ function CallLogTab() {
 
 /* ═══════════════════  ENQUIRIES  ═══════════════════ */
 function EnquiryTab() {
-    const [enquiries, setEnquiries] = useState([]);
+    const [enquiries, setEnquiries] = useLocalStorage('fo_enquiries', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
         name:'', phone:'', email:'', enquiryType:'General', source:'Walk-in', message:'', assignedTo:'', followUpDate:'',
         studentName:'', parentName:'', classInterested:'', academicYear:'',
     });
 
-    const load = useCallback(() => { fetch(`${API}/enquiries`).then(r=>r.json()).then(setEnquiries).catch(()=>{}); }, []);
-    useEffect(load, [load]);
-
     const handleSave = async e => {
         e.preventDefault();
         if (!form.name.trim() || !form.phone.trim()) return await customAlert('Name and Phone required');
-        await fetch(`${API}/enquiries`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
+        const newEnquiry = {
+            ...form,
+            _id: Date.now(),
+            createdAt: new Date().toISOString(),
+            status: 'New'
+        };
+        setEnquiries([newEnquiry, ...enquiries]);
         setForm({ name:'', phone:'', email:'', enquiryType:'General', source:'Walk-in', message:'', assignedTo:'', followUpDate:'', studentName:'', parentName:'', classInterested:'', academicYear:'' });
-        setShowForm(false); load();
+        setShowForm(false);
+        await customAlert('Enquiry saved successfully');
     };
 
     const handleStatusUpdate = async (id, status) => {
-        await fetch(`${API}/enquiries/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
-        load();
+        setEnquiries(prev => prev.map(eq => eq._id === id ? { ...eq, status } : eq));
     };
 
     const handleConvert = async id => {
         if (!await customConfirm('Convert this enquiry to Admission?')) return;
-        await fetch(`${API}/enquiries/${id}/convert`, { method:'PUT' });
-        load();
+        setEnquiries(prev => prev.map(eq => eq._id === id ? { ...eq, status: 'Converted' } : eq));
+        await customAlert('Enquiry marked as Converted.');
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this enquiry record?')) return;
+        setEnquiries(prev => prev.filter(eq => eq._id !== id));
+    };
+
+    const handleView = (eq) => {
+        customAlert(`
+            Enquiry Details
+            ---------------
+            Name: ${eq.name}
+            Phone: ${eq.phone}
+            Type: ${eq.enquiryType}
+            Source: ${eq.source}
+            Student: ${eq.studentName || 'N/A'}
+            Assigned: ${eq.assignedTo || 'Unassigned'}
+            Status: ${eq.status}
+            Message: ${eq.message || 'None'}
+        `);
     };
 
     return (
@@ -366,10 +460,12 @@ function EnquiryTab() {
                                 <td>{eq.source}</td><td>{eq.assignedTo||'—'}</td><td>{fmt(eq.followUpDate)}</td>
                                 <td><Badge text={eq.status} variant={statusColor(eq.status)}/></td>
                                 <td>
-                                    <div style={{display:'flex',gap:4}}>
-                                        {eq.status==='New' && <button className="btn btn-sm btn-outline" onClick={()=>handleStatusUpdate(eq._id,'In Progress')}>Start</button>}
-                                        {eq.status==='In Progress' && eq.enquiryType==='Admission' && <button className="btn btn-sm btn-primary" onClick={()=>handleConvert(eq._id)}>Convert</button>}
-                                        {eq.status==='In Progress' && <button className="btn btn-sm btn-outline" onClick={()=>handleStatusUpdate(eq._id,'Closed')}>Close</button>}
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(eq)} title="View"><Eye size={16}/></button>
+                                        {eq.status==='New' && <button className="btn-icon" style={{color:'var(--primary)'}} onClick={()=>handleStatusUpdate(eq._id,'In Progress')} title="Start"><ArrowRight size={16}/></button>}
+                                        {eq.status==='In Progress' && eq.enquiryType==='Admission' && <button className="btn-icon" style={{color:'var(--success)'}} onClick={()=>handleConvert(eq._id)} title="Convert"><CheckCircle size={16}/></button>}
+                                        {eq.status==='In Progress' && <button className="btn-icon" style={{color:'var(--accent)'}} onClick={()=>handleStatusUpdate(eq._id,'Closed')} title="Close"><X size={16}/></button>}
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(eq._id)} title="Delete"><Trash2 size={16}/></button>
                                     </div>
                                 </td>
                             </tr>
@@ -383,33 +479,55 @@ function EnquiryTab() {
 
 /* ═══════════════════  COMPLAINTS  ═══════════════════ */
 function ComplaintTab() {
-    const [complaints, setComplaints] = useState([]);
+    const [complaints, setComplaints] = useLocalStorage('fo_complaints', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ complainantName:'', phone:'', complainantType:'Parent', category:'Other', description:'', priority:'Medium' });
-
-    const load = useCallback(() => { fetch(`${API}/complaints`).then(r=>r.json()).then(setComplaints).catch(()=>{}); }, []);
-    useEffect(load, [load]);
 
     const handleSave = async e => {
         e.preventDefault();
         if (!form.complainantName.trim() || !form.description.trim()) return await customAlert('Name and Description required');
-        await fetch(`${API}/complaints`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
+        const newComplaint = {
+            ...form,
+            _id: Date.now(),
+            createdAt: new Date().toISOString(),
+            status: 'Pending'
+        };
+        setComplaints([newComplaint, ...complaints]);
         setForm({ complainantName:'', phone:'', complainantType:'Parent', category:'Other', description:'', priority:'Medium' });
-        setShowForm(false); load();
+        setShowForm(false);
+        await customAlert('Complaint registered successfully');
     };
 
     const handleAssign = async id => {
         const staff = prompt('Enter staff member name to assign:');
         if (!staff) return;
-        await fetch(`${API}/complaints/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ assignedTo: staff, status: 'Assigned' }) });
-        load();
+        setComplaints(prev => prev.map(c => c._id === id ? { ...c, assignedTo: staff, status: 'Assigned' } : c));
     };
 
     const handleResolve = async id => {
         const summary = prompt('Enter resolution summary:');
         if (!summary) return;
-        await fetch(`${API}/complaints/${id}/resolve`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ resolutionSummary: summary }) });
-        load();
+        setComplaints(prev => prev.map(c => c._id === id ? { ...c, resolutionSummary: summary, status: 'Resolved', resolvedAt: new Date().toISOString() } : c));
+        await customAlert('Complaint marked as Resolved.');
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this complaint record?')) return;
+        setComplaints(prev => prev.filter(c => c._id !== id));
+    };
+
+    const handleView = (c) => {
+        customAlert(`
+            Complaint Details
+            -----------------
+            Complainant: ${c.complainantName} (${c.complainantType})
+            Category: ${c.category}
+            Priority: ${c.priority}
+            Assigned: ${c.assignedTo || 'Unassigned'}
+            Status: ${c.status}
+            Description: ${c.description}
+            Resolution: ${c.resolutionSummary || 'Pending'}
+        `);
     };
 
     const prioColor = p => ({ Low:'info', Medium:'warning', High:'danger', Urgent:'danger' }[p] || 'info');
@@ -460,9 +578,11 @@ function ComplaintTab() {
                                 <td><Badge text={c.status} variant={statusColor(c.status)}/></td>
                                 <td>{fmt(c.createdAt)}</td>
                                 <td>
-                                    <div style={{display:'flex',gap:4}}>
-                                        {c.status==='Pending' && <button className="btn btn-sm btn-outline" onClick={()=>handleAssign(c._id)}>Assign</button>}
-                                        {(c.status==='Assigned'||c.status==='In Progress') && <button className="btn btn-sm btn-primary" onClick={()=>handleResolve(c._id)}>Resolve</button>}
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(c)} title="View"><Eye size={16}/></button>
+                                        {c.status==='Pending' && <button className="btn-icon" style={{color:'var(--primary)'}} onClick={()=>handleAssign(c._id)} title="Assign"><UserCheck size={16}/></button>}
+                                        {(c.status==='Assigned'||c.status==='In Progress') && <button className="btn-icon" style={{color:'var(--success)'}} onClick={()=>handleResolve(c._id)} title="Resolve"><CheckCircle size={16}/></button>}
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(c._id)} title="Delete"><Trash2 size={16}/></button>
                                     </div>
                                 </td>
                             </tr>
@@ -476,19 +596,43 @@ function ComplaintTab() {
 
 /* ═══════════════════  POSTAL  ═══════════════════ */
 function PostalTab() {
-    const [items, setItems] = useState([]);
+    const [items, setItems] = useLocalStorage('fo_postal', []);
     const [direction, setDirection] = useState('Inward');
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ direction:'Inward', senderName:'', senderAddress:'', recipient:'', receiverName:'', receiverAddress:'', parcelType:'Letter', courierCompany:'', trackingNumber:'', contents:'' });
 
-    const load = useCallback(() => { fetch(`${API}/postal`).then(r=>r.json()).then(setItems).catch(()=>{}); }, []);
-    useEffect(load, [load]);
-
     const handleSave = async e => {
         e.preventDefault();
-        await fetch(`${API}/postal`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...form, direction}) });
+        const newItem = {
+            ...form,
+            direction,
+            _id: Date.now(),
+            date: new Date().toISOString(),
+            status: direction === 'Inward' ? 'Received' : 'Dispatched'
+        };
+        setItems([newItem, ...items]);
         setForm({ direction:'Inward', senderName:'', senderAddress:'', recipient:'', receiverName:'', receiverAddress:'', parcelType:'Letter', courierCompany:'', trackingNumber:'', contents:'' });
-        setShowForm(false); load();
+        setShowForm(false);
+        await customAlert('Postal record saved');
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this postal record?')) return;
+        setItems(prev => prev.filter(i => i._id !== id));
+    };
+
+    const handleView = (p) => {
+        customAlert(`
+            Postal Details (${p.direction})
+            -------------------------------
+            ${p.direction === 'Inward' ? `Sender: ${p.senderName}\nAddress: ${p.senderAddress}` : `Receiver: ${p.receiverName}\nAddress: ${p.receiverAddress}`}
+            Type: ${p.parcelType}
+            Courier: ${p.courierCompany || 'N/A'}
+            Tracking: ${p.trackingNumber || 'N/A'}
+            ${p.direction === 'Inward' ? `Recipient: ${p.recipient}` : `Contents: ${p.contents}`}
+            Date: ${fmt(p.date)}
+            Status: ${p.status}
+        `);
     };
 
     const filtered = items.filter(i => i.direction === direction);
@@ -540,7 +684,7 @@ function PostalTab() {
                 <div className="table-responsive"><table className="data-table">
                     <thead><tr>
                         <th>{direction==='Inward'?'Sender':'Receiver'}</th><th>Type</th><th>Courier</th><th>Tracking #</th>
-                        <th>{direction==='Inward'?'Recipient':'Contents'}</th><th>Date</th><th>Status</th>
+                        <th>{direction==='Inward'?'Recipient':'Contents'}</th><th>Date</th><th>Status</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                         {filtered.length > 0 ? filtered.map(p=>(
@@ -550,8 +694,14 @@ function PostalTab() {
                                 <td>{direction==='Inward'?(p.recipient||'—'):(p.contents||'—')}</td>
                                 <td>{fmt(p.date)}</td>
                                 <td><Badge text={p.status} variant={statusColor(p.status)}/></td>
+                                <td>
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(p)} title="View"><Eye size={16}/></button>
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(p._id)} title="Delete"><Trash2 size={16}/></button>
+                                    </div>
+                                </td>
                             </tr>
-                        )) : <tr><td colSpan="7"><div className="empty-state" style={{padding:30}}><Package size={40}/><h3>No {direction==='Inward'?'Received':'Sent'} Mail</h3></div></td></tr>}
+                        )) : <tr><td colSpan="8"><div className="empty-state" style={{padding:30}}><Package size={40}/><h3>No {direction==='Inward'?'Received':'Sent'} Mail</h3></div></td></tr>}
                     </tbody>
                 </table></div>
             </div>
@@ -561,23 +711,44 @@ function PostalTab() {
 
 /* ═══════════════════  APPOINTMENTS  ═══════════════════ */
 function AppointmentTab() {
-    const [appts, setAppts] = useState([]);
+    const [appts, setAppts] = useLocalStorage('fo_appointments', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ visitorName:'', phone:'', staffMember:'', date:'', time:'', purpose:'', notes:'' });
-
-    const load = useCallback(() => { fetch(`${API}/appointments`).then(r=>r.json()).then(setAppts).catch(()=>{}); }, []);
-    useEffect(load, [load]);
 
     const handleSave = async e => {
         e.preventDefault();
         if (!form.visitorName.trim()||!form.staffMember.trim()||!form.date||!form.time) return await customAlert('All required fields must be filled');
-        await fetch(`${API}/appointments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
-        setForm({ visitorName:'', phone:'', staffMember:'', date:'', time:'', purpose:'', notes:'' }); setShowForm(false); load();
+        const newAppt = {
+            ...form,
+            _id: Date.now(),
+            status: 'Scheduled'
+        };
+        setAppts([newAppt, ...appts]);
+        setForm({ visitorName:'', phone:'', staffMember:'', date:'', time:'', purpose:'', notes:'' }); setShowForm(false);
+        await customAlert('Appointment scheduled successfully');
     };
 
     const handleStatus = async (id, status) => {
-        await fetch(`${API}/appointments/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
-        load();
+        setAppts(prev => prev.map(a => a._id === id ? { ...a, status } : a));
+    };
+
+    const handleDelete = async id => {
+        if (!await customConfirm('Delete this appointment?')) return;
+        setAppts(prev => prev.filter(a => a._id !== id));
+    };
+
+    const handleView = (a) => {
+        customAlert(`
+            Appointment Details
+            -------------------
+            Visitor: ${a.visitorName}
+            Phone: ${a.phone || 'N/A'}
+            Staff: ${a.staffMember}
+            Date: ${fmt(a.date)} at ${a.time}
+            Purpose: ${a.purpose || 'General'}
+            Status: ${a.status}
+            Notes: ${a.notes || 'None'}
+        `);
     };
 
     return (
@@ -620,10 +791,12 @@ function AppointmentTab() {
                                 <td>{fmt(a.date)}</td><td>{a.time}</td><td>{a.purpose||'—'}</td>
                                 <td><Badge text={a.status} variant={statusColor(a.status)}/></td>
                                 <td>
-                                    <div style={{display:'flex',gap:4}}>
-                                        {a.status==='Scheduled' && <button className="btn btn-sm btn-outline" onClick={()=>handleStatus(a._id,'Confirmed')}>Confirm</button>}
-                                        {(a.status==='Scheduled'||a.status==='Confirmed') && <button className="btn btn-sm btn-primary" onClick={()=>handleStatus(a._id,'Completed')}>Done</button>}
-                                        {a.status==='Scheduled' && <button className="btn btn-sm btn-outline" style={{color:'#ef4444',borderColor:'#ef4444'}} onClick={()=>handleStatus(a._id,'Cancelled')}>Cancel</button>}
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(a)} title="View"><Eye size={16}/></button>
+                                        {a.status==='Scheduled' && <button className="btn-icon" style={{color:'var(--primary)'}} onClick={()=>handleStatus(a._id,'Confirmed')} title="Confirm"><CheckCircle size={16}/></button>}
+                                        {(a.status==='Scheduled'||a.status==='Confirmed') && <button className="btn-icon" style={{color:'var(--success)'}} onClick={()=>handleStatus(a._id,'Completed')} title="Done"><FileText size={16}/></button>}
+                                        {a.status==='Scheduled' && <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleStatus(a._id,'Cancelled')} title="Cancel"><X size={16}/></button>}
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} onClick={()=>handleDelete(a._id)} title="Delete"><Trash2 size={16}/></button>
                                     </div>
                                 </td>
                             </tr>

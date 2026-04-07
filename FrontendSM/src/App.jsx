@@ -17,6 +17,7 @@ import Addons from './pages/Addons';
 import Finance from './pages/Finance';
 import HR from './pages/HR';
 import ParentPortal from './pages/ParentPortal';
+import ChildSelectorPage from './pages/ChildSelectorPage';
 
 import Attendance from './pages/Attendance';
 import Certificates from './pages/Certificates';
@@ -36,6 +37,7 @@ function ProtectedRoute({ children }) {
 }
 
 function AppLayout() {
+  const { user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -57,7 +59,9 @@ function AppLayout() {
       <main className="main-content">
         <div className="page-content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={
+              user?.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
+            } />
             <Route path="/students" element={<StudentsPage />} />
             <Route path="/students/add" element={<AddStudent />} />
             <Route path="/students/edit/:id" element={<EditStudent />} />
@@ -93,6 +97,9 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/parent-selector" element={
+            <ProtectedRoute children={<ChildSelectorPage />} />
+          } />
           <Route path="/*" element={
             <ProtectedRoute>
               <AppLayout />

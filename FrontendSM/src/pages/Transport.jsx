@@ -7,38 +7,30 @@ import {
     ChevronRight, CheckCircle2, XCircle, Search, Filter, Download,
     Wrench, Shield, Calendar, Phone, CreditCard, Eye
 } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './Transport.css';
 
-const API = '/api/transport';
-
-function useApi(endpoint) {
-    const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const fetchData = useCallback(async () => {
-        try {
-            setLoading(true);
-            const res = await fetch(`${API}${endpoint}`);
-            const json = await res.json();
-            setData(json);
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
-    }, [endpoint]);
-    useEffect(() => { fetchData(); }, [fetchData]);
-    return { data, loading, refresh: fetchData };
-}
+// Helper to get initials
+const getInitials = n => n ? n.split(' ').map(x=>x[0]).join('').toUpperCase() : '?';
 
 // ======================== DASHBOARD TAB ========================
 function DashboardTab({ onNavigate }) {
-    const { data: stats } = useApi('/dashboard');
+    const [vehicles] = useLocalStorage('transport_vehicles', []);
+    const [routes] = useLocalStorage('transport_routes', []);
+    const [drivers] = useLocalStorage('transport_drivers', []);
+    const [assignments] = useLocalStorage('transport_assignments', []);
+
+    const maintenanceCost = vehicles.reduce((acc, v) => acc + (v.maintenance?.reduce((sum, m) => sum + (Number(m.cost) || 0), 0) || 0), 0);
+
     const kpis = [
-        { label: 'Total Vehicles', value: stats.totalVehicles || 0, icon: Truck, color: 'var(--info)', bg: 'var(--info-light)' },
-        { label: 'Active Routes', value: stats.activeRoutes || 0, icon: RouteIcon, color: 'var(--accent)', bg: 'var(--accent-light)' },
-        { label: 'Students Using Transport', value: stats.studentsUsingTransport || 0, icon: UsersIcon, color: 'var(--success)', bg: 'var(--success-light)' },
-        { label: 'Drivers Assigned', value: stats.driversAssigned || 0, icon: UserCheck, color: 'var(--primary)', bg: 'rgba(11,60,93,0.1)' },
-        { label: 'Maintenance Cost', value: `₹${(stats.maintenanceCost || 0).toLocaleString('en-IN')}`, icon: Wrench, color: 'var(--warning)', bg: 'var(--warning-light)' },
-        { label: 'Pending Assignments', value: stats.pendingAssignments || 0, icon: AlertTriangle, color: 'var(--danger)', bg: 'var(--danger-light)' },
+        { label: 'Total Vehicles', value: vehicles.length, icon: Truck, color: 'var(--info)', bg: 'var(--info-light)' },
+        { label: 'Active Routes', value: routes.filter(r => r.status === 'Active').length, icon: RouteIcon, color: 'var(--accent)', bg: 'var(--accent-light)' },
+        { label: 'Students Using Transport', value: assignments.length, icon: UsersIcon, color: 'var(--success)', bg: 'var(--success-light)' },
+        { label: 'Drivers Assigned', value: drivers.filter(d => d.vehicleId).length, icon: UserCheck, color: 'var(--primary)', bg: 'rgba(11,60,93,0.1)' },
+        { label: 'Maintenance Cost', value: `₹${maintenanceCost.toLocaleString('en-IN')}`, icon: Wrench, color: 'var(--warning)', bg: 'var(--warning-light)' },
+        { label: 'Pending Assignments', value: assignments.filter(a => a.status === 'Pending').length, icon: AlertTriangle, color: 'var(--danger)', bg: 'var(--danger-light)' },
     ];
     const quickActions = [
         { label: 'Add Vehicle', icon: Truck, tab: 'vehicles' },
@@ -82,30 +74,59 @@ function DashboardTab({ onNavigate }) {
 
 // ======================== VEHICLES TAB ========================
 function VehiclesTab() {
-    const { data: vehicles, refresh } = useApi('/vehicles');
+    const [vehicles, setVehicles] = useLocalStorage('transport_vehicles', []);
     const [form, setForm] = useState({ vehicleNumber: '', type: 'Bus', capacity: '', model: '', yearOfManufacture: '', insuranceProvider: '', policyNumber: '', insuranceExpiry: '', rcNumber: '', registrationExpiry: '', fitnessCertExpiry: '' });
     const [showMaint, setShowMaint] = useState(null);
     const [maintForm, setMaintForm] = useState({ date: '', type: 'Routine Service', cost: '', serviceProvider: '', notes: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/vehicles`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, capacity: Number(form.capacity) }) });
+        const newVehicle = { 
+            ...form, 
+            _id: Date.now(), 
+            capacity: Number(form.capacity),
+            status: 'Active',
+            maintenance: []
+        };
+        setVehicles([newVehicle, ...vehicles]);
         setForm({ vehicleNumber: '', type: 'Bus', capacity: '', model: '', yearOfManufacture: '', insuranceProvider: '', policyNumber: '', insuranceExpiry: '', rcNumber: '', registrationExpiry: '', fitnessCertExpiry: '' });
-        refresh();
+        await customAlert('Vehicle added successfully');
     };
 
     const handleDelete = async (id) => {
         if (!await customConfirm('Delete this vehicle?')) return;
-        await fetch(`${API}/vehicles/${id}`, { method: 'DELETE' });
-        refresh();
+        setVehicles(prev => prev.filter(v => v._id !== id));
     };
 
     const handleMaintSubmit = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/vehicles/${showMaint}/maintenance`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...maintForm, cost: Number(maintForm.cost) }) });
+        const updated = vehicles.map(v => {
+            if (v._id === showMaint) {
+                return {
+                    ...v,
+                    maintenance: [...(v.maintenance || []), { ...maintForm, _id: Date.now(), cost: Number(maintForm.cost) }]
+                };
+            }
+            return v;
+        });
+        setVehicles(updated);
         setMaintForm({ date: '', type: 'Routine Service', cost: '', serviceProvider: '', notes: '' });
         setShowMaint(null);
-        refresh();
+        await customAlert('Maintenance record saved');
+    };
+
+    const handleView = (v) => {
+        const maintCount = v.maintenance?.length || 0;
+        customAlert(`
+            Vehicle Details
+            ---------------
+            No: ${v.vehicleNumber}
+            Type: ${v.type}
+            Capacity: ${v.capacity}
+            Model: ${v.model || 'N/A'}
+            Status: ${v.status}
+            Maintenance Records: ${maintCount}
+        `);
     };
 
     const statusBadge = (status) => {
@@ -242,8 +263,11 @@ function VehiclesTab() {
                                 <td>{statusBadge(v.status)}</td>
                                 <td>{v.insuranceExpiry ? new Date(v.insuranceExpiry).toLocaleDateString('en-IN') : '—'}</td>
                                 <td>
-                                    <button className="btn-icon" title="Maintenance" onClick={() => setShowMaint(showMaint === v._id ? null : v._id)}><Wrench size={16} /></button>
-                                    <button className="btn-icon" title="Delete" onClick={() => handleDelete(v._id)}><Trash2 size={16} /></button>
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(v)} title="View"><Eye size={16}/></button>
+                                        <button className="btn-icon" title="Maintenance" onClick={() => setShowMaint(showMaint === v._id ? null : v._id)}><Wrench size={16} /></button>
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} title="Delete" onClick={() => handleDelete(v._id)}><Trash2 size={16} /></button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -256,32 +280,51 @@ function VehiclesTab() {
 
 // ======================== DRIVERS TAB ========================
 function DriversTab() {
-    const { data: drivers, refresh } = useApi('/drivers');
-    const { data: vehicles } = useApi('/vehicles');
-    const { data: routes } = useApi('/routes');
+    const [drivers, setDrivers] = useLocalStorage('transport_drivers', []);
+    const [vehicles] = useLocalStorage('transport_vehicles', []);
+    const [routes] = useLocalStorage('transport_routes', []);
     const [form, setForm] = useState({ firstName: '', lastName: '', mobile: '', licenseNumber: '', licenseCategory: 'LMV', licenseExpiry: '', dob: '', gender: 'Male', address: '' });
     const [showAssign, setShowAssign] = useState(null);
     const [assignForm, setAssignForm] = useState({ vehicleId: '', routeId: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/drivers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        const newDriver = {
+            ...form,
+            _id: Date.now(),
+            status: 'Active'
+        };
+        setDrivers([newDriver, ...drivers]);
         setForm({ firstName: '', lastName: '', mobile: '', licenseNumber: '', licenseCategory: 'LMV', licenseExpiry: '', dob: '', gender: 'Male', address: '' });
-        refresh();
+        await customAlert('Driver details saved');
     };
 
     const handleAssign = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/drivers/${showAssign}/assign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assignForm) });
+        setDrivers(prev => prev.map(d => d._id === showAssign ? { ...d, ...assignForm } : d));
         setShowAssign(null);
         setAssignForm({ vehicleId: '', routeId: '' });
-        refresh();
+        await customAlert('Driver assignment updated');
     };
 
     const handleDelete = async (id) => {
         if (!await customConfirm('Delete this driver?')) return;
-        await fetch(`${API}/drivers/${id}`, { method: 'DELETE' });
-        refresh();
+        setDrivers(prev => prev.filter(d => d._id !== id));
+    };
+
+    const handleView = (d) => {
+        const v = vehicles.find(vx => vx._id === d.vehicleId);
+        const r = routes.find(rx => rx._id === d.routeId);
+        customAlert(`
+            Driver Details
+            --------------
+            Name: ${d.firstName} ${d.lastName}
+            Mobile: ${d.mobile}
+            License: ${d.licenseNumber} (${d.licenseCategory})
+            Status: ${d.status}
+            Vehicle: ${v?.vehicleNumber || 'Unassigned'}
+            Route: ${r?.name || 'Unassigned'}
+        `);
     };
 
     const statusBadge = (status) => {
@@ -398,8 +441,11 @@ function DriversTab() {
                                 <td>{d.licenseExpiry ? new Date(d.licenseExpiry).toLocaleDateString('en-IN') : '—'}</td>
                                 <td>{statusBadge(d.status)}</td>
                                 <td>
-                                    <button className="btn-icon" title="Assign" onClick={() => setShowAssign(showAssign === d._id ? null : d._id)}><UserCheck size={16} /></button>
-                                    <button className="btn-icon" title="Delete" onClick={() => handleDelete(d._id)}><Trash2 size={16} /></button>
+                                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                        <button className="btn-icon" onClick={()=>handleView(d)} title="View"><Eye size={16}/></button>
+                                        <button className="btn-icon" title="Assign" onClick={() => setShowAssign(showAssign === d._id ? null : d._id)}><UserCheck size={16} /></button>
+                                        <button className="btn-icon" style={{color:'var(--danger)'}} title="Delete" onClick={() => handleDelete(d._id)}><Trash2 size={16} /></button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -412,35 +458,59 @@ function DriversTab() {
 
 // ======================== ROUTES TAB ========================
 function RoutesTab() {
-    const { data: routes, refresh } = useApi('/routes');
+    const [routes, setRoutes] = useLocalStorage('transport_routes', []);
     const [form, setForm] = useState({ name: '', startPoint: '', endPoint: '', direction: 'Both' });
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [stopForm, setStopForm] = useState({ name: '', pickupTime: '', dropTime: '', sequence: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/routes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        const newRoute = {
+            ...form,
+            _id: Date.now(),
+            status: 'Active',
+            stops: []
+        };
+        setRoutes([newRoute, ...routes]);
         setForm({ name: '', startPoint: '', endPoint: '', direction: 'Both' });
-        refresh();
+        await customAlert('Route created successfully');
     };
 
     const handleAddStop = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/routes/${selectedRoute}/stops`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...stopForm, sequence: Number(stopForm.sequence) }) });
+        setRoutes(prev => prev.map(r => {
+            if (r._id === selectedRoute) {
+                return {
+                    ...r,
+                    stops: [...(r.stops || []), { ...stopForm, _id: Date.now(), sequence: Number(stopForm.sequence) }]
+                };
+            }
+            return r;
+        }));
         setStopForm({ name: '', pickupTime: '', dropTime: '', sequence: '' });
-        refresh();
+        await customAlert('Stop added to route');
     };
 
     const handleDelete = async (id) => {
         if (!await customConfirm('Delete this route?')) return;
-        await fetch(`${API}/routes/${id}`, { method: 'DELETE' });
+        setRoutes(prev => prev.filter(r => r._id !== id));
         if (selectedRoute === id) setSelectedRoute(null);
-        refresh();
     };
 
     const handleStatusChange = async (id, status) => {
-        await fetch(`${API}/routes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
-        refresh();
+        setRoutes(prev => prev.map(r => r._id === id ? { ...r, status } : r));
+    };
+
+    const handleView = (r) => {
+        customAlert(`
+            Route Details
+            -------------
+            Name: ${r.name}
+            Route: ${r.startPoint} to ${r.endPoint}
+            Direction: ${r.direction}
+            Stops: ${r.stops?.length || 0}
+            Status: ${r.status}
+        `);
     };
 
     const selected = routes.find(r => r._id === selectedRoute);
@@ -546,8 +616,11 @@ function RoutesTab() {
                                         </select>
                                     </td>
                                     <td>
-                                        <button className="btn-icon" title="Manage Stops" onClick={() => setSelectedRoute(selectedRoute === r._id ? null : r._id)}><MapPin size={16} /></button>
-                                        <button className="btn-icon" title="Delete" onClick={() => handleDelete(r._id)}><Trash2 size={16} /></button>
+                                        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                                            <button className="btn-icon" onClick={()=>handleView(r)} title="View"><Eye size={16}/></button>
+                                            <button className="btn-icon" title="Manage Stops" onClick={() => setSelectedRoute(selectedRoute === r._id ? null : r._id)}><MapPin size={16} /></button>
+                                            <button className="btn-icon" style={{color:'var(--danger)'}} title="Delete" onClick={() => handleDelete(r._id)}><Trash2 size={16} /></button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -561,24 +634,27 @@ function RoutesTab() {
 
 // ======================== STUDENTS TAB ========================
 function StudentsTab() {
-    const { data: assignments, refresh } = useApi('/students');
-    const { data: routes } = useApi('/routes');
-    const [form, setForm] = useState({ studentName: '', class: '', section: '', route: '', stop: '', startDate: '' });
-    const [bulkMode, setBulkMode] = useState(false);
-
-    const selectedRoute = routes.find(r => r._id === form.route);
+    const [assignments, setAssignments] = useLocalStorage('transport_assignments', []);
+    const [routes] = useLocalStorage('transport_routes', []);
+    const [form, setForm] = useState({ studentName: '', class: '', section: '', routeId: '', stop: '', startDate: '' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await fetch(`${API}/students`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-        setForm({ studentName: '', class: '', section: '', route: '', stop: '', startDate: '' });
-        refresh();
+        const route = routes.find(r => r._id === Number(form.routeId) || r._id === form.routeId);
+        const newAssignment = {
+            ...form,
+            _id: Date.now(),
+            route: route,
+            status: 'Active'
+        };
+        setAssignments([newAssignment, ...assignments]);
+        setForm({ studentName: '', class: '', section: '', routeId: '', stop: '', startDate: '' });
+        await customAlert('Student assigned to route successfully');
     };
 
     const handleUnassign = async (id) => {
         if (!await customConfirm('Unassign this student from transport?')) return;
-        await fetch(`${API}/students/${id}`, { method: 'DELETE' });
-        refresh();
+        setAssignments(prev => prev.filter(a => a._id !== id));
     };
 
     return (
@@ -601,9 +677,9 @@ function StudentsTab() {
                                 <input type="text" className="form-input" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })} />
                             </div>
                         </div>
-                        <div className="form-group">
+                         <div className="form-group">
                             <label className="form-label">Route <span className="required">*</span></label>
-                            <select className="form-select" required value={form.route} onChange={e => setForm({ ...form, route: e.target.value, stop: '' })}>
+                            <select className="form-select" required value={form.routeId} onChange={e => setForm({ ...form, routeId: e.target.value, stop: '' })}>
                                 <option value="">Select Route</option>
                                 {routes.filter(r => r.status === 'Active').map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
                             </select>
@@ -612,7 +688,7 @@ function StudentsTab() {
                             <label className="form-label">Stop <span className="required">*</span></label>
                             <select className="form-select" required value={form.stop} onChange={e => setForm({ ...form, stop: e.target.value })}>
                                 <option value="">Select Stop</option>
-                                {selectedRoute?.stops?.sort((a, b) => a.sequence - b.sequence).map((s, i) => <option key={i} value={s.name}>{s.sequence}. {s.name}</option>)}
+                                {routes.find(r => r._id == form.routeId)?.stops?.sort((a, b) => a.sequence - b.sequence).map((s, i) => <option key={i} value={s.name}>{s.sequence}. {s.name}</option>)}
                             </select>
                         </div>
                         <div className="form-group">
@@ -661,7 +737,9 @@ function StudentsTab() {
 
 // ======================== TRACKING TAB ========================
 function TrackingTab() {
-    const { data: vehicles } = useApi('/vehicles');
+    const [vehicles] = useLocalStorage('transport_vehicles', []);
+    const [drivers] = useLocalStorage('transport_drivers', []);
+    const [routes] = useLocalStorage('transport_routes', []);
     const activeVehicles = vehicles.filter(v => v.status === 'Active');
 
     return (
@@ -688,8 +766,8 @@ function TrackingTab() {
                                 <div className="tracking-detail"><span>Type</span><span>{v.type}</span></div>
                                 <div className="tracking-detail"><span>Model</span><span>{v.model || '—'}</span></div>
                                 <div className="tracking-detail"><span>Capacity</span><span>{v.capacity} seats</span></div>
-                                <div className="tracking-detail"><span>Driver</span><span>{v.assignedDriver?.firstName ? `${v.assignedDriver.firstName} ${v.assignedDriver.lastName}` : 'Unassigned'}</span></div>
-                                <div className="tracking-detail"><span>Route</span><span>{v.assignedRoute?.name || 'Unassigned'}</span></div>
+                                <div className="tracking-detail"><span>Driver</span><span>{drivers.find(d => d.vehicleId == v._id)?.firstName ? `${drivers.find(d => d.vehicleId == v._id).firstName} ${drivers.find(d => d.vehicleId == v._id).lastName}` : 'Unassigned'}</span></div>
+                                <div className="tracking-detail"><span>Route</span><span>{routes.find(r => r._id == drivers.find(d => d.vehicleId == v._id)?.routeId)?.name || 'Unassigned'}</span></div>
                                 <div className="tracking-progress">
                                     <div className="tracking-detail"><span>Status</span><span style={{ color: 'var(--accent)' }}>Awaiting GPS</span></div>
                                     <div className="tracking-progress-bar"><div className="tracking-progress-fill" style={{ width: '0%' }} /></div>
@@ -705,12 +783,13 @@ function TrackingTab() {
 
 // ======================== ATTENDANCE TAB ========================
 function AttendanceTab() {
-    const { data: routes } = useApi('/routes');
-    const { data: students } = useApi('/students');
+    const [routes] = useLocalStorage('transport_routes', []);
+    const [students] = useLocalStorage('transport_assignments', []);
+    const [attendance, setAttendance] = useLocalStorage('transport_attendance', []);
     const [filters, setFilters] = useState({ route: '', date: new Date().toISOString().split('T')[0], trip: 'Morning Pickup' });
     const [records, setRecords] = useState({});
 
-    const filteredStudents = students.filter(s => s.status === 'Active' && (!filters.route || s.route?._id === filters.route || s.route === filters.route));
+    const filteredStudents = students.filter(s => s.status === 'Active' && (!filters.route || s.route?._id == filters.route || s.routeId == filters.route));
 
     const toggleStatus = (studentId) => {
         setRecords(prev => ({
@@ -722,17 +801,22 @@ function AttendanceTab() {
     const handleSave = async () => {
         if (!filters.route) return await customAlert('Please select a route.');
         const attendanceRecords = filteredStudents.map(s => ({
-            studentId: s.studentId || s._id,
+            studentId: s._id,
             studentName: s.studentName,
             stop: s.stop,
             status: records[s._id] || 'Not Boarded',
             remarks: ''
         }));
-        await fetch(`${API}/attendance`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ route: filters.route, date: filters.date, trip: filters.trip, records: attendanceRecords })
-        });
-        await customAlert('Attendance saved!');
+        
+        const newEntry = {
+            _id: Date.now(),
+            routeId: filters.route,
+            date: filters.date,
+            trip: filters.trip,
+            records: attendanceRecords
+        };
+        setAttendance([newEntry, ...attendance]);
+        await customAlert('Attendance saved locally!');
     };
 
     return (
@@ -786,19 +870,27 @@ function AttendanceTab() {
 
 // ======================== FEES TAB ========================
 function FeesTab() {
-    const { data: fees, refresh } = useApi('/fees');
-    const { data: routes } = useApi('/routes');
-    const [form, setForm] = useState({ route: '', routeName: '', amount: '', frequency: 'Monthly', session: '2025-2026' });
+    const [fees, setFees] = useLocalStorage('transport_fees', []);
+    const [routes] = useLocalStorage('transport_routes', []);
+    const [form, setForm] = useState({ routeId: '', amount: '', frequency: 'Monthly', session: '2025-2026' });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const selectedRoute = routes.find(r => r._id === form.route);
-        await fetch(`${API}/fees`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...form, routeName: selectedRoute?.name || '', amount: Number(form.amount) })
-        });
-        setForm({ route: '', routeName: '', amount: '', frequency: 'Monthly', session: '2025-2026' });
-        refresh();
+        const route = routes.find(r => r._id == form.routeId);
+        const newFee = { 
+            ...form, 
+            _id: Date.now(),
+            routeName: route?.name || '',
+            amount: Number(form.amount) 
+        };
+        setFees([newFee, ...fees]);
+        setForm({ routeId: '', amount: '', frequency: 'Monthly', session: '2025-2026' });
+        await customAlert('Fee configuration saved');
+    };
+
+    const handleDelete = async (id) => {
+        if (!await customConfirm('Delete this fee configuration?')) return;
+        setFees(prev => prev.filter(f => f._id !== id));
     };
 
     return (
@@ -809,7 +901,7 @@ function FeesTab() {
                     <form className="transport-form" onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label className="form-label">Route <span className="required">*</span></label>
-                            <select className="form-select" required value={form.route} onChange={e => setForm({ ...form, route: e.target.value })}>
+                            <select className="form-select" required value={form.routeId} onChange={e => setForm({ ...form, routeId: e.target.value })}>
                                 <option value="">Select Route</option>
                                 {routes.filter(r => r.status === 'Active').map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
                             </select>
@@ -843,7 +935,10 @@ function FeesTab() {
                         <div className="fee-config-grid">
                             {fees.map(f => (
                                 <div className="fee-card" key={f._id}>
-                                    <h4><RouteIcon size={16} /> {f.routeName || f.route?.name || 'Route'}</h4>
+                                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                                        <h4><RouteIcon size={16} /> {f.routeName}</h4>
+                                        <button className="btn-icon" style={{color:'var(--danger)',padding:0}} onClick={()=>handleDelete(f._id)}><Trash2 size={14}/></button>
+                                    </div>
                                     <div className="fee-amount">₹{Number(f.amount).toLocaleString('en-IN')}</div>
                                     <div className="fee-meta">{f.frequency} • Session: {f.session}</div>
                                 </div>

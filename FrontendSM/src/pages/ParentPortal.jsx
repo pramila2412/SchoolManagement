@@ -9,13 +9,36 @@ import './ParentPortal.css';
 
 // ======================== CHILD SELECTOR ========================
 function ChildSelector() {
+    const { user, login } = useAuth();
+    const navigate = useNavigate();
+    const children = user?.children || [];
+    const selected = user?.selectedChild || children[0] || {};
+
+    const handleSwitch = (e) => {
+        const val = e.target.value;
+        if (val === 'switch-screen') {
+            navigate('/parent-selector');
+            return;
+        }
+        const selectedObj = children.find(c => c.id === val);
+        if (selectedObj) {
+            login({ ...user, selectedChild: selectedObj });
+        }
+    };
+
+    if (!selected.name) return null;
+
     return (
         <div className="pp-child-selector">
             <Users size={20}/>
             <label>Viewing for:</label>
-            <select defaultValue="rahul">
-                <option value="rahul">Rahul Kumar — Grade 10-A (Adm: MZS-2025-014)</option>
-                <option value="priya">Priya Kumar — Grade 7-B (Adm: MZS-2025-089)</option>
+            <select value={selected.id} onChange={handleSwitch}>
+                {children.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} — {c.class} (Adm: {c.id})</option>
+                ))}
+                {children.length > 1 && (
+                    <option value="switch-screen">🔄 Switch Student Screen</option>
+                )}
             </select>
         </div>
     );
@@ -23,6 +46,10 @@ function ChildSelector() {
 
 // ======================== DASHBOARD ========================
 function DashboardTab() {
+    const { user } = useAuth();
+    const children = user?.children || [];
+    const selected = user?.selectedChild || children[0] || {};
+
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
@@ -45,21 +72,21 @@ function DashboardTab() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: 20 }}>
-                    <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18}/> Recent Announcements</h4>
+            <div className="pp-dash-grid">
+                <div className="card-sub-panel">
+                    <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18}/> Recent Announcements for {selected.name}</h4>
                     {[
                         { title: 'Annual Day Rehearsal Schedule', cat: 'event', date: '25 Mar 2026' },
                         { title: 'Q4 Fee Due Reminder', cat: 'fee', date: '22 Mar 2026' },
                         { title: 'Holi Holiday - 14th March', cat: 'holiday', date: '10 Mar 2026' },
                     ].map((a, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                        <div key={i} className="pp-ann-item">
                             <div><span className={`pp-ann-badge ${a.cat}`}>{a.cat}</span> <span style={{ marginLeft: 8, fontSize: '0.9rem' }}>{a.title}</span></div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.date}</span>
                         </div>
                     ))}
                 </div>
-                <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: 20 }}>
+                <div className="card-sub-panel">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><ChevronRight size={18}/> Quick Actions</h4>
                     <div style={{ display: 'grid', gap: 8 }}>
                         <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }}><IndianRupee size={16} color="var(--primary)"/> Pay Fees Online</button>
@@ -75,20 +102,25 @@ function DashboardTab() {
 
 // ======================== STUDENT PROFILE ========================
 function ProfileTab() {
+    const { user } = useAuth();
+    const children = user?.children || [];
+    const selected = user?.selectedChild || children[0] || {};
+
+    if (!selected.name) return null;
+
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
-            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><User size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Student Profile</h3>
+            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><User size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> {selected.name}'s Profile</h3>
             <div className="pp-profile-card">
                 <div className="pp-profile-photo"><User size={64} color="var(--text-muted)"/></div>
                 <div className="pp-profile-details">
-                    <h2>Rahul Kumar</h2>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Admission Number</span><span className="pp-detail-value">MZS-2025-014</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Class</span><span className="pp-detail-value">Grade 10</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Section</span><span className="pp-detail-value">A</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Roll Number</span><span className="pp-detail-value">14</span></div>
+                    <h2>{selected.name}</h2>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Admission Number</span><span className="pp-detail-value">{selected.id}</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Class & Section</span><span className="pp-detail-value">{selected.class}</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Roll Number</span><span className="pp-detail-value">{selected.id.split('-').pop()}</span></div>
                     <div className="pp-detail-row"><span className="pp-detail-label">Date of Birth</span><span className="pp-detail-value">12 August 2011</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Parent / Guardian</span><span className="pp-detail-value">Mr. Anil Kumar (PAR-2025-00421)</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Parent / Guardian</span><span className="pp-detail-value">{user.name} ({user.id})</span></div>
                     <div className="pp-detail-row"><span className="pp-detail-label">Contact Number</span><span className="pp-detail-value">+91 98765 43210</span></div>
                     <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ Profile information is managed by the school. Please contact the administration for updates.</p>
                 </div>
@@ -310,7 +342,12 @@ const TABS = [
     { id: 'contact', label: 'Contact', icon: Phone },
 ];
 
+import { useAuth } from '../context/AuthContext';
+
+// ... (other components)
+
 export default function ParentPortal() {
+    const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
@@ -321,10 +358,11 @@ export default function ParentPortal() {
         <div className="parent-portal-page animate-fade-in">
             <div className="page-header"><div>
                 <div className="page-breadcrumb">
-                    <Link to="/">Dashboard</Link><span className="separator">/</span><span>Parent Portal</span>
+                    <Link to="/parent-portal">Home</Link><span className="separator">/</span><span>{user?.name || 'Parent'}'s Portal</span>
                     {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}
                 </div>
-                <h1>Parent Portal Management</h1>
+                <h1>Welcome, {user?.name || 'Parent'}</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Viewing school information for {user?.studentName || 'your children'}</p>
             </div></div>
             <div className="card pp-card">
                 <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>

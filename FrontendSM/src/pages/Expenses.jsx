@@ -11,6 +11,27 @@ export default function Expenses() {
         { id: 1, expenseHead: 'Electricity', name: 'Electricity Board', invoiceNo: 'INV-1029', date: '2026-03-18', amount: '12500.00', description: 'March 2026 Bill' }
     ]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [formData, setFormData] = useState({
+        expenseHead: '',
+        name: '',
+        invoiceNo: '',
+        date: new Date().toISOString().split('T')[0],
+        amount: '',
+        description: ''
+    });
+
+    const triggerUpload = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                customAlert(`File "${file.name}" attached successfully!`);
+                setFormData(prev => ({ ...prev, attachment: file.name }));
+            }
+        };
+        input.click();
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -125,14 +146,14 @@ export default function Expenses() {
                             </div>
                             
                             <div className="form-column">
-                                <div className="form-group document-upload-zone">
+                                <div className="form-group document-upload-zone" onClick={triggerUpload} style={{ cursor: 'pointer' }}>
                                     <label className="form-label">Attach Document</label>
                                     <div className="upload-box">
                                         <Paperclip size={24} className="text-muted" />
                                         <p>Drop a file here or <span>click to upload</span></p>
+                                        {formData.attachment && <p style={{ color: 'var(--success)', marginTop: 4, fontSize: '0.8rem' }}>Selected: {formData.attachment}</p>}
                                     </div>
-                                </div>
-                                <div className="form-group flex-fill">
+                                </div>        <div className="form-group flex-fill">
                                     <label className="form-label">Description</label>
                                     <textarea className="form-textarea" rows="5" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
                                 </div>

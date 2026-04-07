@@ -5,10 +5,11 @@ import {
     FileText, Star, Settings, Download, PlusCircle, Search,
     CheckCircle2, XCircle, Eye, TrendingUp, TrendingDown,
     IndianRupee, ClipboardCheck, UserCheck, AlertTriangle, Mail,
-    Calendar, Upload, Timer, Filter
+    Calendar, Upload, Timer, Filter, ShieldCheck, X
 } from 'lucide-react';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
+import { useAuth } from '../context/AuthContext';
 import './HR.css';
 
 // ======================== DASHBOARD ========================
@@ -515,6 +516,193 @@ function SettingsTab() {
     );
 }
 
+// ======================== LOGIN MANAGEMENT ========================
+// ======================== LOGIN MANAGEMENT ========================
+function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
+    const [formData, setFormData] = useState({
+        id: '',
+        name: '',
+        email: '',
+        role: 'Staff',
+        access: 'Enabled'
+    });
+
+    useEffect(() => {
+        if (user && mode === 'edit') {
+            setFormData(user);
+        } else {
+            setFormData({ id: '', name: '', email: '', role: 'Staff', access: 'Enabled' });
+        }
+    }, [user, mode, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.email || !formData.id) {
+            customAlert('Please fill all required fields.', 'Validation Error', 'error');
+            return;
+        }
+        onSave(formData);
+        onClose();
+    };
+
+    return (
+        <div className="global-dialog-overlay animate-fade-in" style={{ zIndex: 1100 }}>
+            <div className="global-dialog-modal animate-slide-up" style={{ maxWidth: 500, padding: 32 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                    <h2 style={{ color: 'var(--primary)', margin: 0 }}>{mode === 'edit' ? 'Edit User Access' : 'Create New Admin User'}</h2>
+                    <button className="btn-icon" onClick={onClose}><X size={20}/></button>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="ado-form">
+                    <div className="form-group">
+                        <label className="form-label">Full Name *</label>
+                        <input type="text" className="form-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Rajesh Kumar"/>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Email Address *</label>
+                        <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. teacher@mountzion.edu"/>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Staff ID *</label>
+                            <input type="text" className="form-input" value={formData.id} onChange={e => setFormData({...formData, id: e.target.value})} placeholder="EMP-XXXX" disabled={mode === 'edit'}/>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">System Role *</label>
+                            <select className="form-select" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                                <option>Super Admin</option>
+                                <option>Admin / Principal</option>
+                                <option>Staff / Teacher</option>
+                                <option>Accountant</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Portal Access Status</label>
+                        <select className="form-select" value={formData.access} onChange={e => setFormData({...formData, access: e.target.value})}>
+                            <option>Enabled</option>
+                            <option>Disabled</option>
+                        </select>
+                    </div>
+
+                    <div style={{ marginTop: 32, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn btn-primary">
+                            {mode === 'edit' ? 'Update Access' : 'Save User Credentials'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function LoginManagementTab() {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [users, setUsers] = useState(() => {
+        const saved = localStorage.getItem('mzs_system_users');
+        if (saved) return JSON.parse(saved);
+        return [
+            { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Staff / Teacher', email: 'teacher@mountzion.edu', access: 'Enabled' },
+            { id: 'EMP-2024-002', name: 'Dr. Sarah', role: 'Admin / Principal', email: 'principal@mountzion.edu', access: 'Enabled' },
+            { id: 'EMP-2024-004', name: 'Vijay Singh', role: 'Accountant', email: 'accountant@mountzion.edu', access: 'Enabled' },
+        ];
+    });
+
+    const [modal, setModal] = useState({ isOpen: false, mode: 'create', user: null });
+
+    useEffect(() => {
+        localStorage.setItem('mzs_system_users', JSON.stringify(users));
+    }, [users]);
+
+    const toggleAccess = (id) => {
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, access: u.access === 'Enabled' ? 'Disabled' : 'Enabled' } : u));
+    };
+
+    const handleSaveUser = (userData) => {
+        if (modal.mode === 'create') {
+            if (users.find(u => u.id === userData.id)) {
+                customAlert('A user with this Staff ID already exists.', 'Error', 'error');
+                return;
+            }
+            setUsers([...users, userData]);
+            customAlert('User credentials generated successfully!', 'Success', 'success');
+        } else {
+            setUsers(users.map(u => u.id === userData.id ? userData : u));
+            customAlert('User access updated successfully!', 'Success', 'success');
+        }
+    };
+
+    const deleteUser = (id) => {
+        if (window.confirm('Are you sure you want to delete this user login record?')) {
+            setUsers(users.filter(u => u.id !== id));
+        }
+    };
+
+    return (
+        <div className="animate-fade-in">
+            <LoginManagementModal 
+                isOpen={modal.isOpen} 
+                onClose={() => setModal({ ...modal, isOpen: false })} 
+                mode={modal.mode} 
+                user={modal.user}
+                onSave={handleSaveUser}
+            />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                <h3 style={{ color: 'var(--primary)' }}><ShieldCheck size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> User Login Management</h3>
+                <button className="btn btn-primary" onClick={() => setModal({ isOpen: true, mode: 'create', user: null })}><UserPlus size={16}/> Create Admin User</button>
+            </div>
+
+            <div className="hr-form-panel" style={{ padding: 16, marginBottom: 20 }}>
+                <div className="ado-form" style={{ display: 'flex', gap: 16 }}>
+                    <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <div className="relative">
+                            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}/>
+                            <input type="text" className="form-input" style={{ paddingLeft: 36 }} placeholder="Search staff by name or email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="table-responsive">
+                <table className="data-table">
+                    <thead><tr><th>Staff ID</th><th>Name</th><th>Email</th><th>System Role</th><th>Portal Access</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+                            <tr key={u.id}>
+                                <td style={{ fontFamily: 'monospace' }}>{u.id}</td>
+                                <td className="fw-600">{u.name}</td>
+                                <td>{u.email}</td>
+                                <td><span className="badge badge-draft">{u.role}</span></td>
+                                <td>
+                                    <span className={`badge ${u.access === 'Enabled' ? 'badge-success' : 'badge-danger'}`}>
+                                        {u.access}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '4px 8px' }} onClick={() => toggleAccess(u.id)}>
+                                            {u.access === 'Enabled' ? 'Revoke' : 'Grant'}
+                                        </button>
+                                        <button className="btn-icon" title="Edit Access" onClick={() => setModal({ isOpen: true, mode: 'edit', user: u })}><Settings size={16}/></button>
+                                        <button className="btn-icon text-danger" title="Delete record" onClick={() => deleteUser(u.id)}><X size={16}/></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                ℹ️ Only Super Admin can manage system login credentials and roles for staff members.
+            </p>
+        </div>
+    );
+}
+
 // ======================== MAIN HR COMPONENT ========================
 const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -526,28 +714,38 @@ const TABS = [
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'performance', label: 'Performance', icon: Star },
     { id: 'shifts', label: 'Shifts', icon: Clock },
+    { id: 'login-management', label: 'Login Access', icon: ShieldCheck, superAdminOnly: true },
     { id: 'reports', label: 'Reports', icon: Download },
     { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function HR() {
+    const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
     const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
     useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
 
+    // Filter tabs for role
+    const filteredTabs = TABS.filter(t => !t.superAdminOnly || user?.role === 'Super Admin');
+
     return (
         <div className="hr-page animate-fade-in">
             <div className="page-header"><div>
                 <div className="page-breadcrumb">
                     <Link to="/">Dashboard</Link><span className="separator">/</span><span>HR</span>
-                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}
+                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{filteredTabs.find(t => t.id === activeTab)?.label}</span></>}
                 </div>
                 <h1>Human Resources Management</h1>
             </div></div>
             <div className="card hr-card">
-                <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
+                <div className="tabs-header">
+                    {filteredTabs.map(tab => { 
+                        const Icon = tab.icon; 
+                        return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; 
+                    })}
+                </div>
                 <div className="tabs-content">
                     {activeTab === 'dashboard' && <DashboardTab/>}
                     {activeTab === 'staff' && <StaffTab/>}
@@ -558,6 +756,7 @@ export default function HR() {
                     {activeTab === 'documents' && <DocumentsTab/>}
                     {activeTab === 'performance' && <PerformanceTab/>}
                     {activeTab === 'shifts' && <ShiftsTab/>}
+                    {activeTab === 'login-management' && <LoginManagementTab/>}
                     {activeTab === 'reports' && <ReportsTab/>}
                     {activeTab === 'settings' && <SettingsTab/>}
                 </div>

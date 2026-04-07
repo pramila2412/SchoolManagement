@@ -57,25 +57,72 @@ function VisitorsTab() {
 
 // ======================== GALLERY ========================
 function GalleryTab() {
+    const defaultAlbums = [
+        { id: 1, name: 'Annual Sports Day 2026', photos: 15, status: 'Active' },
+        { id: 2, name: 'Science Exhibition', photos: 27, status: 'Draft' },
+        { id: 3, name: 'Independence Day', photos: 39, status: 'Active' },
+        { id: 4, name: 'Class 10 Farewell', photos: 51, status: 'Draft' }
+    ];
+    const [albums, setAlbums] = useLocalStorage('addons_gallery', defaultAlbums);
+    const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState({ name: '', status: 'Active' });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!form.name) return;
+        const newAlbum = {
+            id: Date.now(),
+            name: form.name,
+            photos: 0,
+            status: form.status
+        };
+        setAlbums([newAlbum, ...albums]);
+        setForm({ name: '', status: 'Active' });
+        setShowForm(false);
+    };
+
+    const handleDelete = async (id, name) => {
+        if (await customConfirm(`Delete album "${name}"?`)) {
+            setAlbums(prev => prev.filter(a => a.id !== id));
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><ImageIcon size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Photo Gallery</h3>
-                <button className="btn btn-primary"><UploadCloud size={16}/> Upload New Album</button>
+                <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}><PlusCircle size={16}/> Upload New Album</button>
             </div>
             
+            {showForm && (
+                <div className="ado-form-panel">
+                    <h3>Create New Album</h3>
+                    <form className="ado-form" onSubmit={handleSubmit}>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">Album Name *</label><input type="text" className="form-input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Annual Day 2026" /></div>
+                            <div className="form-group"><label className="form-label">Status</label><select className="form-select" value={form.status} onChange={e => setForm({...form, status: e.target.value})}><option>Active</option><option>Draft</option></select></div>
+                        </div>
+                        <div className="form-actions"><button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button><button type="submit" className="btn btn-primary"><Send size={16}/> Create Album</button></div>
+                    </form>
+                </div>
+            )}
+            
             <div className="ado-gallery-grid">
-                {['Annual Sports Day 2026', 'Science Exhibition', 'Independence Day', 'Class 10 Farewell'].map((album, i) => (
-                    <div className="ado-gallery-item" key={i}>
+                {albums.map((album) => (
+                    <div className="ado-gallery-item" key={album.id}>
                         <div className="ado-gallery-img"><ImageIcon size={32} opacity={0.5}/></div>
-                        <div className="ado-gallery-action"><Edit3 size={14} color="var(--primary)"/></div>
+                        <div className="ado-gallery-action">
+                            <button className="btn-icon" onClick={() => handleDelete(album.id, album.name)} style={{ color: 'var(--danger)' }}><Trash2 size={14}/></button>
+                            <button className="btn-icon"><Edit3 size={14}/></button>
+                        </div>
                         <div className="ado-gallery-info">
-                            <h5>{album}</h5>
-                            <p>{15 + i * 12} Photos • {i % 2 === 0 ? 'Active' : 'Draft'}</p>
+                            <h5>{album.name}</h5>
+                            <p>{album.photos} Photos • {album.status}</p>
                         </div>
                     </div>
                 ))}
             </div>
+            {albums.length === 0 && <div className="collab-empty"><ImageIcon size={40}/><p>No albums created yet</p></div>}
         </div>
     );
 }

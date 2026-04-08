@@ -319,13 +319,59 @@ function FeesTab() {
 
 // ======================== CONFIRMATION ========================
 function ConfirmationTab() {
-    const [confirmed] = useLocalStorage('admission_confirmed', [
+    const [confirmed, setConfirmed] = useLocalStorage('admission_confirmed', [
         { id: 1, admNo: 'ADM-2026-0001', name: 'Arjun Patel', class: 'Grade 2-A', rollNo: 1, date: '2026-03-16', feePaid: true },
         { id: 2, admNo: 'ADM-2026-0002', name: 'Meera Joshi', class: 'Grade 1-B', rollNo: 5, date: '2026-03-11', feePaid: true },
     ]);
-    const [pending] = useLocalStorage('admission_pending', [
-        { id: 3, name: 'Rahul Kumar', class: 'Grade 1', status: 'Approved', feePaid: false },
+    const [pending, setPending] = useLocalStorage('admission_pending', [
+        { id: 3, name: 'Rahul Kumar', class: 'Grade 1', status: 'Approved', feePaid: true, parentEmail: 'rahul.parent@email.com' },
     ]);
+
+    const handleConfirmStudent = async (student) => {
+        if (!student.feePaid) {
+            await customAlert('Admission fee must be paid before confirmation.', 'Payment Required', 'warning');
+            return;
+        }
+
+        if (await customConfirm(`Confirm admission for ${student.name}?`)) {
+            const date = new Date();
+            const year = date.getFullYear();
+            const count = confirmed.length + 1;
+            const admNo = `ADM-${year}-${String(count).padStart(4, '0')}`;
+            
+            const newConfirmed = {
+                ...student,
+                admNo,
+                rollNo: confirmed.filter(c => c.class === student.class).length + 1,
+                date: date.toISOString().split('T')[0],
+            };
+
+            setConfirmed([newConfirmed, ...confirmed]);
+            setPending(prev => prev.filter(p => p.id !== student.id));
+
+            // Sync with Student Portal Directory (mzs_students)
+            const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const portalStudent = {
+                id: admNo,
+                name: student.name,
+                class: student.class,
+                admissionNo: admNo,
+                parentEmail: student.parentEmail || 'parent@mzs.edu', // Fallback for demo
+                status: 'Active'
+            };
+            localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
+
+            await customAlert(
+                `Admission Confirmed!\n\n` +
+                `Admission No: ${admNo}\n` +
+                `Portal Login Details:\n` +
+                `Username: ${portalStudent.parentEmail}\n` +
+                `Password: ${admNo}`,
+                'Success',
+                'success'
+            );
+        }
+    };
 
     return (
         <div className="animate-fade-in">
@@ -337,7 +383,7 @@ function ConfirmationTab() {
                             <tr key={p.id}><td className="fw-600">{p.name}</td><td>{p.class}</td>
                                 <td><span className="badge badge-info">{p.status}</span></td>
                                 <td>{p.feePaid ? <span className="badge badge-success">Yes</span> : <span className="badge badge-warning">Pending</span>}</td>
-                                <td><button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.82rem' }}><CheckCircle2 size={14}/> Confirm Admission</button></td></tr>
+                                <td><button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.82rem' }} onClick={() => handleConfirmStudent(p)}><CheckCircle2 size={14}/> Confirm Admission</button></td></tr>
                         ))}</tbody></table>
             </div>
 

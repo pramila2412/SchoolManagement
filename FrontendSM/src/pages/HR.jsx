@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     BarChart3, Users, UserPlus, CalendarCheck, Clock, Briefcase,
@@ -523,7 +524,8 @@ function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
         id: '',
         name: '',
         email: '',
-        role: 'Staff',
+        password: '',
+        role: 'Staff / Teacher',
         access: 'Enabled'
     });
 
@@ -531,7 +533,7 @@ function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
         if (user && mode === 'edit') {
             setFormData(user);
         } else {
-            setFormData({ id: '', name: '', email: '', role: 'Staff', access: 'Enabled' });
+            setFormData({ id: '', name: '', email: '', password: '', role: 'Staff / Teacher', access: 'Enabled' });
         }
     }, [user, mode, isOpen]);
 
@@ -539,16 +541,16 @@ function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.email || !formData.id) {
-            customAlert('Please fill all required fields.', 'Validation Error', 'error');
+        if (!formData.name || !formData.email || !formData.id || !formData.password) {
+            customAlert('Please fill all required fields (Name, Email, Staff ID, and Password).', 'Validation Error', 'error');
             return;
         }
         onSave(formData);
         onClose();
     };
 
-    return (
-        <div className="global-dialog-overlay animate-fade-in" style={{ zIndex: 1100 }}>
+    return createPortal(
+        <div className="global-dialog-overlay animate-fade-in" style={{ zIndex: 9999 }}>
             <div className="global-dialog-modal animate-slide-up" style={{ maxWidth: 500, padding: 32 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                     <h2 style={{ color: 'var(--primary)', margin: 0 }}>{mode === 'edit' ? 'Edit User Access' : 'Create New Admin User'}</h2>
@@ -560,9 +562,15 @@ function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
                         <label className="form-label">Full Name *</label>
                         <input type="text" className="form-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Rajesh Kumar"/>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">Email Address *</label>
-                        <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. teacher@mountzion.edu"/>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Email Address *</label>
+                            <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. teacher@mountzion.edu"/>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Portal Password *</label>
+                            <input type="text" className="form-input" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="Set login password"/>
+                        </div>
                     </div>
                     <div className="form-row">
                         <div className="form-group">
@@ -595,7 +603,8 @@ function LoginManagementModal({ isOpen, onClose, mode, user, onSave }) {
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -605,9 +614,9 @@ function LoginManagementTab() {
         const saved = localStorage.getItem('mzs_system_users');
         if (saved) return JSON.parse(saved);
         return [
-            { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Staff / Teacher', email: 'teacher@mountzion.edu', access: 'Enabled' },
-            { id: 'EMP-2024-002', name: 'Dr. Sarah', role: 'Admin / Principal', email: 'principal@mountzion.edu', access: 'Enabled' },
-            { id: 'EMP-2024-004', name: 'Vijay Singh', role: 'Accountant', email: 'accountant@mountzion.edu', access: 'Enabled' },
+            { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Staff / Teacher', email: 'teacher@mountzion.edu', password: 'teacher123', access: 'Enabled' },
+            { id: 'EMP-2024-002', name: 'Dr. Sarah', role: 'Admin / Principal', email: 'principal@mountzion.edu', password: 'admin123', access: 'Enabled' },
+            { id: 'EMP-2024-004', name: 'Vijay Singh', role: 'Accountant', email: 'accountant@mountzion.edu', password: 'finance123', access: 'Enabled' },
         ];
     });
 

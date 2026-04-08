@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
     BarChart3, IndianRupee, SlidersHorizontal, AlertTriangle, FileText,
@@ -12,7 +13,7 @@ import { api } from '../utils/api';
 import './Finance.css';
 
 // ======================== DASHBOARD ========================
-function DashboardTab() {
+function DashboardTab({ onGenerateInvoice }) {
     return (
         <div className="animate-fade-in">
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><BarChart3 size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Finance Overview</h3>
@@ -20,7 +21,7 @@ function DashboardTab() {
             <div className="fin-quick-actions">
                 <button className="fin-quick-btn"><IndianRupee size={16} color="var(--primary)"/> Collect Fee</button>
                 <button className="fin-quick-btn"><TrendingDown size={16} color="var(--danger)"/> Record Expense</button>
-                <button className="fin-quick-btn"><FileText size={16} color="var(--info)"/> Generate Invoice</button>
+                <button className="fin-quick-btn" onClick={onGenerateInvoice}><FileText size={16} color="var(--info)"/> Generate Invoice</button>
                 <button className="fin-quick-btn"><RotateCcw size={16} color="var(--warning)"/> Initiate Refund</button>
             </div>
 
@@ -466,20 +467,37 @@ function ExpensesTab() {
 }
 
 // ======================== INVOICES ========================
-function InvoicesTab() {
+function InvoicesTab({ invoices, onGenerateInvoice, onDeleteInvoice }) {
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}><FileText size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Invoice & Billing</h3>
-                <button className="btn btn-primary"><PlusCircle size={16}/> Generate Invoice</button>
+                <button className="btn btn-primary" onClick={onGenerateInvoice}><PlusCircle size={16}/> Generate Invoice</button>
             </div>
             <div className="table-responsive">
                 <table className="data-table"><thead><tr><th>Invoice #</th><th>Billed To</th><th>Type</th><th>Issue Date</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
-                        <tr><td className="fw-600">INV-2026-001</td><td>Ajay Transport</td><td>Vendor</td><td>2026-03-20</td><td>2026-04-05</td><td>₹ 45,000</td><td><span className="badge badge-warning">Sent</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download Invoice" onClick={() => { const txt = 'MOUNT ZION SCHOOL\nINVOICE\n'+('=').repeat(40)+'\nInvoice #: INV-2026-001\nBilled To: Ajay Transport\nType: Vendor\nIssue Date: 2026-03-20\nDue Date: 2026-04-05\nAmount: ₹ 45,000\nStatus: Sent'; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INV-2026-001.txt'; a.click(); }}><FileText size={16}/></button></td></tr>
-                        <tr><td className="fw-600">INV-2026-002</td><td>Ritika Singh</td><td>Student</td><td>2026-03-22</td><td>2026-03-30</td><td>₹ 2,500</td><td><span className="badge badge-success">Paid</span></td>
-                            <td style={{ display: 'flex', gap: 4 }}><button className="btn-icon" title="Download Invoice" onClick={() => { const txt = 'MOUNT ZION SCHOOL\nINVOICE\n'+('=').repeat(40)+'\nInvoice #: INV-2026-002\nBilled To: Ritika Singh\nType: Student\nIssue Date: 2026-03-22\nDue Date: 2026-03-30\nAmount: ₹ 2,500\nStatus: Paid'; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INV-2026-002.txt'; a.click(); }}><FileText size={16}/></button></td></tr>
+                        {invoices.length === 0 ? (
+                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No invoices found. Generate one to get started.</td></tr>
+                        ) : invoices.map(inv => (
+                            <tr key={inv.id}>
+                                <td className="fw-600">{inv.invoiceNo}</td>
+                                <td>{inv.billedTo}</td>
+                                <td>{inv.type}</td>
+                                <td>{inv.issueDate}</td>
+                                <td>{inv.dueDate}</td>
+                                <td>₹ {Number(inv.amount).toLocaleString('en-IN')}</td>
+                                <td><span className={`badge ${inv.status === 'Paid' ? 'badge-success' : 'badge-warning'}`}>{inv.status}</span></td>
+                                <td style={{ display: 'flex', gap: 4 }}>
+                                    <button className="btn-icon" title="Download Invoice" onClick={() => { 
+                                        const txt = `MOUNT ZION SCHOOL\nINVOICE\n${'='.repeat(40)}\nInvoice #: ${inv.invoiceNo}\nBilled To: ${inv.billedTo}\nType: ${inv.type}\nIssue Date: ${inv.issueDate}\nDue Date: ${inv.dueDate}\nAmount: ₹ ${inv.amount}\nStatus: ${inv.status}`; 
+                                        const blob = new Blob([txt],{type:'text/plain'}); 
+                                        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${inv.invoiceNo}.txt`; a.click(); 
+                                    }}><FileText size={16}/></button>
+                                    <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => onDeleteInvoice(inv.id)}><XCircle size={16}/></button>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody></table>
             </div>
         </div>
@@ -629,6 +647,79 @@ function SettingsTab() {
     );
 }
 
+// ======================== MODAL ========================
+function InvoiceModal({ onClose, onSave, count }) {
+    const [formData, setFormData] = useState({
+        billedTo: '',
+        type: 'Student',
+        amount: '',
+        dueDate: '',
+        status: 'Sent'
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.billedTo || !formData.amount || !formData.dueDate) {
+            return customAlert('Please fill all required fields.', 'Error', 'error');
+        }
+        
+        const invoiceNo = `INV-2026-${String(count + 1).padStart(3, '0')}`;
+        onSave({
+            ...formData,
+            id: Date.now(),
+            invoiceNo,
+            issueDate: new Date().toISOString().split('T')[0]
+        });
+        onClose();
+    };
+
+    return (
+        <div className="global-dialog-overlay animate-fade-in" style={{ zIndex: 9999 }}>
+            <div className="global-dialog-modal animate-slide-up" style={{ maxWidth: 500, padding: 32 }}>
+                <h3 style={{ color: 'var(--primary)', marginBottom: 24 }}>Generate New Invoice</h3>
+                <form onSubmit={handleSubmit} className="ado-form">
+                    <div className="form-group">
+                        <label className="form-label">Billed To <span className="required">*</span></label>
+                        <input type="text" className="form-input" placeholder="Name of Student or Vendor" value={formData.billedTo} onChange={e => setFormData({...formData, billedTo: e.target.value})} />
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Type</label>
+                            <select className="form-select" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+                                <option>Student</option>
+                                <option>Vendor</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Amount (₹) <span className="required">*</span></label>
+                            <input type="number" className="form-input" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})}/>
+                        </div>
+                    </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Due Date <span className="required">*</span></label>
+                            <input type="date" className="form-input" value={formData.dueDate} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Status</label>
+                            <select className="form-select" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                                <option>Sent</option>
+                                <option>Paid</option>
+                                <option>Draft</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style={{ marginTop: 32, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn btn-primary">Generate & Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 // ======================== MAIN FINANCE COMPONENT ========================
 const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -650,8 +741,33 @@ export default function Finance() {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
+    const [invoices, setInvoices] = useLocalStorage('finance_invoices', [
+        { id: 1, invoiceNo: 'INV-2026-001', billedTo: 'Ajay Transport', type: 'Vendor', issueDate: '2026-03-20', dueDate: '2026-04-05', amount: 45000, status: 'Sent' },
+        { id: 2, invoiceNo: 'INV-2026-002', billedTo: 'Ritika Singh', type: 'Student', issueDate: '2026-03-22', dueDate: '2026-03-30', amount: 2500, status: 'Paid' },
+    ]);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
     const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    
+    useEffect(() => { 
+        if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); 
+    }, [tabFromUrl]);
+
+    const handleGenerateInvoice = () => {
+        setIsInvoiceModalOpen(true);
+    };
+
+    const handleSaveInvoice = (newInv) => {
+        setInvoices([newInv, ...invoices]);
+        handleNavigate('invoices');
+    };
+
+    const handleDeleteInvoice = async (id) => {
+        const confirmed = await window.confirm('Are you sure you want to delete this invoice?');
+        if (confirmed) {
+            setInvoices(invoices.filter(inv => inv.id !== id));
+        }
+    };
 
     return (
         <div className="finance-page animate-fade-in">
@@ -665,13 +781,13 @@ export default function Finance() {
             <div className="card finance-card">
                 <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
-                    {activeTab === 'dashboard' && <DashboardTab/>}
+                    {activeTab === 'dashboard' && <DashboardTab onGenerateInvoice={handleGenerateInvoice}/>}
                     {activeTab === 'structure' && <FeeStructureTab/>}
                     {activeTab === 'collection' && <FeeCollectionTab/>}
                     {activeTab === 'online-payments' && <OnlinePaymentsTab/>}
                     {activeTab === 'defaulters' && <DefaultersTab/>}
                     {activeTab === 'expenses' && <ExpensesTab/>}
-                    {activeTab === 'invoices' && <InvoicesTab/>}
+                    {activeTab === 'invoices' && <InvoicesTab invoices={invoices} onGenerateInvoice={handleGenerateInvoice} onDeleteInvoice={handleDeleteInvoice}/>}
                     {activeTab === 'refunds' && <RefundsTab/>}
                     {activeTab === 'accounting' && <AccountingTab/>}
                     {activeTab === 'assets' && <AssetsTab/>}
@@ -680,6 +796,14 @@ export default function Finance() {
                     {activeTab === 'settings' && <SettingsTab/>}
                 </div>
             </div>
+
+            {isInvoiceModalOpen && (
+                <InvoiceModal 
+                    count={invoices.length} 
+                    onClose={() => setIsInvoiceModalOpen(false)} 
+                    onSave={handleSaveInvoice} 
+                />
+            )}
         </div>
     );
 }

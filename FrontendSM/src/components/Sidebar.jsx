@@ -328,9 +328,7 @@ export default function Sidebar({ open, onClose }) {
 
     const toggleModule = (moduleId) => {
         setExpandedModules(prev =>
-            prev.includes(moduleId)
-                ? prev.filter(id => id !== moduleId)
-                : [...prev, moduleId]
+            prev.includes(moduleId) ? [] : [moduleId]
         );
     };
 

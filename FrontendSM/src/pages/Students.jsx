@@ -17,8 +17,25 @@ export default function StudentsPage() {
     useEffect(() => {
         const fetchStudents = async () => {
             try {
-                const data = await api.getStudents();
-                setStudents(data);
+                // Fetch from API
+                const apiData = await api.getStudents();
+                
+                // Fetch from Local Admission (Confirmed)
+                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                
+                // Merge and normalize (Admission form uses 'name', API uses 'firstName'/'lastName')
+                const normalizedLocal = localData.map(s => {
+                    const nameParts = s.name.split(' ');
+                    return {
+                        ...s,
+                        firstName: nameParts[0],
+                        lastName: nameParts.slice(1).join(' '),
+                        contactNo: s.phone || 'N/A',
+                        newStudent: true
+                    };
+                });
+
+                setStudents([...apiData, ...normalizedLocal]);
             } catch (err) {
                 console.error("Failed to load students", err);
             } finally {

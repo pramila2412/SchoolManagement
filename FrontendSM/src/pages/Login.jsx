@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, User, ArrowRight, Sparkles, Layout, ShieldCheck, Zap } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, ArrowRight, Sparkles, Layout, ShieldCheck, Zap, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,7 +67,34 @@ export default function LoginPage() {
         setLoading(true);
         try {
             // Mocking API for Parent/Admin based on LoginType
+            // Dynamic Parent Login check from mzs_students
             if (loginType === 'parent') {
+                const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                
+                // Find all children belonging to this parent email
+                const parentChildren = globalStudents.filter(s => s.parentEmail === email);
+
+                if (parentChildren.length > 0) {
+                    // Check if any of these children's admissionNo matches the password
+                    const matchByPass = parentChildren.find(s => s.admissionNo === password);
+                    
+                    if (matchByPass) {
+                        login({ 
+                            name: parentChildren[0].parentName || 'Parent / Guardian',
+                            id: email, 
+                            role: 'Parent', 
+                            children: parentChildren.map(s => ({
+                                name: s.name,
+                                id: s.admissionNo,
+                                class: s.class
+                            }))
+                        });
+                        setAttempts(0);
+                        return;
+                    }
+                }
+
+                // Fallback for demo parent
                 if (email === 'PAR-2025-00421' && password === 'parent123') {
                     login({ 
                         name: 'Anil Kumar', 
@@ -89,10 +116,12 @@ export default function LoginPage() {
             if (savedUsers) {
                 const systemUsers = JSON.parse(savedUsers);
                 const portalUser = systemUsers.find(u => u.email === email && u.access === 'Enabled');
+                
                 if (portalUser) {
-                    // For demo: match password 'admin123' for staff, or same as their role
-                    const validPassword = portalUser.role.toLowerCase().includes('teacher') ? 'teacher123' : 
-                                          portalUser.role.toLowerCase().includes('accountant') ? 'finance123' : 'admin123';
+                    // Check custom password if set, otherwise fallback to role-based default
+                    const validPassword = portalUser.password || 
+                        (portalUser.role.toLowerCase().includes('teacher') ? 'teacher123' : 
+                         portalUser.role.toLowerCase().includes('accountant') ? 'finance123' : 'admin123');
                     
                     if (password === validPassword) {
                         login(portalUser);

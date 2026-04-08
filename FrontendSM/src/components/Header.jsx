@@ -143,13 +143,6 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
             </div>
 
             <div className="header-right">
-                <button className="header-icon-btn" aria-label="Notifications" onClick={() => handleFeatureAlert('Notifications')}>
-                    <Bell size={20} />
-                    <span className="notification-dot"></span>
-                </button>
-                <button className="header-icon-btn" aria-label="Apps" onClick={() => handleFeatureAlert('App Grid')}>
-                    <Grid3X3 size={20} />
-                </button>
                 <div className="header-profile">
                     <div className="profile-avatar">
                         <User size={18} />

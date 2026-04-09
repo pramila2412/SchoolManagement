@@ -19,12 +19,22 @@ export default function StudentDetail() {
     const [activeTab, setActiveTab] = useState('personal');
     const [certificates, setCertificates] = useState([]);
     const [attendanceSummary, setAttendanceSummary] = useState(null);
+    const [portalAuth, setPortalAuth] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const data = await api.getStudentById(id);
                 setStudent(data);
+                
+                // Fetch parent portal credentials and potential local data override from localStorage
+                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const localMatch = localData.find(s => s.admissionNo === data.admissionNo || s.id === data.id);
+                if (localMatch) {
+                    setPortalAuth({ id: localMatch.parentId, password: localMatch.parentPassword });
+                    setStudent(prev => ({ ...prev, photoUrl: prev.photoUrl || localMatch.photoUrl }));
+                }
+
                 // Fetch certificates
                 try { const res = await fetch(`${API}/certificates?studentId=${id}`); setCertificates(await res.json()); } catch {}
                 // Fetch attendance
@@ -90,8 +100,12 @@ export default function StudentDetail() {
             {/* Profile Card */}
             <div className="card profile-card">
                 <div className="profile-top">
-                    <div className="profile-avatar-lg" style={{ background: avatarColor }}>
-                        {initials}
+                    <div className="profile-avatar-lg" style={!student.photoUrl ? { background: avatarColor } : {}}>
+                        {student.photoUrl ? (
+                            <img src={student.photoUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-lg)' }} />
+                        ) : (
+                            initials
+                        )}
                     </div>
                     <div className="profile-main-info">
                         <h2>{student.firstName} {student.lastName}</h2>
@@ -188,6 +202,25 @@ export default function StudentDetail() {
                                 <div className="detail-item"><span className="detail-label">Occupation</span><span className="detail-value">{student.guardianOccupation || '—'}</span></div>
                             </div>
                         </div>
+
+                        {portalAuth && (
+                            <div className="card detail-section" style={{ borderLeft: '4px solid var(--info)' }}>
+                                <h3 className="detail-section-title" style={{ color: 'var(--info)' }}>🔐 Parent Portal Credentials</h3>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '16px' }}>
+                                    Provide these details to the parent so they can access their dedicated portal.
+                                </p>
+                                <div className="detail-list bg-light" style={{ padding: 16, borderRadius: 'var(--radius-sm)' }}>
+                                    <div className="detail-item" style={{ borderBottom: 'none' }}>
+                                        <span className="detail-label">Parent ID (Username)</span>
+                                        <span className="detail-value fw-600 font-monospace">{portalAuth.id}</span>
+                                    </div>
+                                    <div className="detail-item" style={{ borderBottom: 'none' }}>
+                                        <span className="detail-label">Password</span>
+                                        <span className="detail-value fw-600 font-monospace">{portalAuth.password}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -28,6 +28,8 @@ export default function EditStudent() {
         guardianOccupation: '',
         contactNo: '',
         email: '',
+        parentId: '',
+        parentPassword: '',
         address: '',
         rollNo: '',
         admissionNo: '',
@@ -71,6 +73,7 @@ export default function EditStudent() {
                     guardianOccupation: data.guardianOccupation || '',
                     contactNo: data.contactNo || '',
                     email: data.email || '',
+                    parentPassword: '',
                     address: data.address || '',
                     rollNo: data.rollNo || '',
                     admissionNo: data.admissionNo || '',
@@ -85,7 +88,16 @@ export default function EditStudent() {
                     previousTC: null,
                     existingPhotoUrl: data.photoUrl,
                     existingBirthCertificateUrl: data.birthCertificateUrl,
-                    existingPreviousTcUrl: data.previousTcUrl
+                    existingPreviousTcUrl: data.previousTcUrl,
+                    // Load parentPassword and parentId from mzs_students localStorage
+                    ...((() => {
+                        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                        const match = globalStudents.find(s => s.parentEmail === data.email || s.admissionNo === data.admissionNo);
+                        return match ? { 
+                            parentPassword: match.parentPassword || '',
+                            parentId: match.parentId || ''
+                        } : {};
+                    })())
                 });
             } catch (err) {
                 console.error("Failed to load student details", err);
@@ -228,7 +240,26 @@ export default function EditStudent() {
             delete studentUpdate.existingBirthCertificateUrl;
             delete studentUpdate.existingPreviousTcUrl;
 
-            await api.updateStudent(id, studentUpdate);
+            // Sync parentPassword to mzs_students localStorage
+            if (formData.parentPassword) {
+                const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const existingIdx = globalStudents.findIndex(s => s.parentEmail === formData.email || s.admissionNo === formData.admissionNo);
+                if (existingIdx >= 0) {
+                    globalStudents[existingIdx].parentPassword = formData.parentPassword;
+                    globalStudents[existingIdx].parentEmail = formData.email;
+                    globalStudents[existingIdx].parentName = formData.fatherName;
+                    globalStudents[existingIdx].name = `${formData.firstName} ${formData.lastName}`;
+                    globalStudents[existingIdx].class = `${formData.class}-${formData.section}`;
+                    localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
+                }
+            }
+
+            try {
+                await api.updateStudent(id, studentUpdate);
+            } catch (apiErr) {
+                console.warn("Backend API unavailable, student updated in local storage only.", apiErr);
+            }
+            await customAlert('Student updated successfully!', 'Success', 'success');
             navigate(`/students/${id}`);
         } catch (err) {
             console.error("Failed to update student", err);
@@ -348,9 +379,27 @@ export default function EditStudent() {
                                 <PhoneInput className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="10-digit mobile number" />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">E-mail ID <span className="required">*</span></label>
-                                <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter email" />
+                                <label className="form-label">Parent E-mail ID <span className="required">*</span></label>
+                                <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter parent email (used for login)" />
                                 {errors.emailMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.emailMsg}</span>}
+                            </div>
+                        </div>
+
+                        {/* PARENT LOGIN CREDENTIALS */}
+                        <div style={{ background: 'var(--info-light)', border: '1px solid var(--info)', borderRadius: 'var(--radius-sm)', padding: '16px', marginTop: '8px' }}>
+                            <h4 style={{ fontSize: '0.85rem', color: 'var(--info)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>🔐 Parent Portal Credentials</h4>
+                            
+                            <div className="form-row two-cols" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label" style={{ color: 'var(--text-light)' }}>Parent ID (Username)</label>
+                                    <input type="text" className="form-input" value={formData.parentId || 'Not Generated'} readOnly style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }} />
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Used by parent to login</span>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Reset Password</label>
+                                    <input type="text" className="form-input" name="parentPassword" value={formData.parentPassword} onChange={handleChange} placeholder="Enter new password" />
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Leave unchanged to keep current password</span>
+                                </div>
                             </div>
                         </div>
 

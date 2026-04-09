@@ -351,22 +351,44 @@ function ConfirmationTab() {
 
             // Sync with Student Portal Directory (mzs_students)
             const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            
+            // Generate Parent ID in PAR-YYYY-XXXXX format
+            const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
+            let seq = existingParIds.length + 1;
+            let parentId;
+            do {
+                parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
+                seq++;
+            } while (existingParIds.includes(parentId));
+
+            // Generate random 8-char password
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let parentPassword = '';
+            for (let i = 0; i < 8; i++) parentPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+
             const portalStudent = {
                 id: admNo,
                 name: student.name,
                 class: student.class,
                 admissionNo: admNo,
-                parentEmail: student.parentEmail || 'parent@mzs.edu', // Fallback for demo
-                status: 'Active'
+                parentId: parentId,
+                parentEmail: student.parentEmail,
+                parentPassword: parentPassword,
+                parentName: student.parentName || 'Parent / Guardian',
+                status: 'Active',
+                firstLogin: true
             };
             localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
 
             await customAlert(
                 `Admission Confirmed!\n\n` +
                 `Admission No: ${admNo}\n` +
-                `Portal Login Details:\n` +
-                `Username: ${portalStudent.parentEmail}\n` +
-                `Password: ${admNo}`,
+                `Parent Portal Login Credentials:\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Parent ID: ${parentId}\n` +
+                `Password: ${parentPassword}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `Please share these credentials with the parent.`,
                 'Success',
                 'success'
             );

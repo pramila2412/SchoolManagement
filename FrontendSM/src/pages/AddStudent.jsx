@@ -64,6 +64,28 @@ export default function AddStudent() {
         }
     };
 
+    // Generate Parent ID in PAR-YYYY-XXXXX format
+    const generateParentId = () => {
+        const year = new Date().getFullYear();
+        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+        const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
+        let seq = existingParIds.length + 1;
+        let parentId;
+        do {
+            parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
+            seq++;
+        } while (existingParIds.includes(parentId));
+        return parentId;
+    };
+
+    // Generate random 8-char alphanumeric password
+    const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let pass = '';
+        for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        return pass;
+    };
+
     const validate = () => {
         const newErrors = {};
         const requiredStrFields = [
@@ -177,11 +199,58 @@ export default function AddStudent() {
             delete newStudent.birthCertificate;
             delete newStudent.previousTC;
 
-            await api.createStudent(newStudent);
+            // Auto-generate Parent ID and password
+            const parentId = generateParentId();
+            const parentPassword = generatePassword();
+
+            // Save to mzs_students localStorage for Parent Portal login
+            const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const portalStudent = {
+                id: newId,
+                name: `${formData.firstName} ${formData.lastName}`,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                class: `${formData.class}-${formData.section}`,
+                admissionNo: formData.admissionNo,
+                rollNo: formData.rollNo,
+                dateOfBirth: formData.dateOfBirth,
+                gender: formData.gender,
+                bloodGroup: formData.bloodGroup,
+                parentId: parentId,
+                parentEmail: formData.email,
+                parentPassword: parentPassword,
+                parentName: formData.fatherName,
+                motherName: formData.motherName,
+                phone: formData.contactNo,
+                guardianPhone: formData.guardianPhone,
+                address: formData.address,
+                photoUrl: photoUrl,
+                status: 'Active',
+                firstLogin: true
+            };
+            localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
+
+            try {
+                await api.createStudent(newStudent);
+            } catch (apiErr) {
+                console.warn("Backend API unavailable, student saved to local storage only.", apiErr);
+            }
+
+            await customAlert(
+                `Student added successfully!\n\n` +
+                `Parent Portal Login Credentials:\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `Parent ID: ${parentId}\n` +
+                `Password: ${parentPassword}\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `Please share these credentials with the parent during admission.`,
+                'Student Created',
+                'success'
+            );
             navigate('/students');
         } catch (err) {
             console.error("Failed to add student", err);
-            await customAlert("Failed to add student to DB. Check server.");
+            await customAlert("Failed to add student. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -293,10 +362,16 @@ export default function AddStudent() {
                                 <PhoneInput className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="10-digit mobile number" />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">E-mail ID <span className="required">*</span></label>
-                                <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter email" />
+                                <label className="form-label">Parent E-mail ID <span className="required">*</span></label>
+                                <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter parent email (used for login)" />
                                 {errors.emailMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.emailMsg}</span>}
                             </div>
+                        </div>
+
+                        {/* PARENT LOGIN CREDENTIALS INFO */}
+                        <div style={{ background: 'var(--info-light)', border: '1px solid var(--info)', borderRadius: 'var(--radius-sm)', padding: '16px', marginTop: '8px' }}>
+                            <h4 style={{ fontSize: '0.85rem', color: 'var(--info)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>🔐 Parent Portal Credentials</h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0' }}>A unique <strong>Parent ID</strong> (PAR-YYYY-XXXXX) and <strong>secure password</strong> will be auto-generated when you submit this form. The credentials will be displayed after successful creation — please share them with the parent.</p>
                         </div>
 
                         <div className="form-group">

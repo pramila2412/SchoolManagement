@@ -8,7 +8,7 @@ import {
     CheckCircle2, XCircle, Clock, Eye, Printer, UploadCloud,
     TrendingUp, Calculator, Grid
 } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import { api } from '../utils/api';
 import './Finance.css';
 
@@ -54,47 +54,182 @@ function DashboardTab({ onGenerateInvoice }) {
 }
 
 // ======================== FEE STRUCTURE ========================
-function FeeStructureTab() {
+function FeeStructureTab({ structures, setStructures }) {
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const defaultStructures = [
-        { _id: '1', classGroup: 'Nursery, LKG & UKG', classes: ['Nursery', 'LKG', 'UKG'], admissionFee: 0, admissionFeeNote: 'FREE (3,000.00)', annualFee: 2000, examFee: 2000, monthlyFee: 1500, total: 5500 },
-        { _id: '2', classGroup: 'STD. 1 to 2', classes: ['I', 'II'], admissionFee: 0, admissionFeeNote: 'FREE (4,000.00)', annualFee: 3000, examFee: 2000, monthlyFee: 2000, total: 7000 },
-        { _id: '3', classGroup: 'STD. 3 to 4', classes: ['III', 'IV'], admissionFee: 0, admissionFeeNote: 'FREE (4,000.00)', annualFee: 3000, examFee: 2000, monthlyFee: 2400, total: 7400 },
-        { _id: '4', classGroup: 'STD. 5 to 7', classes: ['V', 'VI', 'VII'], admissionFee: 7500, annualFee: 7950, examFee: 3050, monthlyFee: 2700, total: 21200 },
-        { _id: '5', classGroup: 'STD. 8', classes: ['VIII'], admissionFee: 7500, annualFee: 7950, examFee: 3650, monthlyFee: 3300, total: 22400 },
-        { _id: '6', classGroup: 'STD. 9', classes: ['IX'], admissionFee: 8000, annualFee: 9150, examFee: 4250, monthlyFee: 3300, total: 24700 },
-        { _id: '7', classGroup: 'STD. 11', classes: ['XI'], admissionFee: 0, annualFee: 8550, examFee: 4000, monthlyFee: 3300, total: 15850 },
-    ];
-    const [structures, setStructures] = useState(defaultStructures);
+    const DEFAULT_FEE_TYPES = ['Admission Fee', 'Annual Fee', 'Examination Fee', 'Monthly Fee'];
+    
     const [isAdding, setIsAdding] = useState(false);
     const [classDropdownOpen, setClassDropdownOpen] = useState(false);
+    const [editClassDropdownOpen, setEditClassDropdownOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const emptyForm = { classGroup: '', classes: [], admissionFee: '', annualFee: '', examFee: '', monthlyFee: '' };
-    const [newEntry, setNewEntry] = useState({...emptyForm});
-    const calcTotal = (e) => (Number(e.admissionFee)||0) + (Number(e.annualFee)||0) + (Number(e.examFee)||0) + (Number(e.monthlyFee)||0);
-    const toggleClass = (cls) => {
+    const [editingId, setEditingId] = useState(null);
+    const [editData, setEditData] = useState(null);
+    const [newCustomFeeName, setNewCustomFeeName] = useState('');
+    const [editCustomFeeName, setEditCustomFeeName] = useState('');
+    
+    const emptyForm = { classGroup: '', classes: [], fees: DEFAULT_FEE_TYPES.map(name => ({ name, amount: '' })) };
+    const [newEntry, setNewEntry] = useState({...emptyForm, fees: emptyForm.fees.map(f => ({...f}))});
+    
+    const calcTotal = (fees) => fees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+    const fmt = (v) => (!v && v !== 0) ? '—' : '₹ ' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    
+    const toggleClass = (cls, setter, getter) => {
         if (cls === 'All Classes') {
-            setNewEntry(prev => prev.classes.includes('All Classes') ? {...prev, classes: [], classGroup: ''} : {...prev, classes: ['All Classes'], classGroup: 'All Classes'});
+            setter(prev => prev.classes.includes('All Classes') ? {...prev, classes: [], classGroup: ''} : {...prev, classes: ['All Classes'], classGroup: 'All Classes'});
             return;
         }
-        setNewEntry(prev => {
+        setter(prev => {
             const filtered = prev.classes.filter(c => c !== 'All Classes');
             const updated = filtered.includes(cls) ? filtered.filter(c => c !== cls) : [...filtered, cls];
             return {...prev, classes: updated, classGroup: updated.join(', ')};
         });
     };
+    
+    // --- Update fee amount in add form ---
+    const updateNewFee = (index, amount) => {
+        setNewEntry(prev => {
+            const fees = [...prev.fees];
+            fees[index] = { ...fees[index], amount };
+            return { ...prev, fees };
+        });
+    };
+    
+    // --- Add custom fee type to add form ---
+    const addCustomFeeToNew = () => {
+        const name = newCustomFeeName.trim();
+        if (!name) return customAlert('Please enter a fee name');
+        if (newEntry.fees.some(f => f.name.toLowerCase() === name.toLowerCase())) return customAlert('This fee type already exists');
+        setNewEntry(prev => ({ ...prev, fees: [...prev.fees, { name, amount: '' }] }));
+        setNewCustomFeeName('');
+    };
+    
+    // --- Remove fee type from add form ---
+    const removeNewFee = (index) => {
+        setNewEntry(prev => ({ ...prev, fees: prev.fees.filter((_, i) => i !== index) }));
+    };
+    
+    // --- Save new entry ---
     const handleSave = async () => {
         if (newEntry.classes.length === 0) return customAlert('Please select at least one class');
-        if (!newEntry.annualFee && !newEntry.examFee && !newEntry.monthlyFee && !newEntry.admissionFee) return customAlert('Please enter at least one fee amount');
+        if (newEntry.fees.length === 0) return customAlert('Please add at least one fee type');
+        if (!newEntry.fees.some(f => Number(f.amount) > 0)) return customAlert('Please enter at least one fee amount');
         setSaving(true);
         try {
-            const entry = { ...newEntry, admissionFee: Number(newEntry.admissionFee)||0, annualFee: Number(newEntry.annualFee)||0, examFee: Number(newEntry.examFee)||0, monthlyFee: Number(newEntry.monthlyFee)||0, total: calcTotal(newEntry), _id: 'new-' + Date.now() };
+            const entry = {
+                _id: 'fs-' + Date.now(),
+                classGroup: newEntry.classGroup,
+                classes: [...newEntry.classes],
+                fees: newEntry.fees.map(f => ({ name: f.name, amount: Number(f.amount) || 0 })),
+                total: calcTotal(newEntry.fees)
+            };
             setStructures([entry, ...structures]);
-            setIsAdding(false); setClassDropdownOpen(false); setNewEntry({...emptyForm});
+            setIsAdding(false); setClassDropdownOpen(false);
+            setNewEntry({...emptyForm, fees: emptyForm.fees.map(f => ({...f}))});
+            setNewCustomFeeName('');
             await customAlert('Fee structure added successfully!');
         } catch (err) { await customAlert(err.message || 'Failed to save.'); } finally { setSaving(false); }
     };
-    const fmt = (v) => (!v && v !== 0) ? '—' : '₹ ' + Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    
+    // --- Start editing ---
+    const startEdit = (s) => {
+        setEditingId(s._id);
+        setEditData({
+            classGroup: s.classGroup,
+            classes: [...s.classes],
+            fees: s.fees.map(f => ({ ...f }))
+        });
+        setEditCustomFeeName('');
+        setEditClassDropdownOpen(false);
+    };
+    
+    // --- Cancel editing ---
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditData(null);
+        setEditClassDropdownOpen(false);
+    };
+    
+    // --- Update fee in edit form ---
+    const updateEditFee = (index, amount) => {
+        setEditData(prev => {
+            const fees = [...prev.fees];
+            fees[index] = { ...fees[index], amount };
+            return { ...prev, fees };
+        });
+    };
+    
+    // --- Add custom fee type to edit form ---
+    const addCustomFeeToEdit = () => {
+        const name = editCustomFeeName.trim();
+        if (!name) return customAlert('Please enter a fee name');
+        if (editData.fees.some(f => f.name.toLowerCase() === name.toLowerCase())) return customAlert('This fee type already exists');
+        setEditData(prev => ({ ...prev, fees: [...prev.fees, { name, amount: '' }] }));
+        setEditCustomFeeName('');
+    };
+    
+    // --- Remove fee type from edit form ---
+    const removeEditFee = (index) => {
+        setEditData(prev => ({ ...prev, fees: prev.fees.filter((_, i) => i !== index) }));
+    };
+    
+    // --- Save edit ---
+    const saveEdit = async () => {
+        if (editData.classes.length === 0) return customAlert('Please select at least one class');
+        if (editData.fees.length === 0) return customAlert('Please add at least one fee type');
+        if (!editData.fees.some(f => Number(f.amount) > 0)) return customAlert('Please enter at least one fee amount');
+        const updated = structures.map(s => {
+            if (s._id !== editingId) return s;
+            return {
+                ...s,
+                classGroup: editData.classGroup,
+                classes: [...editData.classes],
+                fees: editData.fees.map(f => ({ name: f.name, amount: Number(f.amount) || 0 })),
+                total: calcTotal(editData.fees)
+            };
+        });
+        setStructures(updated);
+        setEditingId(null);
+        setEditData(null);
+        setEditClassDropdownOpen(false);
+        await customAlert('Fee structure updated successfully!');
+    };
+    
+    // --- Delete structure ---
+    const handleDelete = async (id) => {
+        const ok = await customConfirm('Are you sure you want to delete this fee structure?');
+        if (ok) {
+            setStructures(structures.filter(s => s._id !== id));
+            await customAlert('Fee structure deleted.');
+        }
+    };
+    
+    // --- Class multi-select dropdown component ---
+    const ClassSelector = ({ data, setData, isOpen, setIsOpen }) => (
+        <div className="form-group" style={{ marginBottom: 20 }}>
+            <label className="form-label">Assigned Classes <span className="required">*</span></label>
+            <div style={{ position: 'relative' }}>
+                <div className="form-input" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, minHeight: 44, padding: '6px 12px' }} onClick={() => setIsOpen(!isOpen)}>
+                    {data.classes.length === 0 ? <span style={{ color: '#8898aa', fontSize: '0.88rem' }}>Select classes...</span> : data.classes.map(cls => (
+                        <span key={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--accent)', color: '#fff', padding: '3px 12px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 600 }}>
+                            {cls}<span style={{ cursor: 'pointer', marginLeft: 2, fontWeight: 'bold' }} onClick={(e) => { e.stopPropagation(); toggleClass(cls, setData); }}>×</span>
+                        </span>
+                    ))}
+                </div>
+                {isOpen && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#fff', border: '1px solid #e9ecef', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 260, overflowY: 'auto', marginTop: 4, padding: '8px 0' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', borderBottom: '1px solid #f0f0f5', background: data.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
+                            <input type="checkbox" checked={data.classes.includes('All Classes')} onChange={() => toggleClass('All Classes', setData)} style={{ accentColor: 'var(--accent)' }}/>All Classes
+                        </label>
+                        {ALL_CLASSES.map(cls => (
+                            <label key={cls} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontSize: '0.88rem', background: data.classes.includes(cls) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
+                                <input type="checkbox" checked={data.classes.includes('All Classes') || data.classes.includes(cls)} disabled={data.classes.includes('All Classes')} onChange={() => toggleClass(cls, setData)} style={{ accentColor: 'var(--accent)' }}/>Class {cls}
+                            </label>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     return (
         <div className="animate-fade-in">
@@ -105,66 +240,138 @@ function FeeStructureTab() {
                 </div>
                 {!isAdding && <button className="btn btn-primary" onClick={() => setIsAdding(true)}><PlusCircle size={16}/> Add Fee Structure</button>}
             </div>
+            
+            {/* ===== ADD NEW FORM ===== */}
             {isAdding && (
                 <div className="card animate-slide-up" style={{ padding: 24, marginBottom: 24, border: '1px solid var(--accent)', borderRadius: 12 }}>
                     <h4 style={{ marginBottom: 20, color: 'var(--primary)' }}>Add New Fee Structure</h4>
-                    <div className="form-group" style={{ marginBottom: 20 }}>
-                        <label className="form-label">Assigned Classes <span className="required">*</span></label>
-                        <div style={{ position: 'relative' }}>
-                            <div className="form-input" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, minHeight: 44, padding: '6px 12px' }} onClick={() => setClassDropdownOpen(!classDropdownOpen)}>
-                                {newEntry.classes.length === 0 ? <span style={{ color: '#8898aa', fontSize: '0.88rem' }}>Select classes (e.g. Nursery, LKG, UKG)...</span> : newEntry.classes.map(cls => (
-                                    <span key={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--accent)', color: '#fff', padding: '3px 12px', borderRadius: 20, fontSize: '0.78rem', fontWeight: 600 }}>
-                                        {cls}<span style={{ cursor: 'pointer', marginLeft: 2, fontWeight: 'bold' }} onClick={(e) => { e.stopPropagation(); toggleClass(cls); }}>×</span>
-                                    </span>
-                                ))}
-                            </div>
-                            {classDropdownOpen && (
-                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#fff', border: '1px solid #e9ecef', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 260, overflowY: 'auto', marginTop: 4, padding: '8px 0' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', borderBottom: '1px solid #f0f0f5', background: newEntry.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
-                                        <input type="checkbox" checked={newEntry.classes.includes('All Classes')} onChange={() => toggleClass('All Classes')} style={{ accentColor: 'var(--accent)' }}/>All Classes
-                                    </label>
-                                    {ALL_CLASSES.map(cls => (
-                                        <label key={cls} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontSize: '0.88rem', background: newEntry.classes.includes(cls) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
-                                            <input type="checkbox" checked={newEntry.classes.includes('All Classes') || newEntry.classes.includes(cls)} disabled={newEntry.classes.includes('All Classes')} onChange={() => toggleClass(cls)} style={{ accentColor: 'var(--accent)' }}/>Class {cls}
-                                        </label>
-                                    ))}
+                    <ClassSelector data={newEntry} setData={setNewEntry} isOpen={classDropdownOpen} setIsOpen={setClassDropdownOpen} />
+                    
+                    {/* Dynamic fee rows */}
+                    <div style={{ marginBottom: 16 }}>
+                        <label className="form-label" style={{ marginBottom: 12, display: 'block' }}>Fee Components</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+                            {newEntry.fees.map((fee, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f8fafc', borderRadius: 8, padding: '8px 12px', border: '1px solid #e9ecef' }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#8898aa', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fee.name}</div>
+                                        <input type="number" className="form-input" style={{ padding: '6px 10px', fontSize: '0.88rem' }} placeholder="0.00" value={fee.amount} onChange={e => updateNewFee(i, e.target.value)} />
+                                    </div>
+                                    {!DEFAULT_FEE_TYPES.includes(fee.name) && (
+                                        <button type="button" onClick={() => removeNewFee(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 4, marginTop: 16 }} title="Remove this fee type">
+                                            <XCircle size={16}/>
+                                        </button>
+                                    )}
                                 </div>
-                            )}
+                            ))}
                         </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
-                        <div className="form-group"><label className="form-label">Admission Fee (₹)</label><input type="number" className="form-input" placeholder="0.00" value={newEntry.admissionFee} onChange={e => setNewEntry({...newEntry, admissionFee: e.target.value})}/></div>
-                        <div className="form-group"><label className="form-label">Annual Fee (₹)</label><input type="number" className="form-input" placeholder="0.00" value={newEntry.annualFee} onChange={e => setNewEntry({...newEntry, annualFee: e.target.value})}/></div>
-                        <div className="form-group"><label className="form-label">Examination Fee (₹)</label><input type="number" className="form-input" placeholder="0.00" value={newEntry.examFee} onChange={e => setNewEntry({...newEntry, examFee: e.target.value})}/></div>
-                        <div className="form-group"><label className="form-label">Monthly Fee (₹)</label><input type="number" className="form-input" placeholder="0.00" value={newEntry.monthlyFee} onChange={e => setNewEntry({...newEntry, monthlyFee: e.target.value})}/></div>
+                    
+                    {/* Add custom fee type */}
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 20, padding: '12px 16px', background: 'rgba(28,167,166,0.04)', border: '1px dashed var(--accent)', borderRadius: 8 }}>
+                        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                            <label className="form-label" style={{ fontSize: '0.78rem' }}>Add Custom Fee Type</label>
+                            <input type="text" className="form-input" placeholder="e.g. Tuition Fee, Special Class Fee, Lab Fee..." value={newCustomFeeName} onChange={e => setNewCustomFeeName(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomFeeToNew())} />
+                        </div>
+                        <button type="button" className="btn btn-outline" style={{ height: 42, whiteSpace: 'nowrap' }} onClick={addCustomFeeToNew}>
+                            <PlusCircle size={14}/> Add Fee
+                        </button>
                     </div>
+                    
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 8 }}>
-                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>Total: {fmt(calcTotal(newEntry))}</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>Total: {fmt(calcTotal(newEntry.fees))}</div>
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="btn btn-outline" onClick={() => { setIsAdding(false); setClassDropdownOpen(false); }}>Cancel</button>
+                            <button className="btn btn-outline" onClick={() => { setIsAdding(false); setClassDropdownOpen(false); setNewEntry({...emptyForm, fees: emptyForm.fees.map(f => ({...f}))}); setNewCustomFeeName(''); }}>Cancel</button>
                             <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Fee Structure'}</button>
                         </div>
                     </div>
                 </div>
             )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-                {structures.map(s => (
-                    <div key={s._id} className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid #e9ecef', borderRadius: 12 }}>
-                        <div style={{ background: 'var(--primary)', color: '#fff', padding: '12px 16px', textAlign: 'center', fontWeight: 700, fontSize: '0.95rem', letterSpacing: 0.5 }}>{s.classGroup}</div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                            <tbody>
-                                {(s.admissionFee > 0 || s.admissionFeeNote) && <tr style={{ borderBottom: '1px solid #f0f0f5' }}><td style={{ padding: '10px 16px', color: '#495057', fontWeight: 500 }}>ADMISSION FEE</td><td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#1a1a2e' }}>{s.admissionFeeNote || fmt(s.admissionFee)}</td></tr>}
-                                <tr style={{ borderBottom: '1px solid #f0f0f5' }}><td style={{ padding: '10px 16px', color: '#495057', fontWeight: 500 }}>ANNUAL FEE (INCIDENTAL)</td><td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#1a1a2e' }}>{fmt(s.annualFee)}</td></tr>
-                                <tr style={{ borderBottom: '1px solid #f0f0f5' }}><td style={{ padding: '10px 16px', color: '#495057', fontWeight: 500 }}>EXAMINATION FEE (1 YEAR)</td><td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#1a1a2e' }}>{fmt(s.examFee)}</td></tr>
-                                <tr style={{ borderBottom: '1px solid #f0f0f5' }}><td style={{ padding: '10px 16px', color: '#495057', fontWeight: 500 }}>MONTHLY FEE</td><td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#1a1a2e' }}>{fmt(s.monthlyFee)}</td></tr>
-                            </tbody>
-                            <tfoot><tr style={{ background: '#f8fafc' }}><td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>TOTAL</td><td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>{fmt(s.total)}</td></tr></tfoot>
-                        </table>
-                        <div style={{ padding: '8px 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {s.classes.map((cls, i) => <span key={i} className="badge badge-draft" style={{ fontSize: '0.72rem' }}>{cls}</span>)}
+            
+            {/* ===== FEE STRUCTURE CARDS ===== */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 16 }}>
+                {structures.map(s => {
+                    const isEditing = editingId === s._id;
+                    
+                    if (isEditing && editData) {
+                        // ===== EDIT MODE =====
+                        return (
+                            <div key={s._id} className="card animate-fade-in" style={{ padding: 0, overflow: 'hidden', border: '2px solid var(--accent)', borderRadius: 12, boxShadow: '0 4px 16px rgba(28,167,166,0.15)' }}>
+                                <div style={{ background: 'var(--accent)', color: '#fff', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem' }}>
+                                    <span>✏️ Editing Fee Structure</span>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <button onClick={saveEdit} style={{ background: '#fff', color: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <CheckCircle2 size={14}/> Save
+                                        </button>
+                                        <button onClick={cancelEdit} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <XCircle size={14}/> Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style={{ padding: 16 }}>
+                                    <ClassSelector data={editData} setData={setEditData} isOpen={editClassDropdownOpen} setIsOpen={setEditClassDropdownOpen} />
+                                    
+                                    {editData.fees.map((fee, i) => (
+                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e9ecef' }}>
+                                            <div style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: '#495057', textTransform: 'uppercase' }}>{fee.name}</div>
+                                            <input type="number" className="form-input" style={{ width: 130, padding: '6px 10px', fontSize: '0.88rem', textAlign: 'right' }} value={fee.amount} onChange={e => updateEditFee(i, e.target.value)} placeholder="0.00" />
+                                            <button type="button" onClick={() => removeEditFee(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 4 }} title="Remove fee">
+                                                <XCircle size={16}/>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Add custom fee type in edit mode */}
+                                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 10, marginBottom: 10 }}>
+                                        <input type="text" className="form-input" style={{ flex: 1, padding: '6px 10px', fontSize: '0.85rem' }} placeholder="Add new fee type (e.g. Tuition Fee)..." value={editCustomFeeName} onChange={e => setEditCustomFeeName(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomFeeToEdit())} />
+                                        <button type="button" className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.78rem', whiteSpace: 'nowrap' }} onClick={addCustomFeeToEdit}>
+                                            <PlusCircle size={14}/> Add
+                                        </button>
+                                    </div>
+                                    
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(28,167,166,0.06)', borderRadius: 8, marginTop: 8 }}>
+                                        <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>TOTAL</span>
+                                        <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1rem' }}>{fmt(calcTotal(editData.fees))}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+                    
+                    // ===== VIEW MODE =====
+                    return (
+                        <div key={s._id} className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid #e9ecef', borderRadius: 12 }}>
+                            <div style={{ background: 'var(--primary)', color: '#fff', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: 0.5 }}>{s.classGroup}</span>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                    <button onClick={() => startEdit(s)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 600 }} title="Edit">
+                                        <Eye size={13}/> Edit
+                                    </button>
+                                    <button onClick={() => handleDelete(s._id)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: '#ffcccc', display: 'flex', alignItems: 'center' }} title="Delete">
+                                        <XCircle size={14}/>
+                                    </button>
+                                </div>
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                <tbody>
+                                    {s.fees && s.fees.map((fee, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid #f0f0f5' }}>
+                                            <td style={{ padding: '10px 16px', color: '#495057', fontWeight: 500 }}>{fee.name.toUpperCase()}</td>
+                                            <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#1a1a2e' }}>{fmt(fee.amount)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot><tr style={{ background: '#f8fafc' }}>
+                                    <td style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>TOTAL</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>{fmt(s.total)}</td>
+                                </tr></tfoot>
+                            </table>
+                            <div style={{ padding: '8px 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {s.classes.map((cls, i) => <span key={i} className="badge badge-draft" style={{ fontSize: '0.72rem' }}>{cls}</span>)}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -745,6 +952,15 @@ export default function Finance() {
         { id: 1, invoiceNo: 'INV-2026-001', billedTo: 'Ajay Transport', type: 'Vendor', issueDate: '2026-03-20', dueDate: '2026-04-05', amount: 45000, status: 'Sent' },
         { id: 2, invoiceNo: 'INV-2026-002', billedTo: 'Ritika Singh', type: 'Student', issueDate: '2026-03-22', dueDate: '2026-03-30', amount: 2500, status: 'Paid' },
     ]);
+    const [feeStructures, setFeeStructures] = useLocalStorage('finance_fee_structures', [
+        { _id: '1', classGroup: 'Nursery, LKG & UKG', classes: ['Nursery', 'LKG', 'UKG'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 2000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 1500 }], total: 5500 },
+        { _id: '2', classGroup: 'STD. 1 to 2', classes: ['I', 'II'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 3000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 2000 }], total: 7000 },
+        { _id: '3', classGroup: 'STD. 3 to 4', classes: ['III', 'IV'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 3000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 2400 }], total: 7400 },
+        { _id: '4', classGroup: 'STD. 5 to 7', classes: ['V', 'VI', 'VII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3050 }, { name: 'Monthly Fee', amount: 2700 }], total: 21200 },
+        { _id: '5', classGroup: 'STD. 8', classes: ['VIII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3650 }, { name: 'Monthly Fee', amount: 3300 }], total: 22400 },
+        { _id: '6', classGroup: 'STD. 9', classes: ['IX'], fees: [{ name: 'Admission Fee', amount: 8000 }, { name: 'Annual Fee', amount: 9150 }, { name: 'Examination Fee', amount: 4250 }, { name: 'Monthly Fee', amount: 3300 }], total: 24700 },
+        { _id: '7', classGroup: 'STD. 11', classes: ['XI'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 8550 }, { name: 'Examination Fee', amount: 4000 }, { name: 'Monthly Fee', amount: 3300 }], total: 15850 },
+    ]);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
     const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
@@ -782,7 +998,7 @@ export default function Finance() {
                 <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
                     {activeTab === 'dashboard' && <DashboardTab onGenerateInvoice={handleGenerateInvoice}/>}
-                    {activeTab === 'structure' && <FeeStructureTab/>}
+                    {activeTab === 'structure' && <FeeStructureTab structures={feeStructures} setStructures={setFeeStructures}/>}
                     {activeTab === 'collection' && <FeeCollectionTab/>}
                     {activeTab === 'online-payments' && <OnlinePaymentsTab/>}
                     {activeTab === 'defaulters' && <DefaultersTab/>}

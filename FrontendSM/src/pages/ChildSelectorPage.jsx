@@ -26,7 +26,7 @@ export default function ChildSelectorPage() {
                 <div className="cs-header">
                     <div className="cs-logo">🏫</div>
                     <h1>Select Student Profile</h1>
-                    <p>Welcome back, {user.name}. Please select a child to continue to the portal.</p>
+                    <p>Welcome back, {user.name} ({user.parentId}). Please select a child to continue to the portal.</p>
                 </div>
 
                 <div className="cs-grid">

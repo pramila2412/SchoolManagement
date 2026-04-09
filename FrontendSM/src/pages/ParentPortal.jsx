@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { customAlert } from '../utils/dialogs';
 import {
     LayoutDashboard, User, CalendarCheck, Megaphone, Award, IndianRupee,
-    Clock, Phone, Download, CreditCard, Eye, FileText, MapPin, Mail,
-    CheckCircle2, XCircle, AlertTriangle, ChevronRight, Users
+    Clock, Phone, Download, CreditCard, ChevronRight, Users, CheckCircle2, AlertTriangle, MapPin, Mail, Settings
 } from 'lucide-react';
 import './ParentPortal.css';
 
@@ -45,25 +46,47 @@ function ChildSelector() {
 }
 
 // ======================== DASHBOARD ========================
-function DashboardTab() {
+function DashboardTab({ setTab }) {
     const { user } = useAuth();
     const children = user?.children || [];
     const selected = user?.selectedChild || children[0] || {};
+    
+    // Load dynamic data based on selected child
+    const allFees = JSON.parse(localStorage.getItem('mzs_fee_structure') || '[]');
+    const allPayments = JSON.parse(localStorage.getItem('mzs_fee_payments') || '[]');
+    const allAnnouncements = JSON.parse(localStorage.getItem('mzs_announcements') || '[]');
+
+    const studentClass = selected.class ? selected.class.split('-')[0] : '';
+    const assignedFees = allFees.filter(f => !f.classIds || f.classIds.includes(studentClass));
+    const totalFee = assignedFees.reduce((sum, f) => sum + Number(f.amount || 0), 0) || 85000;
+    
+    const studentPayments = allPayments.filter(p => p.studentId === selected.id);
+    const amountPaid = studentPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const pendingBalance = totalFee - amountPaid;
+
+    const recentAnnouncements = allAnnouncements.slice(0, 3);
+    if(recentAnnouncements.length === 0) {
+        recentAnnouncements.push(
+            { title: 'Annual Day Rehearsal Schedule', category: 'General', date: '25 Mar 2026' },
+            { title: 'Q4 Fee Due Reminder', category: 'Finance', date: '22 Mar 2026' },
+            { title: 'Holi Holiday - 14th March', category: 'Holiday', date: '10 Mar 2026' }
+        );
+    }
 
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
             <div className="pp-summary-grid">
                 <div className="pp-summary-card">
-                    <div className="pp-summary-info"><h4>Total Fee</h4><p>₹ 85,000</p></div>
+                    <div className="pp-summary-info"><h4>Total Fee</h4><p>₹ {totalFee.toLocaleString()}</p></div>
                     <div className="pp-summary-icon" style={{ background: 'var(--info-light)' }}><IndianRupee size={22} color="var(--info)"/></div>
                 </div>
                 <div className="pp-summary-card">
-                    <div className="pp-summary-info"><h4>Amount Paid</h4><p style={{ color: 'var(--success)' }}>₹ 52,750</p></div>
+                    <div className="pp-summary-info"><h4>Amount Paid</h4><p style={{ color: 'var(--success)' }}>₹ {amountPaid.toLocaleString()}</p></div>
                     <div className="pp-summary-icon" style={{ background: 'var(--success-light)' }}><CheckCircle2 size={22} color="var(--success)"/></div>
                 </div>
                 <div className="pp-summary-card">
-                    <div className="pp-summary-info"><h4>Pending Balance</h4><p style={{ color: 'var(--danger)' }}>₹ 32,250</p></div>
+                    <div className="pp-summary-info"><h4>Pending Balance</h4><p style={{ color: 'var(--danger)' }}>₹ {pendingBalance.toLocaleString()}</p></div>
                     <div className="pp-summary-icon" style={{ background: 'var(--danger-light)' }}><AlertTriangle size={22} color="var(--danger)"/></div>
                 </div>
                 <div className="pp-summary-card">
@@ -74,25 +97,29 @@ function DashboardTab() {
 
             <div className="pp-dash-grid">
                 <div className="card-sub-panel">
-                    <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18}/> Recent Announcements for {selected.name}</h4>
-                    {[
-                        { title: 'Annual Day Rehearsal Schedule', cat: 'event', date: '25 Mar 2026' },
-                        { title: 'Q4 Fee Due Reminder', cat: 'fee', date: '22 Mar 2026' },
-                        { title: 'Holi Holiday - 14th March', cat: 'holiday', date: '10 Mar 2026' },
-                    ].map((a, i) => (
+                    <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18}/> Recent Announcements</h4>
+                    {recentAnnouncements.map((a, i) => {
+                        // Map old categories or dynamic ones to CSS classes
+                        let catClass = 'general';
+                        if(a.category?.toLowerCase() === 'finance' || a.category?.toLowerCase() === 'fee') catClass = 'fee';
+                        else if(a.category?.toLowerCase() === 'holiday') catClass = 'holiday';
+                        else if(a.title?.toLowerCase().includes('exam')) catClass = 'exam';
+                        else if(a.category?.toLowerCase() === 'urgent') catClass = 'urgent';
+
+                        return (
                         <div key={i} className="pp-ann-item">
-                            <div><span className={`pp-ann-badge ${a.cat}`}>{a.cat}</span> <span style={{ marginLeft: 8, fontSize: '0.9rem' }}>{a.title}</span></div>
+                            <div><span className={`pp-ann-badge ${catClass}`}>{a.category || a.cat || 'Alert'}</span> <span style={{ marginLeft: 8, fontSize: '0.9rem' }}>{a.title}</span></div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.date}</span>
                         </div>
-                    ))}
+                    )})}
                 </div>
                 <div className="card-sub-panel">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><ChevronRight size={18}/> Quick Actions</h4>
                     <div style={{ display: 'grid', gap: 8 }}>
-                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }}><IndianRupee size={16} color="var(--primary)"/> Pay Fees Online</button>
-                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }}><Download size={16} color="var(--info)"/> Download Receipts</button>
-                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }}><CalendarCheck size={16} color="var(--success)"/> View Attendance</button>
-                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }}><Award size={16} color="var(--warning)"/> View Certificates</button>
+                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }} onClick={() => setTab('fees')}><IndianRupee size={16} color="var(--primary)"/> Pay Fees Online</button>
+                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }} onClick={() => setTab('history')}><Download size={16} color="var(--info)"/> Download Receipts</button>
+                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }} onClick={() => setTab('attendance')}><CalendarCheck size={16} color="var(--success)"/> View Attendance</button>
+                        <button className="hr-quick-btn" style={{ justifyContent: 'flex-start' }} onClick={() => setTab('certificates')}><Award size={16} color="var(--warning)"/> View Certificates</button>
                     </div>
                 </div>
             </div>
@@ -113,15 +140,19 @@ function ProfileTab() {
             <ChildSelector/>
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><User size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> {selected.name}'s Profile</h3>
             <div className="pp-profile-card">
-                <div className="pp-profile-photo"><User size={64} color="var(--text-muted)"/></div>
+                <div className="pp-profile-photo">
+                    {selected.photoUrl ? <img src={selected.photoUrl} alt="Student" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:'var(--radius-md)'}} /> : <User size={64} color="var(--text-muted)"/>}
+                </div>
                 <div className="pp-profile-details">
                     <h2>{selected.name}</h2>
                     <div className="pp-detail-row"><span className="pp-detail-label">Admission Number</span><span className="pp-detail-value">{selected.id}</span></div>
                     <div className="pp-detail-row"><span className="pp-detail-label">Class & Section</span><span className="pp-detail-value">{selected.class}</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Roll Number</span><span className="pp-detail-value">{selected.id.split('-').pop()}</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Date of Birth</span><span className="pp-detail-value">12 August 2011</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Roll Number</span><span className="pp-detail-value">{selected.rollNo || selected.id.split('-').pop()}</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Date of Birth</span><span className="pp-detail-value">{selected.dateOfBirth || '—'}</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Gender / Blood Group</span><span className="pp-detail-value">{(selected.gender || '—')} / {(selected.bloodGroup || '—')}</span></div>
                     <div className="pp-detail-row"><span className="pp-detail-label">Parent / Guardian</span><span className="pp-detail-value">{user.name} ({user.id})</span></div>
-                    <div className="pp-detail-row"><span className="pp-detail-label">Contact Number</span><span className="pp-detail-value">+91 98765 43210</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Primary Contact Number</span><span className="pp-detail-value">{selected.phone || '—'}</span></div>
+                    <div className="pp-detail-row"><span className="pp-detail-label">Registered Address</span><span className="pp-detail-value">{selected.address || '—'}</span></div>
                     <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-muted)' }}>ℹ️ Profile information is managed by the school. Please contact the administration for updates.</p>
                 </div>
             </div>
@@ -161,7 +192,7 @@ function AttendanceTab() {
                         </div>
                     ))}
                 </div>
-                <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 12 }}>
+                <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}><span style={{ width: 12, height: 12, background: '#e8f5e9', border: '1px solid #2e7d32', borderRadius: 3 }}></span> Present</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}><span style={{ width: 12, height: 12, background: '#ffebee', border: '1px solid #c62828', borderRadius: 3 }}></span> Absent</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}><span style={{ width: 12, height: 12, background: '#fff3e0', border: '1px solid #e65100', borderRadius: 3 }}></span> Late</span>
@@ -175,32 +206,40 @@ function AttendanceTab() {
 
 // ======================== ANNOUNCEMENTS ========================
 function AnnouncementsTab() {
-    const announcements = [
-        { title: '📌 Important: Final Exam Schedule Released', body: 'The final examination for all grades will commence from April 15, 2026. Detailed timetable has been attached. Students must carry their hall tickets.', cat: 'exam', date: '25 Mar 2026', pinned: true, attachment: 'exam_timetable_2026.pdf' },
-        { title: 'Annual Day Celebration — 28th March', body: 'Parents are invited for the Annual Day function at the school auditorium. Gates open at 4:00 PM. Please carry your visitor pass.', cat: 'event', date: '22 Mar 2026' },
-        { title: 'Q4 Fee Payment Due Reminder', body: 'This is a reminder that Q4 tuition fees are due by March 31, 2026. Late payment may attract a fine of ₹500. Please pay via the portal.', cat: 'fee', date: '20 Mar 2026' },
-        { title: 'Holi Holiday — School Closed on 14th March', body: 'On account of Holi, the school will remain closed on March 14, 2026 (Saturday). Regular classes resume on March 16.', cat: 'holiday', date: '10 Mar 2026' },
-        { title: '🔴 Water Supply Disruption — Carry Water Bottles', body: 'Due to maintenance, the school water supply will be disrupted on March 12. Students must bring their own water bottles.', cat: 'urgent', date: '9 Mar 2026' },
-        { title: 'PTM Scheduled for 5th March', body: 'Parent-Teacher Meeting for Grades 9 and 10 is scheduled for March 5, 2026, from 10:00 AM. Attendance is mandatory.', cat: 'general', date: '1 Mar 2026' },
+    const allAnnouncements = JSON.parse(localStorage.getItem('mzs_announcements') || '[]');
+    const announcements = allAnnouncements.length > 0 ? allAnnouncements : [
+        { title: '📌 Important: Final Exam Schedule Released', desc: 'The final examination for all grades will commence from April 15, 2026. Detailed timetable has been attached. Students must carry their hall tickets.', category: 'Exam', date: '25 Mar 2026', pinned: true, attachmentUrl: 'exam_timetable_2026.pdf' },
+        { title: 'Annual Day Celebration — 28th March', desc: 'Parents are invited for the Annual Day function at the school auditorium. Gates open at 4:00 PM. Please carry your visitor pass.', category: 'Event', date: '22 Mar 2026' },
+        { title: 'Q4 Fee Payment Due Reminder', desc: 'This is a reminder that Q4 tuition fees are due by March 31, 2026. Late payment may attract a fine of ₹500. Please pay via the portal.', category: 'Fee', date: '20 Mar 2026' },
+        { title: 'Holi Holiday — School Closed on 14th March', desc: 'On account of Holi, the school will remain closed on March 14, 2026 (Saturday). Regular classes resume on March 16.', category: 'Holiday', date: '10 Mar 2026' },
     ];
+    
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><Megaphone size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> School Announcements</h3>
-            {announcements.map((a, i) => (
-                <div key={i} className={`pp-announcement ${a.cat}`}>
+            {announcements.map((a, i) => {
+                let catClass = 'general';
+                if(a.category?.toLowerCase() === 'finance' || a.category?.toLowerCase() === 'fee') catClass = 'fee';
+                else if(a.category?.toLowerCase() === 'holiday') catClass = 'holiday';
+                else if(a.title?.toLowerCase().includes('exam') || a.category?.toLowerCase() === 'exam') catClass = 'exam';
+                else if(a.category?.toLowerCase() === 'event') catClass = 'event';
+                else if(a.category?.toLowerCase() === 'urgent') catClass = 'urgent';
+
+                return (
+                <div key={i} className={`pp-announcement ${catClass}`}>
                     <h4>
-                        <span className={`pp-ann-badge ${a.cat}`}>{a.cat}</span>
+                        <span className={`pp-ann-badge ${catClass}`}>{a.category}</span>
                         {a.title}
                     </h4>
-                    <p>{a.body}</p>
+                    <p>{a.desc || a.content}</p>
                     <div className="ann-meta">
                         <span><Clock size={12}/> {a.date}</span>
-                        {a.attachment && <span><Download size={12}/> {a.attachment}</span>}
+                        {a.attachmentUrl && <span><Download size={12}/> Download Attachment</span>}
                         {a.pinned && <span style={{ color: 'var(--danger)' }}>📌 Pinned</span>}
                     </div>
                 </div>
-            ))}
+            )})}
         </div>
     );
 }
@@ -232,17 +271,52 @@ function CertificatesTab() {
 }
 
 // ======================== FEE PAYMENT ========================
-function FeePaymentTab() {
-    const [selected, setSelected] = useState([]);
-    const fees = [
-        { id: 'monthly', name: 'Monthly Fee (March 2026)', amount: 3300 },
-        { id: 'annual', name: 'Annual Fee (2025-26)', amount: 7950 },
-        { id: 'transport', name: 'Transport Fee (Q4)', amount: 1500 },
-        { id: 'lab', name: 'Computer Lab Fee', amount: 2000 },
-        { id: 'exam', name: 'Exam Fee (Final)', amount: 1500 },
-    ];
-    const toggle = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    const total = fees.filter(f => selected.includes(f.id)).reduce((s, f) => s + f.amount, 0);
+function FeePaymentTab({ setTab }) {
+    const { user } = useAuth();
+    const selected = user?.selectedChild || user.children[0] || {};
+    const [selectedFees, setSelectedFees] = useState([]);
+    
+    // Load from local storage
+    const allFees = JSON.parse(localStorage.getItem('mzs_fee_structure') || '[]');
+    const studentClass = selected.class ? selected.class.split('-')[0] : '';
+    let availableFees = allFees.filter(f => !f.classIds || f.classIds.includes(studentClass));
+
+    if (availableFees.length === 0) {
+        availableFees = [
+            { id: 'monthly', feeName: 'Monthly Fee (March)', amount: 3300 },
+            { id: 'annual', feeName: 'Annual Fee', amount: 7950 },
+            { id: 'transport', feeName: 'Transport Fee (Q4)', amount: 1500 }
+        ];
+    }
+
+    const toggle = (id) => setSelectedFees(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const total = availableFees.filter(f => selectedFees.includes(f.id)).reduce((s, f) => s + Number(f.amount), 0);
+
+    const handlePayment = async () => {
+        if(total <= 0) return;
+        
+        // Mock payment flow
+        await customAlert('Redirecting to Razorpay Secure Gateway...', 'Processing Payment', 'info');
+        
+        // Register successful payment
+        const newPayment = {
+            id: `PAY-${Date.now()}`,
+            date: new Date().toISOString().split('T')[0],
+            studentId: selected.id,
+            studentName: selected.name,
+            amount: total,
+            feeTypes: availableFees.filter(f => selectedFees.includes(f.id)).map(f => f.feeName).join(', '),
+            mode: 'Razorpay Online',
+            status: 'Success',
+            receiptNo: `MZS-REC-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`
+        };
+
+        const existingPayments = JSON.parse(localStorage.getItem('mzs_fee_payments') || '[]');
+        localStorage.setItem('mzs_fee_payments', JSON.stringify([newPayment, ...existingPayments]));
+
+        await customAlert(`Payment of ₹${total.toLocaleString()} was successful!\nReceipt No: ${newPayment.receiptNo}`, 'Payment Successful', 'success');
+        setTab('history');
+    };
 
     return (
         <div className="animate-fade-in">
@@ -250,22 +324,25 @@ function FeePaymentTab() {
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><CreditCard size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Fee Payment</h3>
             <div style={{ maxWidth: 700 }}>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: 16 }}>Select the fee components you wish to pay. The total is calculated dynamically.</p>
-                {fees.map(f => (
-                    <div key={f.id} className={`pp-fee-item ${selected.includes(f.id) ? 'selected' : ''}`} onClick={() => toggle(f.id)}>
+                {availableFees.map(f => (
+                    <div key={f.id} className={`pp-fee-item ${selectedFees.includes(f.id) ? 'selected' : ''}`} onClick={() => toggle(f.id)}>
                         <label>
-                            <input type="checkbox" checked={selected.includes(f.id)} onChange={() => toggle(f.id)} style={{ width: 18, height: 18, accentColor: 'var(--primary)' }}/>
-                            {f.name}
+                            <input type="checkbox" checked={selectedFees.includes(f.id)} onChange={() => toggle(f.id)} onClick={e => e.stopPropagation()} style={{ width: 18, height: 18, accentColor: 'var(--primary)' }}/>
+                            {f.feeName || f.name}
                         </label>
-                        <span className="pp-fee-amount">₹ {f.amount.toLocaleString()}</span>
+                        <span className="pp-fee-amount">₹ {Number(f.amount).toLocaleString()}</span>
                     </div>
                 ))}
+                
                 <div className="pp-fee-total">
                     <span style={{ fontWeight: 600 }}>Total Payable:</span>
                     <span style={{ fontSize: '1.4rem', fontWeight: 700 }}>₹ {total.toLocaleString()}</span>
                 </div>
-                <button className="btn btn-primary" style={{ width: '100%', marginTop: 16, padding: '14px 0', fontSize: '1rem' }} disabled={total === 0}>
+                
+                <button className="btn btn-primary" style={{ width: '100%', marginTop: 16, padding: '14px 0', fontSize: '1rem', background: '#0b3c5d', border: 'none' }} disabled={total === 0} onClick={handlePayment}>
                     <CreditCard size={18} style={{ marginRight: 8, verticalAlign: 'middle' }}/> Pay Online via Razorpay
                 </button>
+                
                 <div style={{ marginTop: 16, padding: 16, background: 'var(--bg)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     <p><strong>Supported:</strong> UPI, PhonePe, Google Pay, Debit/Credit Card, Net Banking</p>
                     <p><strong>Minimum:</strong> ₹100 | <strong>Currency:</strong> INR | <strong>Gateway:</strong> Razorpay (PCI DSS Compliant)</p>
@@ -277,25 +354,102 @@ function FeePaymentTab() {
 
 // ======================== PAYMENT HISTORY ========================
 function PaymentHistoryTab() {
-    const payments = [
-        { date: '18 Mar 2026', student: 'Rahul Kumar', fee: 'Monthly Fee', amount: '₹ 3,300', receipt: 'MZS-REC-2025-0145', status: 'Success' },
-        { date: '10 Feb 2026', student: 'Rahul Kumar', fee: 'Annual Fee', amount: '₹ 7,950', receipt: 'MZS-REC-2025-0098', status: 'Success' },
-        { date: '05 Jan 2026', student: 'Rahul Kumar', fee: 'Monthly Fee', amount: '₹ 3,300', receipt: 'MZS-REC-2025-0067', status: 'Success' },
-        { date: '15 Dec 2025', student: 'Rahul Kumar', fee: 'Transport Fee', amount: '₹ 4,500', receipt: 'MZS-REC-2025-0042', status: 'Success' },
-        { date: '20 Nov 2025', student: 'Rahul Kumar', fee: 'Monthly Fee + Lab Fee', amount: '₹ 5,300', receipt: 'MZS-REC-2025-0023', status: 'Success' },
-    ];
+    const { user } = useAuth();
+    const selected = user?.selectedChild || user.children[0] || {};
+    const allPayments = JSON.parse(localStorage.getItem('mzs_fee_payments') || '[]');
+    const studentPayments = allPayments.filter(p => p.studentId === selected.id);
+
+    if (studentPayments.length === 0 && allPayments.length === 0) {
+        // Mock data if completely empty
+        studentPayments.push(
+            { date: '2026-03-18', studentName: selected.name, feeTypes: 'Monthly Fee', amount: 3300, receiptNo: 'MZS-REC-2025-0145', status: 'Success' },
+            { date: '2026-02-10', studentName: selected.name, feeTypes: 'Annual Fee', amount: 7950, receiptNo: 'MZS-REC-2025-0098', status: 'Success' },
+        );
+    }
+
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><Clock size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Payment History</h3>
-            <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Date</th><th>Student</th><th>Fee Type</th><th>Amount</th><th>Receipt #</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody>{payments.map((p, i) => (
-                        <tr key={i}><td>{p.date}</td><td className="fw-600">{p.student}</td><td>{p.fee}</td><td className="fw-600">{p.amount}</td>
-                            <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{p.receipt}</td>
-                            <td><span className="badge badge-success"><CheckCircle2 size={12}/> {p.status}</span></td>
-                            <td><button className="btn btn-outline" style={{ padding: '4px 12px', fontSize: '0.8rem' }}><Download size={14}/> PDF</button></td></tr>
-                    ))}</tbody></table>
+            
+            {studentPayments.length === 0 ? (
+                <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg)', borderRadius: 'var(--radius-md)' }}>
+                    <p style={{ color: 'var(--text-muted)' }}>No payment history found for this student.</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="data-table"><thead><tr><th>Date</th><th>Student</th><th>Fee Type</th><th>Amount</th><th>Receipt #</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>{studentPayments.map((p, i) => (
+                            <tr key={i}><td>{p.date}</td><td className="fw-600">{p.studentName}</td><td>{p.feeTypes || p.category}</td><td className="fw-600">₹ {Number(p.amount).toLocaleString()}</td>
+                                <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{p.receiptNo}</td>
+                                <td><span className="badge badge-success"><CheckCircle2 size={12}/> {p.status}</span></td>
+                                <td><button className="btn btn-outline" style={{ padding: '4px 12px', fontSize: '0.8rem' }}><Download size={14}/> PDF</button></td></tr>
+                        ))}</tbody></table>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ======================== PASSWORD CHANGE ========================
+function SettingsTab() {
+    const { user, login } = useAuth();
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        
+        if (newPass.length < 8) return customAlert('New password must be at least 8 characters.', 'Validation Error', 'warning');
+        if (newPass !== confirmPass) return customAlert('New passwords do not match.', 'Validation Error', 'warning');
+        
+        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+        const parentRecords = globalStudents.filter(s => s.parentId === user.parentId);
+        
+        if (parentRecords.length === 0) return customAlert('Parent record not found.', 'Error', 'error');
+        
+        // Check current password on first record (all siblings have same password)
+        if (parentRecords[0].parentPassword !== currentPass) {
+            return customAlert('Current password is incorrect.', 'Authentication Failed', 'error');
+        }
+        
+        // Update password for all connected siblings
+        parentRecords.forEach(record => {
+            record.parentPassword = newPass;
+            record.firstLogin = false; // clear first login flag
+        });
+        
+        localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
+        
+        // Update context to clear firstLogin warning
+        login({ ...user, firstLogin: false });
+        
+        await customAlert('Password changed successfully!', 'Success', 'success');
+        setCurrentPass(''); setNewPass(''); setConfirmPass('');
+    };
+
+    return (
+        <div className="animate-fade-in" style={{ maxWidth: 500 }}>
+            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><Settings size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Account Settings</h3>
+            
+            <div className="card" style={{ padding: 24, paddingBottom: 32 }}>
+                <h4 style={{ marginBottom: 16 }}>Change Password</h4>
+                <form onSubmit={handleChangePassword}>
+                    <div className="form-group">
+                        <label className="form-label">Current Password</label>
+                        <input type="password" required className="form-input" value={currentPass} onChange={e => setCurrentPass(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">New Password</label>
+                        <input type="password" required className="form-input" value={newPass} onChange={e => setNewPass(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Confirm New Password</label>
+                        <input type="password" required className="form-input" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: 8 }}>Update Password</button>
+                </form>
             </div>
         </div>
     );
@@ -340,41 +494,69 @@ const TABS = [
     { id: 'fees', label: 'Fee Payment', icon: CreditCard },
     { id: 'history', label: 'Payment History', icon: Clock },
     { id: 'contact', label: 'Contact', icon: Phone },
+    { id: 'settings', label: 'Account Settings', icon: Settings },
 ];
-
-import { useAuth } from '../context/AuthContext';
-
-// ... (other components)
 
 export default function ParentPortal() {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
+    
     const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    
+    useEffect(() => { 
+        if (tabFromUrl && tabFromUrl !== activeTab) {
+            setActiveTab(tabFromUrl); 
+        }
+    }, [tabFromUrl]);
 
     return (
         <div className="parent-portal-page animate-fade-in">
-            <div className="page-header"><div>
-                <div className="page-breadcrumb">
-                    <Link to="/parent-portal">Home</Link><span className="separator">/</span><span>{user?.name || 'Parent'}'s Portal</span>
-                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}
+            <div className="page-header">
+                <div>
+                    <div className="page-breadcrumb">
+                        <Link to="/parent-portal">Home</Link><span className="separator">/</span><span>{user?.name || 'Parent'}'s Portal</span>
+                        {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}
+                    </div>
+                    <h1>Welcome, {user?.name || 'Parent'}</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Viewing school information for {user?.selectedChild?.name || 'your children'}</p>
                 </div>
-                <h1>Welcome, {user?.name || 'Parent'}</h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Viewing school information for {user?.studentName || 'your children'}</p>
-            </div></div>
+                
+                {user?.firstLogin && (
+                    <div style={{ background: '#fff3e0', border: '1px solid #ffb74d', padding: '10px 16px', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <AlertTriangle size={20} color="#f57c00" />
+                        <div>
+                            <span style={{ fontWeight: 600, color: '#e65100', fontSize: '0.9rem', display: 'block' }}>First Login Notice</span>
+                            <span style={{ fontSize: '0.8rem', color: '#e65100' }}>Please update your default password in Account Settings.</span>
+                        </div>
+                        <button className="btn btn-outline" style={{ background: '#fff', borderColor: '#ffb74d', color: '#f57c00', marginLeft: 16, padding: '4px 12px' }} onClick={() => handleNavigate('settings')}>Update Now</button>
+                    </div>
+                )}
+            </div>
+
             <div className="card pp-card">
-                <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
+                <div className="tabs-header">
+                    {TABS.map(tab => { 
+                        const Icon = tab.icon; 
+                        return (
+                            <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}>
+                                <Icon size={16}/> {tab.label}
+                            </button>
+                        ); 
+                    })}
+                </div>
+                
                 <div className="tabs-content">
-                    {activeTab === 'dashboard' && <DashboardTab/>}
+                    {activeTab === 'dashboard' && <DashboardTab setTab={handleNavigate}/>}
                     {activeTab === 'profile' && <ProfileTab/>}
                     {activeTab === 'attendance' && <AttendanceTab/>}
                     {activeTab === 'announcements' && <AnnouncementsTab/>}
                     {activeTab === 'certificates' && <CertificatesTab/>}
-                    {activeTab === 'fees' && <FeePaymentTab/>}
+                    {activeTab === 'fees' && <FeePaymentTab setTab={handleNavigate}/>}
                     {activeTab === 'history' && <PaymentHistoryTab/>}
                     {activeTab === 'contact' && <ContactTab/>}
+                    {activeTab === 'settings' && <SettingsTab/>}
                 </div>
             </div>
         </div>

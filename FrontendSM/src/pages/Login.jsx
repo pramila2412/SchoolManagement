@@ -71,43 +71,44 @@ export default function LoginPage() {
             if (loginType === 'parent') {
                 const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
                 
-                // Find all children belonging to this parent email
-                const parentChildren = globalStudents.filter(s => s.parentEmail === email);
+                // Find all children belonging to this parent ID
+                const parentChildren = globalStudents.filter(s => s.parentId === email);
 
                 if (parentChildren.length > 0) {
-                    // Check if any of these children's admissionNo matches the password
-                    const matchByPass = parentChildren.find(s => s.admissionNo === password);
+                    // Check if any of these children's parentPassword matches
+                    const matchByPass = parentChildren.find(s => s.parentPassword === password);
                     
                     if (matchByPass) {
                         login({ 
                             name: parentChildren[0].parentName || 'Parent / Guardian',
-                            id: email, 
+                            id: email,
+                            parentId: email,
+                            parentEmail: parentChildren[0].parentEmail,
                             role: 'Parent', 
                             children: parentChildren.map(s => ({
                                 name: s.name,
+                                firstName: s.firstName,
+                                lastName: s.lastName,
                                 id: s.admissionNo,
-                                class: s.class
-                            }))
+                                class: s.class,
+                                rollNo: s.rollNo,
+                                dateOfBirth: s.dateOfBirth,
+                                gender: s.gender,
+                                bloodGroup: s.bloodGroup,
+                                phone: s.phone,
+                                guardianPhone: s.guardianPhone,
+                                address: s.address,
+                                photoUrl: s.photoUrl,
+                                motherName: s.motherName
+                            })),
+                            firstLogin: matchByPass.firstLogin || false
                         });
                         setAttempts(0);
                         return;
                     }
                 }
 
-                // Fallback for demo parent
-                if (email === 'PAR-2025-00421' && password === 'parent123') {
-                    login({ 
-                        name: 'Anil Kumar', 
-                        id: email, 
-                        role: 'Parent', 
-                        children: [
-                            { name: 'Rahul Kumar', id: 'MZS-2025-014', class: 'Grade 10-A' },
-                            { name: 'Priya Kumar', id: 'MZS-2025-089', class: 'Grade 7-B' }
-                        ]
-                    });
-                } else {
-                    handleFailedAttempt();
-                }
+                handleFailedAttempt();
                 return;
             }
 
@@ -350,9 +351,9 @@ export default function LoginPage() {
 
                                 {/* Demo Hint */}
                                 <div className="mt-8 text-center pt-6 border-t border-white/10">
-                                    <p className="text-xs text-white/40 mb-2 font-medium">DEMO ACCESS</p>
+                                    <p className="text-xs text-white/40 mb-2 font-medium">{loginType === 'admin' ? 'DEMO ACCESS' : 'HOW TO LOGIN'}</p>
                                     <div className="inline-block px-4 py-2 rounded-lg bg-black/50 border border-white/5 text-sm text-white/60 font-mono">
-                                        {loginType === 'admin' ? 'admin@mountzion.edu / admin123' : 'PAR-2025-00421 / parent123'}
+                                        {loginType === 'admin' ? 'admin@mountzion.edu / admin123' : 'Use Parent Email & Password set during student admission'}
                                     </div>
                                 </div>
 

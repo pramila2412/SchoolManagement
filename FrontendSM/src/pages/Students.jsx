@@ -25,17 +25,26 @@ export default function StudentsPage() {
                 
                 // Merge and normalize (Admission form uses 'name', API uses 'firstName'/'lastName')
                 const normalizedLocal = localData.map(s => {
-                    const nameParts = s.name.split(' ');
+                    const nameParts = (s.name || '').split(' ');
                     return {
                         ...s,
-                        firstName: nameParts[0],
-                        lastName: nameParts.slice(1).join(' '),
-                        contactNo: s.phone || 'N/A',
+                        firstName: s.firstName || nameParts[0],
+                        lastName: s.lastName || nameParts.slice(1).join(' '),
+                        contactNo: s.phone || s.contactNo || 'N/A',
                         newStudent: true
                     };
                 });
 
-                setStudents([...apiData, ...normalizedLocal]);
+                // Merge by ID to prevent duplicates
+                const allStudentsMap = new Map();
+                apiData.forEach(s => allStudentsMap.set(s.id || s.admissionNo, s));
+                normalizedLocal.forEach(s => {
+                    if (!allStudentsMap.has(s.id || s.admissionNo)) {
+                        allStudentsMap.set(s.id || s.admissionNo, s);
+                    }
+                });
+
+                setStudents(Array.from(allStudentsMap.values()));
             } catch (err) {
                 console.error("Failed to load students", err);
             } finally {

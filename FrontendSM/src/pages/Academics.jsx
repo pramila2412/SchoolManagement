@@ -8,7 +8,9 @@ import {
     BarChart3, Settings, ArrowUpRight, CheckCircle2, XCircle,
     Award, Eye, Send, UserCheck, CalendarCheck, FolderOpen
 } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './Academics.css';
+
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
@@ -118,6 +120,7 @@ function ClassSectionTab() {
 
 // ======================== SUBJECTS ========================
 function SubjectsTab() {
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const [subjects, setSubjects] = useLocalStorage('academic_subjects', [
         { id: 1, name: 'Mathematics', code: 'MATH-01', type: 'Theory', classes: ['Grade 1', 'Grade 2', 'Grade 3'] },
         { id: 2, name: 'Science', code: 'SCI-01', type: 'Both', classes: ['Grade 2', 'Grade 3'] },
@@ -125,19 +128,66 @@ function SubjectsTab() {
         { id: 4, name: 'Hindi', code: 'HIN-01', type: 'Theory', classes: ['Grade 1', 'Grade 2'] },
         { id: 5, name: 'Computer Science', code: 'CS-01', type: 'Practical', classes: ['Grade 3'] },
     ]);
-    const [form, setForm] = useState({ name: '', code: '', type: 'Theory', classes: '' });
+    const [editingId, setEditingId] = useState(null);
+    const [classDropdownOpen, setClassDropdownOpen] = useState(false);
+    
+    const [form, setForm] = useState({ name: '', code: '', type: 'Theory', classes: [] });
+
+    const toggleClass = (cls) => {
+        if (cls === 'All Classes') {
+            const isAllSelected = form.classes.includes('All Classes');
+            setForm(prev => ({ 
+                ...prev, 
+                classes: isAllSelected ? [] : ['All Classes'] 
+            }));
+            return;
+        }
+        setForm(prev => {
+            const withoutAll = prev.classes.filter(c => c !== 'All Classes');
+            const updated = withoutAll.includes(cls) 
+                ? withoutAll.filter(c => c !== cls) 
+                : [...withoutAll, cls];
+            return { ...prev, classes: updated };
+        });
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setSubjects(prev => [...prev, { ...form, id: Date.now(), classes: form.classes.split(',').map(c => c.trim()) }]);
-        setForm({ name: '', code: '', type: 'Theory', classes: '' });
+        if (form.classes.length === 0) {
+            customAlert('Please assign this subject to at least one class.');
+            return;
+        }
+
+        if (editingId) {
+            setSubjects(prev => prev.map(s => s.id === editingId ? { ...form, id: editingId } : s));
+            customAlert('Subject updated successfully!');
+        } else {
+            setSubjects(prev => [...prev, { ...form, id: Date.now() }]);
+            customAlert('Subject added successfully!');
+        }
+        
+        setForm({ name: '', code: '', type: 'Theory', classes: [] });
+        setEditingId(null);
+        setClassDropdownOpen(false);
+    };
+
+    const handleEdit = (s) => {
+        setForm({ name: s.name, code: s.code, type: s.type, classes: Array.isArray(s.classes) ? [...s.classes] : [] });
+        setEditingId(s.id);
+        setClassDropdownOpen(false);
+    };
+
+    const handleCancel = () => {
+        setForm({ name: '', code: '', type: 'Theory', classes: [] });
+        setEditingId(null);
+        setClassDropdownOpen(false);
     };
 
     return (
         <div className="animate-fade-in">
             <div className="acad-two-col">
                 <div className="acad-form-panel">
-                    <h3><BookOpen size={18}/> Add Subject</h3>
+                    <h3><BookOpen size={18}/> {editingId ? 'Edit Subject' : 'Add Subject'}</h3>
                     <form className="acad-form" onSubmit={handleSubmit}>
                         <div className="form-group"><label className="form-label">Subject Name <span className="required">*</span></label>
                             <input type="text" className="form-input" required placeholder="e.g. Mathematics" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
@@ -147,18 +197,73 @@ function SubjectsTab() {
                             <div className="form-group"><label className="form-label">Subject Type</label>
                                 <select className="form-select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option>Theory</option><option>Practical</option><option>Both</option></select></div>
                         </div>
-                        <div className="form-group"><label className="form-label">Assign to Classes (comma-separated)</label>
-                            <input type="text" className="form-input" placeholder="e.g. Grade 1, Grade 2" value={form.classes} onChange={e => setForm({ ...form, classes: e.target.value })} /></div>
-                        <div className="acad-form form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save Subject</button></div>
+                        
+                        <div className="form-group" style={{ position: 'relative' }}>
+                            <label className="form-label">Assign to Classes <span className="required">*</span></label>
+                            <div 
+                                className="form-input custom-multi-select" 
+                                onClick={() => setClassDropdownOpen(!classDropdownOpen)}
+                                style={{ minHeight: '44px', cursor: 'pointer', display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px 12px' }}
+                            >
+                                {form.classes.length === 0 ? (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Select classes...</span>
+                                ) : (
+                                    form.classes.map(cls => (
+                                        <span key={cls} className="multi-select-tag">
+                                            {cls}
+                                            <span 
+                                                className="tag-close" 
+                                                onClick={(e) => { e.stopPropagation(); toggleClass(cls); }}
+                                            >×</span>
+                                        </span>
+                                    ))
+                                )}
+                                <ChevronDown size={16} style={{ marginLeft: 'auto', alignSelf: 'center', opacity: 0.5 }} />
+                            </div>
+                            
+                            {classDropdownOpen && (
+                                <div className="multi-select-dropdown">
+                                    <label className="dropdown-item" style={{ fontWeight: 600, borderBottom: '1px solid var(--border-light)', background: form.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={form.classes.includes('All Classes')} 
+                                            onChange={() => toggleClass('All Classes')} 
+                                            style={{ accentColor: 'var(--accent)' }}
+                                        />
+                                        <span>All Classes</span>
+                                    </label>
+                                    {ALL_CLASSES.map(cls => (
+                                        <label key={cls} className="dropdown-item" style={{ background: (form.classes.includes('All Classes') || form.classes.includes(cls)) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={form.classes.includes('All Classes') || form.classes.includes(cls)} 
+                                                disabled={form.classes.includes('All Classes')}
+                                                onChange={() => toggleClass(cls)} 
+                                                style={{ accentColor: 'var(--accent)' }}
+                                            />
+                                            <span>Class {cls}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="acad-form form-actions">
+                            {editingId && <button type="button" className="btn btn-outline" onClick={handleCancel}>Cancel</button>}
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> {editingId ? 'Update Subject' : 'Save Subject'}</button>
+                        </div>
                     </form>
                 </div>
                 <div className="acad-table-panel">
                     <table className="data-table"><thead><tr><th>Subject</th><th>Code</th><th>Type</th><th>Classes</th><th>Actions</th></tr></thead>
                         <tbody>{subjects.map(s => (
-                            <tr key={s.id}><td className="fw-600">{s.name}</td><td>{s.code}</td>
+                            <tr key={s.id} className={editingId === s.id ? 'row-editing' : ''}><td className="fw-600">{s.name}</td><td>{s.code}</td>
                                 <td><span className={`badge ${s.type === 'Theory' ? 'badge-info' : s.type === 'Practical' ? 'badge-warning' : 'badge-success'}`}>{s.type}</span></td>
-                                <td>{s.classes.join(', ')}</td>
-                                <td><button className="btn-icon"><Edit3 size={16}/></button><button className="btn-icon" onClick={() => setSubjects(prev => prev.filter(x => x.id !== s.id))}><Trash2 size={16}/></button></td></tr>
+                                <td>{Array.isArray(s.classes) ? s.classes.join(', ') : '—'}</td>
+                                <td>
+                                    <button className="btn-icon" onClick={() => handleEdit(s)} title="Edit"><Edit3 size={16}/></button>
+                                    <button className="btn-icon" onClick={async () => { if(await customConfirm(`Delete subject "${s.name}"?`)) setSubjects(prev => prev.filter(x => x.id !== s.id)) }} title="Delete" style={{color: 'var(--danger)'}}><Trash2 size={16}/></button>
+                                </td></tr>
                         ))}</tbody></table>
                 </div>
             </div>
@@ -166,20 +271,42 @@ function SubjectsTab() {
     );
 }
 
+
 // ======================== TEACHER ASSIGNMENT ========================
 function TeacherAssignmentTab() {
     const [assignments, setAssignments] = useLocalStorage('academic_teacher_assignments', [
-        { id: 1, class: 'Grade 1', section: 'A', subject: 'Mathematics', teacher: 'Mrs. Sharma', type: 'Subject Teacher' },
-        { id: 2, class: 'Grade 1', section: 'A', subject: 'English', teacher: 'Ms. Gupta', type: 'Subject Teacher' },
-        { id: 3, class: 'Grade 2', section: 'A', subject: 'Science', teacher: 'Mr. Roy', type: 'Subject Teacher' },
-        { id: 4, class: 'Grade 1', section: 'A', subject: '—', teacher: 'Mrs. Sharma', type: 'Class Teacher' },
+        { id: 1, class: 'Grade 1', section: 'A', subject: 'Mathematics', teacher: 'Rajesh Kumar', type: 'Subject Teacher' },
+        { id: 2, class: 'Grade 1', section: 'A', subject: 'English', teacher: 'Kavitha Rao', type: 'Subject Teacher' },
+        { id: 3, class: 'Grade 2', section: 'A', subject: 'Science', teacher: 'Mohan Das', type: 'Subject Teacher' },
+        { id: 4, class: 'Grade 1', section: 'A', subject: '—', teacher: 'Rajesh Kumar', type: 'Class Teacher' },
     ]);
+    const [allStaff] = useLocalStorage('mzs_staff', [
+        { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-006', name: 'Kavitha Rao', role: 'Teacher', dept: 'English', type: 'Full-time', status: 'Active', joined: '2023-04-15', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-007', name: 'Vijay Singh', role: 'Peon', dept: 'Support', type: 'Contract', status: 'Active', joined: '2022-01-05', email: '', phone: '', dob: '', address: '' },
+    ]);
+    const [subjects] = useLocalStorage('academic_subjects', []);
+
+    // Filter staff who have 'teacher' in their role (case-insensitive)
+    const teachers = allStaff.filter(s => s.role && s.role.toLowerCase().includes('teacher') && s.status === 'Active');
+
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
     const [form, setForm] = useState({ class: '', section: '', subject: '', teacher: '', type: 'Subject Teacher' });
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!form.teacher) {
+            customAlert('Please select a teacher.', 'Validation Error', 'error');
+            return;
+        }
         setAssignments(prev => [...prev, { ...form, id: Date.now() }]);
         setForm({ class: '', section: '', subject: '', teacher: '', type: 'Subject Teacher' });
+        customAlert('Teacher assignment saved successfully!', 'Success', 'success');
     };
 
     return (
@@ -190,16 +317,37 @@ function TeacherAssignmentTab() {
                     <form className="acad-form" onSubmit={handleSubmit}>
                         <div className="acad-form form-row">
                             <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
-                                <select className="form-select" required value={form.class} onChange={e => setForm({ ...form, class: e.target.value })}><option value="">Select</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option></select></div>
+                                <select className="form-select" required value={form.class} onChange={e => setForm({ ...form, class: e.target.value })}>
+                                    <option value="">Select</option>
+                                    {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                </select></div>
                             <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
                                 <select className="form-select" required value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}><option value="">Select</option><option>A</option><option>B</option><option>C</option></select></div>
                         </div>
                         <div className="form-group"><label className="form-label">Assignment Type</label>
                             <select className="form-select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option>Subject Teacher</option><option>Class Teacher</option></select></div>
                         {form.type === 'Subject Teacher' && <div className="form-group"><label className="form-label">Subject</label>
-                            <select className="form-select" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}><option value="">Select</option><option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option></select></div>}
+                            <select className="form-select" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}>
+                                <option value="">Select</option>
+                                {subjects.length > 0 
+                                    ? subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
+                                    : <><option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option></>
+                                }
+                            </select></div>}
                         <div className="form-group"><label className="form-label">Teacher <span className="required">*</span></label>
-                            <select className="form-select" required value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })}><option value="">Select</option><option>Mrs. Sharma</option><option>Mr. Patel</option><option>Ms. Gupta</option><option>Mr. Roy</option><option>Mrs. Verma</option><option>Mr. Singh</option></select></div>
+                            <select className="form-select" required value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })}>
+                                <option value="">Select Teacher</option>
+                                {teachers.length > 0 
+                                    ? teachers.map(t => <option key={t.id} value={t.name}>{t.name} — {t.dept}</option>)
+                                    : <option disabled>No teachers found. Add staff in HR module.</option>
+                                }
+                            </select>
+                            {teachers.length === 0 && (
+                                <p style={{ fontSize: '0.78rem', color: 'var(--warning)', marginTop: 4 }}>
+                                    ⚠️ No teachers found. Please add staff with a "Teacher" role in the HR → Staff tab.
+                                </p>
+                            )}
+                        </div>
                         <div className="acad-form form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save Assignment</button></div>
                     </form>
                 </div>
@@ -218,7 +366,8 @@ function TeacherAssignmentTab() {
 
 // ======================== TIMETABLE ========================
 function TimetableTab() {
-    const [sel, setSel] = useState({ class: 'Grade 1', section: 'A' });
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const [sel, setSel] = useState({ class: 'I', section: 'A' });
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const [schedule, setSchedule] = useLocalStorage('academic_schedule', [
         { period: 1, time: '08:30-09:15', Monday: 'Math', Tuesday: 'English', Wednesday: 'Science', Thursday: 'Hindi', Friday: 'Math', Saturday: 'Games' },
@@ -228,23 +377,115 @@ function TimetableTab() {
         { period: 5, time: '12:00-12:45', Monday: 'SST', Tuesday: 'Computer', Wednesday: 'SST', Thursday: 'Art', Friday: 'Hindi', Saturday: '—' },
     ]);
     const [status, setStatus] = useState('Draft');
+    const [editingCell, setEditingCell] = useState(null); // { period, day }
+    const [editValue, setEditValue] = useState('');
+    const [editingTime, setEditingTime] = useState(null); // period number
+    const [timeValue, setTimeValue] = useState('');
+
+    const handleCellClick = (period, day, currentValue) => {
+        setEditingCell({ period, day });
+        setEditValue(currentValue || '');
+    };
+
+    const handleCellSave = () => {
+        if (!editingCell) return;
+        setSchedule(prev => prev.map(row => 
+            row.period === editingCell.period 
+                ? { ...row, [editingCell.day]: editValue.trim() || '—' } 
+                : row
+        ));
+        setEditingCell(null);
+        setEditValue('');
+    };
+
+    const handleCellKeyDown = (e) => {
+        if (e.key === 'Enter') handleCellSave();
+        if (e.key === 'Escape') { setEditingCell(null); setEditValue(''); }
+    };
+
+    const handleTimeClick = (period, currentTime) => {
+        setEditingTime(period);
+        setTimeValue(currentTime);
+    };
+
+    const handleTimeSave = () => {
+        if (editingTime === null) return;
+        setSchedule(prev => prev.map(row => row.period === editingTime ? { ...row, time: timeValue.trim() } : row));
+        setEditingTime(null);
+        setTimeValue('');
+    };
+
+    const handleTimeKeyDown = (e) => {
+        if (e.key === 'Enter') handleTimeSave();
+        if (e.key === 'Escape') { setEditingTime(null); setTimeValue(''); }
+    };
+
+    const addPeriod = () => {
+        const nextPeriod = schedule.length + 1;
+        const newRow = { period: nextPeriod, time: '--:--' };
+        days.forEach(d => newRow[d] = '—');
+        setSchedule(prev => [...prev, newRow]);
+    };
+
+    const deletePeriod = async (periodNum) => {
+        if (await customConfirm(`Delete Period ${periodNum} from the timetable?`)) {
+            setSchedule(prev => {
+                const filtered = prev.filter(r => r.period !== periodNum);
+                // Re-number remaining periods
+                return filtered.map((r, i) => ({ ...r, period: i + 1 }));
+            });
+        }
+    };
 
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div className="form-group"><label className="form-label">Class</label>
-                    <select className="form-select" style={{ width: 140 }} value={sel.class} onChange={e => setSel({ ...sel, class: e.target.value })}><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option></select></div>
+                    <select className="form-select" style={{ width: 140 }} value={sel.class} onChange={e => setSel({ ...sel, class: e.target.value })}>
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                    </select></div>
                 <div className="form-group"><label className="form-label">Section</label>
                     <select className="form-select" style={{ width: 100 }} value={sel.section} onChange={e => setSel({ ...sel, section: e.target.value })}><option>A</option><option>B</option><option>C</option></select></div>
                 <span className={`badge ${status === 'Published' ? 'badge-success' : 'badge-draft'}`} style={{ marginBottom: 8 }}>{status}</span>
-                {status === 'Draft' && <button className="btn btn-primary" style={{ marginBottom: 4 }} onClick={() => setStatus('Published')}><Send size={16}/> Publish</button>}
+                {status === 'Draft' && <button className="btn btn-primary" style={{ marginBottom: 4 }} onClick={() => { setStatus('Published'); customAlert('Timetable published successfully!', 'Success', 'success'); }}><Send size={16}/> Publish</button>}
+                {status === 'Published' && <button className="btn btn-outline" style={{ marginBottom: 4 }} onClick={() => setStatus('Draft')}><Edit3 size={16}/> Edit</button>}
+                <button className="btn btn-outline" style={{ marginBottom: 4, marginLeft: 'auto' }} onClick={addPeriod}><PlusCircle size={16}/> Add Period</button>
             </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 12 }}>💡 Click on any subject cell to edit. Click on time to change period timing.</p>
             <div className="timetable-grid-wrapper">
                 <table className="data-table">
-                    <thead><tr><th>Period</th><th>Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead>
+                    <thead><tr><th>Period</th><th>Time</th>{days.map(d => <th key={d}>{d}</th>)}<th style={{ width: 50 }}>Actions</th></tr></thead>
                     <tbody>{schedule.map(row => (
-                        <tr key={row.period}><td className="fw-600">Period {row.period}</td><td style={{ fontSize: '0.82rem', color: 'var(--text-light)' }}>{row.time}</td>
-                            {days.map(d => <td key={d}><div className="subject-box" style={{ background: 'var(--accent-light)', padding: '4px 8px', borderRadius: 4, textAlign: 'center', fontSize: '0.85rem', fontWeight: 500 }}>{row[d]}</div></td>)}</tr>
+                        <tr key={row.period}>
+                            <td className="fw-600">Period {row.period}</td>
+                            <td style={{ fontSize: '0.82rem', color: 'var(--text-light)', cursor: 'pointer' }} onClick={() => handleTimeClick(row.period, row.time)}>
+                                {editingTime === row.period ? (
+                                    <input 
+                                        type="text" className="form-input" autoFocus
+                                        value={timeValue} onChange={e => setTimeValue(e.target.value)}
+                                        onBlur={handleTimeSave} onKeyDown={handleTimeKeyDown}
+                                        style={{ fontSize: '0.82rem', padding: '2px 6px', width: 100 }}
+                                    />
+                                ) : row.time}
+                            </td>
+                            {days.map(d => (
+                                <td key={d} onClick={() => handleCellClick(row.period, d, row[d])} style={{ cursor: 'pointer' }}>
+                                    {editingCell && editingCell.period === row.period && editingCell.day === d ? (
+                                        <input 
+                                            type="text" className="form-input" autoFocus
+                                            value={editValue} onChange={e => setEditValue(e.target.value)}
+                                            onBlur={handleCellSave} onKeyDown={handleCellKeyDown}
+                                            style={{ fontSize: '0.85rem', padding: '4px 8px', width: '100%', textAlign: 'center' }}
+                                        />
+                                    ) : (
+                                        <div className="subject-box" style={{ background: row[d] === '—' ? 'var(--bg)' : 'var(--accent-light)', padding: '4px 8px', borderRadius: 4, textAlign: 'center', fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.15s ease' }}>{row[d]}</div>
+                                    )}
+                                </td>
+                            ))}
+                            <td>
+                                <button className="btn-icon" title="Delete Period" style={{ color: 'var(--danger)' }} onClick={() => deletePeriod(row.period)}><Trash2 size={16}/></button>
+                            </td>
+                        </tr>
                     ))}</tbody>
                 </table>
             </div>
@@ -254,34 +495,105 @@ function TimetableTab() {
 
 // ======================== SYLLABUS ========================
 function SyllabusTab() {
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const [expandedCh, setExpandedCh] = useState([1]);
-    const [syllabus] = useLocalStorage('academic_syllabus', [
-        { id: 1, chapter: 1, title: 'Algebra', hours: 8, topics: ['Linear Equations', 'Quadratic Formula', 'Polynomials'] },
-        { id: 2, chapter: 2, title: 'Geometry', hours: 10, topics: ['Triangles', 'Circles', 'Coordinate Geometry'] },
-        { id: 3, chapter: 3, title: 'Trigonometry', hours: 6, topics: ['Sine & Cosine', 'Tan & Identities'] },
+    const [syllabus, setSyllabus] = useLocalStorage('academic_syllabus', [
+        { id: 1, class: 'I', subject: 'Mathematics', chapter: 1, title: 'Algebra', hours: 8, topics: ['Linear Equations', 'Quadratic Formula', 'Polynomials'] },
+        { id: 2, class: 'II', subject: 'Mathematics', chapter: 2, title: 'Geometry', hours: 10, topics: ['Triangles', 'Circles', 'Coordinate Geometry'] },
+        { id: 3, class: 'III', subject: 'Science', chapter: 3, title: 'Trigonometry', hours: 6, topics: ['Sine & Cosine', 'Tan & Identities'] },
     ]);
+    const [filterClass, setFilterClass] = useState('I');
+    const [filterSubject, setFilterSubject] = useState('Mathematics');
+
+    const [isAdding, setIsAdding] = useState(false);
+    const [form, setForm] = useState({ class: 'I', subject: 'Mathematics', chapter: '', title: '', hours: '', topics: '' });
+
+    const handleAddChapter = async (e) => {
+        e.preventDefault();
+        const newChapter = {
+            id: Date.now(),
+            class: form.class,
+            subject: form.subject,
+            chapter: parseInt(form.chapter) || (syllabus.length + 1),
+            title: form.title,
+            hours: parseInt(form.hours) || 0,
+            topics: form.topics.split(',').map(t => t.trim()).filter(t => t)
+        };
+        setSyllabus(prev => [...prev, newChapter]);
+        setForm({ class: filterClass, subject: filterSubject, chapter: '', title: '', hours: '', topics: '' });
+        setIsAdding(false);
+        await customAlert(`Chapter "${newChapter.title}" added successfully!`, 'Success', 'success');
+    };
+
+    const handleDeleteChapter = async (id, title, e) => {
+        e.stopPropagation();
+        if (await customConfirm(`Delete chapter "${title}"?`)) {
+            setSyllabus(prev => prev.filter(ch => ch.id !== id));
+        }
+    };
+
+    const filteredSyllabus = syllabus.filter(ch => ch.class === filterClass && ch.subject === filterSubject);
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" style={{ width: 140 }}><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option></select></div>
-                <div className="form-group"><label className="form-label">Subject</label><select className="form-select" style={{ width: 160 }}><option>Mathematics</option><option>Science</option><option>English</option></select></div>
-                <button className="btn btn-primary" style={{ alignSelf: 'flex-end' }}><PlusCircle size={16}/> Add Chapter</button>
-            </div>
-            <div className="syllabus-tree">
-                {syllabus.map(ch => (
-                    <div className="syllabus-chapter" key={ch.id}>
-                        <div className="syllabus-chapter-header" onClick={() => setExpandedCh(prev => prev.includes(ch.id) ? prev.filter(x => x !== ch.id) : [...prev, ch.id])}>
-                            {expandedCh.includes(ch.id) ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
-                            <span>Chapter {ch.chapter}: {ch.title}</span>
-                            <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>{ch.hours} hrs</span>
-                        </div>
-                        {expandedCh.includes(ch.id) && ch.topics.map((t, i) => (
-                            <div className="syllabus-topic" key={i}><BookMarked size={14}/> {t}</div>
-                        ))}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: 16 }}>
+                    <div className="form-group"><label className="form-label">Class</label>
+                        <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        </select>
                     </div>
-                ))}
+                    <div className="form-group"><label className="form-label">Subject</label>
+                        <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
+                            <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                        </select>
+                    </div>
+                </div>
+                {!isAdding && <button className="btn btn-primary" style={{ alignSelf: 'flex-end' }} onClick={() => setIsAdding(true)}><PlusCircle size={16}/> Add Chapter</button>}
             </div>
+
+            {isAdding && (
+                <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Chapter</h3>
+                    <form className="acad-form form-row-2" onSubmit={handleAddChapter}>
+                        <div className="form-group"><label className="form-label">Title <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Introduction to Algebra" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Chapter Number <span className="required">*</span></label>
+                            <input type="number" className="form-input" required min="1" value={form.chapter} onChange={e => setForm({...form, chapter: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Expected Hours <span className="required">*</span></label>
+                            <input type="number" className="form-input" required min="1" value={form.hours} onChange={e => setForm({...form, hours: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Topics (comma separated) <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Linear Equations, Polynomials" value={form.topics} onChange={e => setForm({...form, topics: e.target.value})} /></div>
+                        
+                        <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                            <button type="button" className="btn btn-outline" onClick={() => setIsAdding(false)}>Cancel</button>
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> Save Chapter</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {!isAdding && (
+                <div className="syllabus-tree">
+                    {filteredSyllabus.length > 0 ? filteredSyllabus.map(ch => (
+                        <div className="syllabus-chapter" key={ch.id}>
+                            <div className="syllabus-chapter-header" onClick={() => setExpandedCh(prev => prev.includes(ch.id) ? prev.filter(x => x !== ch.id) : [...prev, ch.id])}>
+                                {expandedCh.includes(ch.id) ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                                <span>Chapter {ch.chapter}: {ch.title}</span>
+                                <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>{ch.hours} hrs</span>
+                                <button className="btn-icon" onClick={(e) => handleDeleteChapter(ch.id, ch.title, e)} style={{ color: 'var(--danger)', margin: '0 8px 0 16px' }} title="Delete Chapter"><Trash2 size={16}/></button>
+                            </div>
+                            {expandedCh.includes(ch.id) && ch.topics.map((t, i) => (
+                                <div className="syllabus-topic" key={i}><BookMarked size={14}/> {t}</div>
+                            ))}
+                        </div>
+                    )) : (
+                        <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', background: 'var(--card-bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border-light)' }}>
+                            No syllabus chapters found for this class and subject.
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
@@ -415,28 +727,96 @@ function PerformanceTab() {
 
 // ======================== STUDY MATERIALS ========================
 function StudyMaterialsTab() {
-    const [materials] = useLocalStorage('academic_materials', [
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const [materials, setMaterials] = useLocalStorage('academic_materials', [
         { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'PDF', uploadedBy: 'Mrs. Sharma', date: '2026-03-15' },
         { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', uploadedBy: 'Mr. Roy', date: '2026-03-18' },
         { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', uploadedBy: 'Ms. Gupta', date: '2026-03-20' },
     ]);
+    const [isUploading, setIsUploading] = useState(false);
+    const [form, setForm] = useState({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
+
     const typeBadge = (t) => t === 'PDF' ? 'badge-danger' : t === 'Video Link' ? 'badge-info' : 'badge-warning';
+
+    const handleUploadSubmit = async (e) => {
+        e.preventDefault();
+        const newMaterial = {
+            id: Date.now(),
+            title: form.title,
+            class: form.class,
+            subject: form.subject,
+            type: form.type,
+            uploadedBy: form.uploadedBy,
+            date: new Date().toISOString().split('T')[0]
+        };
+        setMaterials(prev => [...prev, newMaterial]);
+        setForm({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
+        setIsUploading(false);
+        await customAlert('Study Material uploaded successfully!', 'Success', 'success');
+    };
+
+    const handleDelete = async (id, title) => {
+        if (await customConfirm(`Delete study material "${title}"?`)) {
+            setMaterials(prev => prev.filter(m => m.id !== id));
+        }
+    };
 
     return (
         <div className="animate-fade-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <h3 style={{ color: 'var(--primary)' }}>Study Materials</h3>
-                <button className="btn btn-primary"><Upload size={16}/> Upload Material</button>
+                {!isUploading && <button className="btn btn-primary" onClick={() => setIsUploading(true)}><Upload size={16}/> Upload Material</button>}
+                {isUploading && <button className="btn btn-outline" onClick={() => setIsUploading(false)}>Cancel Upload</button>}
             </div>
-            <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
-                    <tbody>{materials.map(m => (
-                        <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.class}</td><td>{m.subject}</td>
-                            <td><span className={`badge ${typeBadge(m.type)}`}>{m.type}</span></td>
-                            <td>{m.uploadedBy}</td><td>{m.date}</td>
-                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Study Material\n\nTitle: ${m.title}\nClass: ${m.class}\nSubject: ${m.subject}\nType: ${m.type}\nUploaded by: ${m.uploadedBy}\nDate: ${m.date}`)}><Eye size={16}/></button><button className="btn-icon" title="Delete" onClick={async () => { if(await customConfirm(`Delete "${m.title}"?`)) { /* setMaterials would be needed */ } }} style={{color:'var(--danger)'}}><Trash2 size={16}/></button></td></tr>
-                    ))}</tbody></table>
-            </div>
+
+            {isUploading && (
+                <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Upload New Material</h3>
+                    <form className="acad-form form-row-2" onSubmit={handleUploadSubmit}>
+                        <div className="form-group"><label className="form-label">Title <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="Enter material title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
+                            <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
+                                <option value="">Select Class</option>
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
+                            <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
+                                <option value="">Select Subject</option>
+                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Social Science</option><option>Computer Science</option>
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Material Type <span className="required">*</span></label>
+                            <select className="form-select" required value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                                <option>PDF</option><option>Video Link</option><option>Presentation</option><option>Document</option>
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Uploaded By <span className="required">*</span></label>
+                            <input type="text" className="form-input" required value={form.uploadedBy} onChange={e => setForm({...form, uploadedBy: e.target.value})} /></div>
+                        
+                        <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                            <button type="button" className="btn btn-outline" onClick={() => setIsUploading(false)}>Cancel</button>
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> Save Material</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {!isUploading && (
+                <div className="table-responsive">
+                    <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
+                        <tbody>{materials.length > 0 ? materials.map(m => (
+                            <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.class}</td><td>{m.subject}</td>
+                                <td><span className={`badge ${typeBadge(m.type)}`}>{m.type}</span></td>
+                                <td>{m.uploadedBy}</td><td>{m.date}</td>
+                                <td>
+                                    <button className="btn-icon" title="View" onClick={() => customAlert(`Study Material\n\nTitle: ${m.title}\nClass: ${m.class}\nSubject: ${m.subject}\nType: ${m.type}\nUploaded by: ${m.uploadedBy}\nDate: ${m.date}`)}><Eye size={16}/></button>
+                                    <button className="btn-icon" title="Delete" onClick={() => handleDelete(m.id, m.title)} style={{color:'var(--danger)'}}><Trash2 size={16}/></button>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No study materials uploaded yet.</td></tr>
+                        )}</tbody></table>
+                </div>
+            )}
         </div>
     );
 }

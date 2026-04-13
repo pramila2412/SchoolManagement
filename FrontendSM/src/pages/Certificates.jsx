@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Printer, FileText, Award, Plus, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import './Certificates.css';
 
 const API = '/api';
@@ -14,55 +15,145 @@ export default function Certificates() {
     const [remarks, setRemarks] = useState('');
     const [results, setResults] = useState([]);
     const [hasSearched, setHasSearched] = useState(false);
-    const [certificates, setCertificates] = useState([]);
+    const [localCertificates, setLocalCertificates] = useLocalStorage('mzs_certificates', []);
+    const [apiCertificates, setApiCertificates] = useState([]);
     const [generating, setGenerating] = useState(false);
 
+    // Merge API and Local certificates
+    const certificates = [...apiCertificates, ...localCertificates].sort((a, b) => 
+        new Date(b.issueDate || b.createdAt) - new Date(a.issueDate || a.createdAt)
+    );
+
+    // Helper to normalize class names for searching (e.g. "Grade 1" -> "I", "1")
+    const normalizeClass = (cls) => {
+        if (!cls) return '';
+        return cls.replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
+    };
+
     useEffect(() => {
-        fetch(`${API}/certificates`).then(r => r.json()).then(setCertificates).catch(() => {});
+        fetch(`${API}/certificates`)
+            .then(r => r.json())
+            .then(data => Array.isArray(data) ? setApiCertificates(data) : setApiCertificates([]))
+            .catch(() => setApiCertificates([]));
     }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
         try {
-            let url = `${API}/students?status=Active`;
-            if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
-            if (formData.section) url += `&section=${formData.section}`;
-            const res = await fetch(url);
-            let data = await res.json();
+            // Load API students
+            let apiStudents = [];
+            try {
+                let url = `${API}/students?status=Active`;
+                if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
+                if (formData.section) url += `&section=${formData.section}`;
+                const res = await fetch(url);
+                apiStudents = await res.json();
+            } catch (err) { console.error("API search failed", err); }
+
+            // Load Local students (normalized)
+            const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const normalizedLocal = localData.map(s => {
+                const nameParts = (s.name || '').split(' ');
+                return {
+                    ...s,
+                    firstName: s.firstName || nameParts[0] || 'Unknown',
+                    lastName: s.lastName || nameParts.slice(1).join(' ') || '',
+                    admissionNo: s.admissionNo || s.id || 'N/A',
+                    rollNo: s.rollNo || 'N/A'
+                };
+            }).filter(s => {
+                const searchClass = normalizeClass(formData.class);
+                const studentClass = normalizeClass(s.class);
+                
+                if (searchClass && studentClass !== searchClass) return false;
+                if (formData.section && s.section !== formData.section) return false;
+                if (s.status === 'Inactive') return false;
+                return true;
+            });
+
+            // Merge
+            let data = [...apiStudents, ...normalizedLocal];
+
             if (formData.keyword) {
                 const kw = formData.keyword.toLowerCase();
-                data = data.filter(s => `${s.firstName} ${s.lastName} ${s.admissionNo} ${s.rollNo}`.toLowerCase().includes(kw));
+                data = data.filter(s => 
+                    `${s.firstName} ${s.lastName} ${s.admissionNo} ${s.rollNo}`.toLowerCase().includes(kw)
+                );
             }
             setResults(data);
             setHasSearched(true);
-        } catch { setResults([]); setHasSearched(true); }
+        } catch (err) { 
+            console.error("Search failed", err);
+            setResults([]); 
+            setHasSearched(true); 
+        }
     };
 
     const handleGenerate = async (student) => {
         if (!certType) return await customAlert('Select a certificate type');
         setGenerating(true);
         try {
+            const certNo = `CERT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
             const body = {
-                studentId: student.id,
+                studentId: student.id || student._id,
                 studentName: `${student.firstName} ${student.lastName}`,
                 class: student.class,
                 section: student.section,
                 type: certType,
                 purpose,
                 remarks,
+                certificateNo: certNo,
+                issueDate: new Date().toISOString()
             };
-            const res = await fetch(`${API}/certificates`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const cert = await res.json();
-            await customAlert(`Certificate generated! No: ${cert.certificateNo}`);
-            setCertificates([cert, ...certificates]);
-        } catch { await customAlert('Failed to generate certificate'); }
-        finally { setGenerating(false); }
+
+            // Attempt API save
+            try {
+                const res = await fetch(`${API}/certificates`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(body) 
+                });
+                if (res.ok) {
+                    const savedCert = await res.json();
+                    setApiCertificates([savedCert, ...apiCertificates]);
+                } else {
+                    // Fallback to local only if API fails
+                    setLocalCertificates([body, ...localCertificates]);
+                }
+            } catch {
+                // Network error, save locally
+                setLocalCertificates([body, ...localCertificates]);
+            }
+
+            await customAlert(`Certificate generated! No: ${certNo}`);
+            setPurpose('');
+            setRemarks('');
+        } catch (err) { 
+            console.error("Generation failed", err);
+            await customAlert('Failed to generate certificate'); 
+        } finally { 
+            setGenerating(false); 
+        }
     };
 
     const handleDelete = async (id) => {
         if (!await customConfirm('Delete this certificate?')) return;
-        await fetch(`${API}/certificates/${id}`, { method: 'DELETE' });
-        setCertificates(certificates.filter(c => c._id !== id));
+        
+        // Try deleting from local storage first
+        const isLocal = localCertificates.some(c => c._id === id || c.certificateNo === id);
+        if (isLocal) {
+            setLocalCertificates(localCertificates.filter(c => c._id !== id && c.certificateNo !== id));
+            await customAlert('Certificate record deleted locally.');
+            return;
+        }
+
+        // Otherwise try API
+        try {
+            await fetch(`${API}/certificates/${id}`, { method: 'DELETE' });
+            setApiCertificates(apiCertificates.filter(c => c._id !== id));
+        } catch (err) {
+            console.error("API delete failed", err);
+        }
     };
 
     return (
@@ -134,22 +225,35 @@ export default function Certificates() {
                                 <table className="data-table">
                                     <thead><tr><th>Adm No</th><th>Student</th><th>Class</th><th>Father</th><th>Contact</th><th style={{textAlign:'center'}}>Action</th></tr></thead>
                                     <tbody>
-                                        {results.length > 0 ? results.map(s => (
-                                            <tr key={s.id}>
-                                                <td>{s.admissionNo}</td>
-                                                <td className="fw-600">{s.firstName} {s.lastName}</td>
-                                                <td>{s.class} - {s.section}</td>
-                                                <td>{s.fatherName}</td>
-                                                <td>{s.contactNo}</td>
-                                                <td>
-                                                    <div className="action-buttons-center">
-                                                        <button className="btn btn-primary btn-sm" onClick={()=>handleGenerate(s)} disabled={generating||!certType}>
+                                        {results.length > 0 ? results.map(s => {
+                                            const sId = s.id || s._id;
+                                            return (
+                                                <tr key={sId}>
+                                                    <td>{s.admissionNo}</td>
+                                                    <td className="fw-600">{s.firstName} {s.lastName}</td>
+                                                    <td>{s.class} - {s.section}</td>
+                                                    <td>{s.fatherName}</td>
+                                                    <td>{s.contactNo}</td>
+                                                    <td>
+                                                        <div className="action-buttons-center">
+                                                            <button 
+                                                            className="btn btn-primary btn-sm" 
+                                                            onClick={() => {
+                                                                if (!certType) {
+                                                                    customAlert('Please select a Certificate Type from the dropdown above before generating.');
+                                                                    return;
+                                                                }
+                                                                handleGenerate(s);
+                                                            }} 
+                                                            disabled={generating}
+                                                        >
                                                             {generating ? '...' : 'Generate'}
                                                         </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )) : (
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }) : (
                                             <tr><td colSpan="6"><div className="empty-state"><FileText size={48}/><h3>No Students Found</h3></div></td></tr>
                                         )}
                                     </tbody>
@@ -168,7 +272,7 @@ export default function Certificates() {
                                 <thead><tr><th>Certificate No</th><th>Student</th><th>Type</th><th>Class</th><th>Issue Date</th><th>Purpose</th><th>Action</th></tr></thead>
                                 <tbody>
                                     {certificates.map(c => (
-                                        <tr key={c._id}>
+                                        <tr key={c._id || c.certificateNo}>
                                             <td className="fw-600">{c.certificateNo}</td>
                                             <td>{c.studentName}</td>
                                             <td><span className="badge badge-info">{c.type}</span></td>
@@ -176,7 +280,7 @@ export default function Certificates() {
                                             <td>{new Date(c.issueDate).toLocaleDateString('en-IN')}</td>
                                             <td>{c.purpose || '—'}</td>
                                             <td>
-                                                <button className="btn-icon text-danger" title="Delete" onClick={()=>handleDelete(c._id)}><Trash2 size={16}/></button>
+                                                <button className="btn-icon text-danger" title="Delete" onClick={()=>handleDelete(c._id || c.certificateNo)}><Trash2 size={16}/></button>
                                             </td>
                                         </tr>
                                     ))}

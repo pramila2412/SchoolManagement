@@ -60,3 +60,18 @@
 .fw-600 {
     font-weight: 600;
 }
+
+/* Disabled state for buttons */
+.btn-primary:disabled,
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--border) !important;
+    border-color: var(--border) !important;
+    color: var(--text-light) !important;
+}
+
+.btn-primary:disabled:hover {
+    box-shadow: none;
+    transform: none;
+}

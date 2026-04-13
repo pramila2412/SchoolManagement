@@ -36,7 +36,26 @@ export default function StudentDetail() {
                 }
 
                 // Fetch certificates
-                try { const res = await fetch(`${API}/certificates?studentId=${id}`); setCertificates(await res.json()); } catch {}
+                try { 
+                    const res = await fetch(`${API}/certificates?studentId=${id}`); 
+                    const apiCerts = await res.json();
+                    
+                    // Also check local certificates
+                    const localCerts = JSON.parse(localStorage.getItem('mzs_certificates') || '[]');
+                    const filteredLocal = localCerts.filter(c => c.studentId === id || c.admissionNo === student?.admissionNo);
+                    
+                    // Merge and sort
+                    const allCerts = [...apiCerts, ...filteredLocal].sort((a,b) => 
+                        new Date(b.issueDate || b.createdAt) - new Date(a.issueDate || a.createdAt)
+                    );
+                    setCertificates(allCerts);
+                } catch {
+                    // Fallback to local only if API fails
+                    const localCerts = JSON.parse(localStorage.getItem('mzs_certificates') || '[]');
+                    const filteredLocal = localCerts.filter(c => c.studentId === id);
+                    setCertificates(filteredLocal);
+                }
+
                 // Fetch attendance
                 try { const res = await fetch(`${API}/attendance/report/student/${id}`); setAttendanceSummary(await res.json()); } catch {}
             } catch (err) {

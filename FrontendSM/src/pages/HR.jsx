@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
     BarChart3, Users, UserPlus, CalendarCheck, Clock, Briefcase,
     FileText, Star, Settings, Download, PlusCircle, Search,
@@ -59,15 +60,15 @@ function DashboardTab() {
 // ======================== STAFF MANAGEMENT ========================
 function StaffTab() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const allStaff = [
-        { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15' },
-        { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01' },
-        { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10' },
-        { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20' },
-        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01' },
-        { id: 'EMP-2024-006', name: 'Kavitha Rao', role: 'Teacher', dept: 'English', type: 'Full-time', status: 'Active', joined: '2023-04-15' },
-        { id: 'EMP-2024-007', name: 'Vijay Singh', role: 'Peon', dept: 'Support', type: 'Contract', status: 'Active', joined: '2022-01-05' },
-    ];
+    const [staff, setStaff] = useLocalStorage('mzs_staff', [
+        { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-006', name: 'Kavitha Rao', role: 'Teacher', dept: 'English', type: 'Full-time', status: 'Active', joined: '2023-04-15', email: '', phone: '', dob: '', address: '' },
+        { id: 'EMP-2024-007', name: 'Vijay Singh', role: 'Peon', dept: 'Support', type: 'Contract', status: 'Active', joined: '2022-01-05', email: '', phone: '', dob: '', address: '' },
+    ]);
     const [searchTerm, setSearchTerm] = useState('');
     const [deptFilter, setDeptFilter] = useState('All Departments');
     const [typeFilter, setTypeFilter] = useState('All Types');
@@ -77,7 +78,7 @@ function StaffTab() {
 
     const handleSearch = () => {
         const term = searchTerm.toLowerCase();
-        const results = allStaff.filter(s => {
+        const results = staff.filter(s => {
             const matchSearch = !term || `${s.name} ${s.id} ${s.role}`.toLowerCase().includes(term);
             const matchDept = deptFilter === 'All Departments' || s.dept === deptFilter;
             const matchType = typeFilter === 'All Types' || s.type === typeFilter;
@@ -88,11 +89,52 @@ function StaffTab() {
     };
 
     const [isAdding, setIsAdding] = useState(searchParams.get('action') === 'add');
+    const [staffForm, setStaffForm] = useState({
+        name: '', email: '', phone: '', dob: '', dept: 'Mathematics', role: 'Teacher', type: 'Full-time', joined: '', address: ''
+    });
 
     const closeAdd = () => {
         setIsAdding(false);
         setSearchParams({ tab: 'staff' });
     };
+
+    const generateEmpId = () => {
+        const year = new Date().getFullYear();
+        const existing = staff.filter(s => s.id.includes(`EMP-${year}`));
+        const nextNum = String(existing.length + 1).padStart(3, '0');
+        return `EMP-${year}-${nextNum}`;
+    };
+
+    const handleSaveStaff = async () => {
+        if (!staffForm.name.trim()) {
+            await customAlert('Please enter the staff member\'s full name.', 'Validation Error', 'error');
+            return;
+        }
+        if (!staffForm.role.trim()) {
+            await customAlert('Please enter the role / designation.', 'Validation Error', 'error');
+            return;
+        }
+        const newStaff = {
+            id: generateEmpId(),
+            name: staffForm.name.trim(),
+            email: staffForm.email.trim(),
+            phone: staffForm.phone.trim(),
+            dob: staffForm.dob,
+            dept: staffForm.dept,
+            role: staffForm.role.trim(),
+            type: staffForm.type,
+            joined: staffForm.joined || new Date().toISOString().split('T')[0],
+            address: staffForm.address.trim(),
+            status: 'Active'
+        };
+        setStaff(prev => [...prev, newStaff]);
+        setStaffForm({ name: '', email: '', phone: '', dob: '', dept: 'Mathematics', role: 'Teacher', type: 'Full-time', joined: '', address: '' });
+        await customAlert(`Staff member "${newStaff.name}" added successfully! (ID: ${newStaff.id})`, 'Success', 'success');
+        closeAdd();
+    };
+
+    // Get unique departments from staff for filter
+    const allDepts = [...new Set(staff.map(s => s.dept))];
 
     return (
         <div className="animate-fade-in">
@@ -112,28 +154,24 @@ function StaffTab() {
                 <div className="hr-form-panel animate-fade-in" style={{ padding: 24 }}>
                     <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Staff Member</h3>
                     <div className="ado-form form-row-2">
-                        <div className="form-group"><label className="form-label">Full Name *</label><input type="text" className="form-input" placeholder="Enter full name"/></div>
-                        <div className="form-group"><label className="form-label">Email Address</label><input type="email" className="form-input" placeholder="Enter email address"/></div>
-                        <div className="form-group"><label className="form-label">Phone Number *</label><PhoneInput className="form-input" placeholder="Enter phone number"/></div>
-                        <div className="form-group"><label className="form-label">Date of Birth</label><input type="date" className="form-input"/></div>
+                        <div className="form-group"><label className="form-label">Full Name *</label><input type="text" className="form-input" placeholder="Enter full name" value={staffForm.name} onChange={e => setStaffForm({...staffForm, name: e.target.value})}/></div>
+                        <div className="form-group"><label className="form-label">Email Address</label><input type="email" className="form-input" placeholder="Enter email address" value={staffForm.email} onChange={e => setStaffForm({...staffForm, email: e.target.value})}/></div>
+                        <div className="form-group"><label className="form-label">Phone Number *</label><PhoneInput className="form-input" placeholder="Enter phone number" value={staffForm.phone} onChange={e => setStaffForm({...staffForm, phone: e.target.value})}/></div>
+                        <div className="form-group"><label className="form-label">Date of Birth</label><input type="date" className="form-input" value={staffForm.dob} onChange={e => setStaffForm({...staffForm, dob: e.target.value})}/></div>
                         
-                        <div className="form-group"><label className="form-label">Department *</label><select className="form-select"><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option></select></div>
-                        <div className="form-group"><label className="form-label">Role / Designation *</label><input type="text" className="form-input" placeholder="e.g. Senior Teacher"/></div>
-                        <div className="form-group"><label className="form-label">Employment Type *</label><select className="form-select"><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
-                        <div className="form-group"><label className="form-label">Date of Joining</label><input type="date" className="form-input"/></div>
+                        <div className="form-group"><label className="form-label">Department *</label><select className="form-select" value={staffForm.dept} onChange={e => setStaffForm({...staffForm, dept: e.target.value})}><option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Social Science</option><option>Computer Science</option><option>Physical Education</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select></div>
+                        <div className="form-group"><label className="form-label">Role / Designation *</label><input type="text" className="form-input" placeholder="e.g. Senior Teacher" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value})}/></div>
+                        <div className="form-group"><label className="form-label">Employment Type *</label><select className="form-select" value={staffForm.type} onChange={e => setStaffForm({...staffForm, type: e.target.value})}><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
+                        <div className="form-group"><label className="form-label">Date of Joining</label><input type="date" className="form-input" value={staffForm.joined} onChange={e => setStaffForm({...staffForm, joined: e.target.value})}/></div>
                         
                         <div className="form-group" style={{ gridColumn: 'span 2' }}>
                             <label className="form-label">Address</label>
-                            <textarea className="form-input" rows={2} placeholder="Full address"></textarea>
+                            <textarea className="form-input" rows={2} placeholder="Full address" value={staffForm.address} onChange={e => setStaffForm({...staffForm, address: e.target.value})}></textarea>
                         </div>
                     </div>
                     <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                         <button className="btn btn-outline" onClick={closeAdd}>Cancel</button>
-                        <button className="btn btn-primary" onClick={async () => {
-                            if (window.customAlert) await window.customAlert('Staff member added successfully!', 'Success', 'success');
-                            else await customAlert('Staff member added successfully!', 'Success', 'success');
-                            closeAdd();
-                        }}>Save Staff Member</button>
+                        <button className="btn btn-primary" onClick={handleSaveStaff}>Save Staff Member</button>
                     </div>
                 </div>
             ) : (
@@ -142,7 +180,7 @@ function StaffTab() {
                         <div className="hr-form-panel animate-fade-in" style={{ padding: 16 }}>
                             <div className="ado-form form-row-4">
                                 <div className="form-group"><label className="form-label">Search</label><input type="text" className="form-input" placeholder="Name or Employee ID" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()}/></div>
-                                <div className="form-group"><label className="form-label">Department</label><select className="form-select" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}><option>All Departments</option><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select></div>
+                                <div className="form-group"><label className="form-label">Department</label><select className="form-select" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}><option>All Departments</option>{allDepts.map(d => <option key={d}>{d}</option>)}</select></div>
                                 <div className="form-group"><label className="form-label">Employment Type</label><select className="form-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}><option>All Types</option><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
                                 <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}><button className="btn btn-primary" style={{ width: '100%', height: 40 }} onClick={handleSearch}><Search size={16}/> Search</button></div>
                             </div>

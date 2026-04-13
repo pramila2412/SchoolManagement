@@ -42,14 +42,49 @@ export default function TC() {
         customAlert(`Initiating print for TC #${tc.tcNo}...\n(In a real app, this would open a styled PDF printable view)`);
     };
 
+    // Helper to normalize class names for searching (e.g. "Grade 3" -> "3")
+    const normalizeClass = (cls) => {
+        if (!cls) return '';
+        // Map Roman Numerals to digits if needed, but for now just strip "Grade " or "Class "
+        return cls.replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         try {
-            let url = `${API}/students?status=Active`;
-            if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
-            if (formData.section) url += `&section=${formData.section}`;
-            const res = await fetch(url);
-            let data = await res.json();
+            // Fetch API students
+            let apiStudents = [];
+            try {
+                let url = `${API}/students?status=Active`;
+                if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
+                if (formData.section) url += `&section=${formData.section}`;
+                const res = await fetch(url);
+                apiStudents = await res.json();
+            } catch (err) { console.error("API search failed", err); }
+
+            // Fetch Local students (normalized)
+            const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const normalizedLocal = localData.map(s => {
+                const nameParts = (s.name || '').split(' ');
+                return {
+                    ...s,
+                    firstName: s.firstName || nameParts[0] || 'Unknown',
+                    lastName: s.lastName || nameParts.slice(1).join(' ') || '',
+                    admissionNo: s.admissionNo || s.id || 'N/A',
+                    rollNo: s.rollNo || 'N/A'
+                };
+            }).filter(s => {
+                const searchClass = normalizeClass(formData.class);
+                const studentClass = normalizeClass(s.class);
+                
+                if (searchClass && studentClass !== searchClass) return false;
+                if (formData.section && s.section !== formData.section) return false;
+                if (s.status === 'Inactive') return false;
+                return true;
+            });
+
+            // Merge
+            let data = [...apiStudents, ...normalizedLocal];
             
             if (formData.batch) {
                 data = data.filter(s => s.batch === formData.batch || s.academicYear === formData.batch);
@@ -61,7 +96,11 @@ export default function TC() {
             }
             setResults(data);
             setHasSearched(true);
-        } catch { setResults([]); setHasSearched(true); }
+        } catch (err) { 
+            console.error("Search failed", err);
+            setResults([]); 
+            setHasSearched(true); 
+        }
     };
 
     const openTcForm = (student) => {
@@ -152,16 +191,19 @@ export default function TC() {
                                 <table className="data-table">
                                     <thead><tr><th>Adm No</th><th>Student</th><th>Class</th><th>Father</th><th>Contact</th><th style={{textAlign:'center'}}>Action</th></tr></thead>
                                     <tbody>
-                                        {results.length > 0 ? results.map(s => (
-                                            <tr key={s.id}>
-                                                <td>{s.admissionNo}</td>
-                                                <td className="fw-600">{s.firstName} {s.lastName}</td>
-                                                <td>{s.class} - {s.section}</td>
-                                                <td>{s.fatherName}</td>
-                                                <td>{s.contactNo}</td>
-                                                <td><div className="action-buttons-center"><button className="btn btn-primary btn-sm" onClick={()=>openTcForm(s)}>Generate TC</button></div></td>
-                                            </tr>
-                                        )) : (
+                                        {results.length > 0 ? results.map(s => {
+                                            const sId = s.id || s._id;
+                                            return (
+                                                <tr key={sId}>
+                                                    <td>{s.admissionNo}</td>
+                                                    <td className="fw-600">{(s.firstName || '') + ' ' + (s.lastName || '')}</td>
+                                                    <td>{s.class} - {s.section}</td>
+                                                    <td>{s.fatherName}</td>
+                                                    <td>{s.contactNo}</td>
+                                                    <td><div className="action-buttons-center"><button className="btn btn-primary btn-sm" onClick={()=>openTcForm(s)}>Generate TC</button></div></td>
+                                                </tr>
+                                            );
+                                        }) : (
                                             <tr><td colSpan="6"><div className="empty-state"><FileText size={48}/><h3>No Active Students Found</h3></div></td></tr>
                                         )}
                                     </tbody>

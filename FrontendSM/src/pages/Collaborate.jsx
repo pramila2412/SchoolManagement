@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { classes } from '../data/mockData';
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
@@ -50,15 +51,50 @@ function DashboardTab({ onNavigate }) {
 
 // ===== ANNOUNCEMENTS =====
 function AnnouncementsTab() {
-    const { data: list, refresh } = useApi('/announcements');
+    const { user } = useAuth();
+    const { data: apiList, refresh } = useApi('/announcements');
     const [form, setForm] = useState({title:'',content:'',category:'General',audience:'Everyone',publishMode:'Immediate',sendNotification:false,status:'Published'});
     const [show, setShow] = useState(false);
+    
+    // Permission check
+    const isStaff = user?.role?.includes('Admin') || user?.role?.includes('Staff') || user?.role?.includes('Teacher');
+
+    // Load from localStorage (unified source)
+    const localAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
+    const filteredLocal = localAnnouncements.filter(a => {
+        if (isStaff) return true; // Staff see all
+        
+        // Students see published ones for them or all
+        const studentClass = user?.class || '';
+        return a.status === 'Published' && (
+            a.targetGroup === 'All Students' || 
+            a.targetGroup === 'Everyone' || 
+            a.targetGroup === `Class ${studentClass}` ||
+            a.targetGroup === studentClass
+        );
+    }).map(a => ({
+        ...a,
+        _id: a.id,
+        content: a.message,
+        category: a.category || a.targetGroup,
+        source: 'Local'
+    }));
+
+    // Merge API and Local
+    const list = [...filteredLocal, ...apiList].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/announcements`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({title:'',content:'',category:'General',audience:'Everyone',publishMode:'Immediate',sendNotification:false,status:'Published'}); setShow(false); refresh(); };
-    const handleDelete = async id => { await fetch(`${API}/announcements/${id}`,{method:'DELETE'}); refresh(); };
+    const handleDelete = async id => { 
+        // Only delete API ones here; Local ones are managed in the other screen
+        await fetch(`${API}/announcements/${id}`,{method:'DELETE'}); refresh(); 
+    };
     const statusCls = s => s==='Draft'?'badge-draft':s==='Scheduled'?'badge-scheduled':s==='Published'?'badge-published':'badge-completed';
 
     return (<div className="animate-fade-in">
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>Announcements</h3><button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> Create</button></div>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}>
+            <h3 style={{margin:0}}>Announcements</h3>
+            {isStaff && <button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> Create</button>}
+        </div>
         {show && <div className="collab-form-panel"><h3><Megaphone size={18}/> New Announcement</h3><form className="collab-form" onSubmit={handleSubmit}>
             <div className="form-group"><label className="form-label">Title *</label><input className="form-input" required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
             <div className="form-group"><label className="form-label">Content *</label><textarea className="form-textarea" rows="3" required value={form.content} onChange={e=>setForm({...form,content:e.target.value})} /></div>
@@ -68,8 +104,18 @@ function AnnouncementsTab() {
             </div>
             <div className="form-actions"><button type="submit" className="btn btn-primary"><Send size={16}/> Publish</button></div>
         </form></div>}
-        {list.map(a => <div key={a._id} className="notice-card"><div style={{display:'flex',justifyContent:'space-between'}}><h4>{a.title}</h4><div style={{display:'flex',gap:8,alignItems:'center'}}><span className={`badge ${statusCls(a.status)}`}>{a.status}</span><span className="badge badge-info">{a.category}</span><button className="btn-icon" onClick={()=>handleDelete(a._id)}><Trash2 size={14}/></button></div></div>
-            <div className="notice-meta"><span>To: {a.audience}</span><span>{new Date(a.createdAt).toLocaleDateString('en-IN')}</span></div><div className="notice-body">{a.content}</div></div>)}
+        {list.map(a => <div key={a._id} className="notice-card">
+            <div style={{display:'flex',justifyContent:'space-between'}}>
+                <h4>{a.title}</h4>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <span className={`badge ${statusCls(a.status)}`}>{a.status}</span>
+                    <span className="badge badge-info">{a.category}</span>
+                    {isStaff && a.source !== 'Local' && <button className="btn-icon" onClick={()=>handleDelete(a._id)}><Trash2 size={14}/></button>}
+                </div>
+            </div>
+            <div className="notice-meta"><span>To: {a.audience || a.targetGroup}</span><span>{new Date(a.createdAt || a.publishDate).toLocaleDateString('en-IN')}</span></div>
+            <div className="notice-body" style={{ whiteSpace: 'pre-wrap' }}>{a.content}</div>
+        </div>)}
         {list.length===0&&<div className="collab-empty"><Megaphone size={40}/><p>No announcements yet</p></div>}
     </div>);
 }

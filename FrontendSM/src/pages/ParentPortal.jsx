@@ -54,24 +54,24 @@ function DashboardTab({ setTab }) {
     // Load dynamic data based on selected child
     const allFees = JSON.parse(localStorage.getItem('mzs_fee_structure') || '[]');
     const allPayments = JSON.parse(localStorage.getItem('mzs_fee_payments') || '[]');
-    const allAnnouncements = JSON.parse(localStorage.getItem('mzs_announcements') || '[]');
-
+    const allAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
     const studentClass = selected.class ? selected.class.split('-')[0] : '';
+    
     const assignedFees = allFees.filter(f => !f.classIds || f.classIds.includes(studentClass));
+    const recentAnnouncements = allAnnouncements.filter(a => {
+        return a.status === 'Published' && (
+            a.targetGroup === 'All Students' || 
+            a.targetGroup === 'Parents' || 
+            a.targetGroup === `Class ${studentClass}` || 
+            a.targetGroup === studentClass
+        );
+    }).slice(0, 3);
+
     const totalFee = assignedFees.reduce((sum, f) => sum + Number(f.amount || 0), 0) || 85000;
     
     const studentPayments = allPayments.filter(p => p.studentId === selected.id);
     const amountPaid = studentPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const pendingBalance = totalFee - amountPaid;
-
-    const recentAnnouncements = allAnnouncements.slice(0, 3);
-    if(recentAnnouncements.length === 0) {
-        recentAnnouncements.push(
-            { title: 'Annual Day Rehearsal Schedule', category: 'General', date: '25 Mar 2026' },
-            { title: 'Q4 Fee Due Reminder', category: 'Finance', date: '22 Mar 2026' },
-            { title: 'Holi Holiday - 14th March', category: 'Holiday', date: '10 Mar 2026' }
-        );
-    }
 
     return (
         <div className="animate-fade-in">
@@ -98,20 +98,20 @@ function DashboardTab({ setTab }) {
             <div className="pp-dash-grid">
                 <div className="card-sub-panel">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Megaphone size={18}/> Recent Announcements</h4>
-                    {recentAnnouncements.map((a, i) => {
-                        // Map old categories or dynamic ones to CSS classes
+                    {recentAnnouncements.length > 0 ? recentAnnouncements.map((a, i) => {
                         let catClass = 'general';
-                        if(a.category?.toLowerCase() === 'finance' || a.category?.toLowerCase() === 'fee') catClass = 'fee';
-                        else if(a.category?.toLowerCase() === 'holiday') catClass = 'holiday';
-                        else if(a.title?.toLowerCase().includes('exam')) catClass = 'exam';
-                        else if(a.category?.toLowerCase() === 'urgent') catClass = 'urgent';
+                        const cat = (a.category || a.targetGroup || '').toLowerCase();
+                        if(cat.includes('finance') || cat.includes('fee')) catClass = 'fee';
+                        else if(cat.includes('holiday')) catClass = 'holiday';
+                        else if(a.title?.toLowerCase().includes('exam') || cat.includes('exam')) catClass = 'exam';
+                        else if(cat.includes('urgent')) catClass = 'urgent';
 
                         return (
                         <div key={i} className="pp-ann-item">
-                            <div><span className={`pp-ann-badge ${catClass}`}>{a.category || a.cat || 'Alert'}</span> <span style={{ marginLeft: 8, fontSize: '0.9rem' }}>{a.title}</span></div>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{a.date}</span>
+                            <div><span className={`pp-ann-badge ${catClass}`}>{a.targetGroup || 'Alert'}</span> <span style={{ marginLeft: 8, fontSize: '0.9rem' }}>{a.title}</span></div>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(a.publishDate || a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                         </div>
-                    )})}
+                    )}) : <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No recent announcements</p>}
                 </div>
                 <div className="card-sub-panel">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><ChevronRight size={18}/> Quick Actions</h4>
@@ -206,40 +206,55 @@ function AttendanceTab() {
 
 // ======================== ANNOUNCEMENTS ========================
 function AnnouncementsTab() {
-    const allAnnouncements = JSON.parse(localStorage.getItem('mzs_announcements') || '[]');
-    const announcements = allAnnouncements.length > 0 ? allAnnouncements : [
-        { title: '📌 Important: Final Exam Schedule Released', desc: 'The final examination for all grades will commence from April 15, 2026. Detailed timetable has been attached. Students must carry their hall tickets.', category: 'Exam', date: '25 Mar 2026', pinned: true, attachmentUrl: 'exam_timetable_2026.pdf' },
-        { title: 'Annual Day Celebration — 28th March', desc: 'Parents are invited for the Annual Day function at the school auditorium. Gates open at 4:00 PM. Please carry your visitor pass.', category: 'Event', date: '22 Mar 2026' },
-        { title: 'Q4 Fee Payment Due Reminder', desc: 'This is a reminder that Q4 tuition fees are due by March 31, 2026. Late payment may attract a fine of ₹500. Please pay via the portal.', category: 'Fee', date: '20 Mar 2026' },
-        { title: 'Holi Holiday — School Closed on 14th March', desc: 'On account of Holi, the school will remain closed on March 14, 2026 (Saturday). Regular classes resume on March 16.', category: 'Holiday', date: '10 Mar 2026' },
-    ];
+    const { user } = useAuth();
+    const children = user?.children || [];
+    const selected = user?.selectedChild || children[0] || {};
+    const studentClass = selected.class ? selected.class.split('-')[0] : '';
+
+    const allAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
+    
+    const announcements = allAnnouncements.filter(a => {
+        // Show if published AND (targeted to All, Parents, or specific Class)
+        return a.status === 'Published' && (
+            a.targetGroup === 'All Students' || 
+            a.targetGroup === 'Parents' || 
+            a.targetGroup === `Class ${studentClass}` ||
+            a.targetGroup === studentClass
+        );
+    });
     
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><Megaphone size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> School Announcements</h3>
-            {announcements.map((a, i) => {
+            {announcements.length > 0 ? announcements.map((a, i) => {
                 let catClass = 'general';
-                if(a.category?.toLowerCase() === 'finance' || a.category?.toLowerCase() === 'fee') catClass = 'fee';
-                else if(a.category?.toLowerCase() === 'holiday') catClass = 'holiday';
-                else if(a.title?.toLowerCase().includes('exam') || a.category?.toLowerCase() === 'exam') catClass = 'exam';
-                else if(a.category?.toLowerCase() === 'event') catClass = 'event';
-                else if(a.category?.toLowerCase() === 'urgent') catClass = 'urgent';
+                const cat = (a.category || a.targetGroup || '').toLowerCase();
+                if(cat.includes('finance') || cat.includes('fee')) catClass = 'fee';
+                else if(cat.includes('holiday')) catClass = 'holiday';
+                else if(a.title?.toLowerCase().includes('exam') || cat.includes('exam')) catClass = 'exam';
+                else if(cat.includes('event')) catClass = 'event';
+                else if(cat.includes('urgent')) catClass = 'urgent';
 
                 return (
                 <div key={i} className={`pp-announcement ${catClass}`}>
                     <h4>
-                        <span className={`pp-ann-badge ${catClass}`}>{a.category}</span>
+                        <span className={`pp-ann-badge ${catClass}`}>{a.targetGroup || 'Notice'}</span>
                         {a.title}
                     </h4>
-                    <p>{a.desc || a.content}</p>
+                    <p>{a.message || a.desc || a.content}</p>
                     <div className="ann-meta">
-                        <span><Clock size={12}/> {a.date}</span>
+                        <span><Clock size={12}/> {new Date(a.publishDate || a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         {a.attachmentUrl && <span><Download size={12}/> Download Attachment</span>}
                         {a.pinned && <span style={{ color: 'var(--danger)' }}>📌 Pinned</span>}
                     </div>
                 </div>
-            )})}
+            )}) : (
+                <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg)', borderRadius: 'var(--radius-md)' }}>
+                    <Megaphone size={40} style={{ color: 'var(--text-muted)', marginBottom: 12 }} />
+                    <p style={{ color: 'var(--text-muted)' }}>No announcements found for your child's class.</p>
+                </div>
+            )}
         </div>
     );
 }

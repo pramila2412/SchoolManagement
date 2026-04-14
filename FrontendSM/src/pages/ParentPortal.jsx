@@ -54,18 +54,32 @@ function DashboardTab({ setTab }) {
     // Load dynamic data based on selected child
     const allFees = JSON.parse(localStorage.getItem('mzs_fee_structure') || '[]');
     const allPayments = JSON.parse(localStorage.getItem('mzs_fee_payments') || '[]');
-    const allAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
-    const studentClass = selected.class ? selected.class.split('-')[0] : '';
+    const localAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
+    
+    const [apiAnnouncements, setApiAnnouncements] = useState([]);
+    useEffect(() => {
+        fetch('/api/collaborate/announcements')
+            .then(r => r.json())
+            .then(d => { if (Array.isArray(d)) setApiAnnouncements(d); })
+            .catch(e => console.error("Error fetching announcements:", e));
+    }, []);
+
+    const allAnnouncements = [...localAnnouncements, ...apiAnnouncements];
+    const studentClass = selected.class ? selected.class.split('-')[0].trim() : '';
     
     const assignedFees = allFees.filter(f => !f.classIds || f.classIds.includes(studentClass));
     const recentAnnouncements = allAnnouncements.filter(a => {
-        return a.status === 'Published' && (
-            a.targetGroup === 'All Students' || 
-            a.targetGroup === 'Parents' || 
-            a.targetGroup === `Class ${studentClass}` || 
-            a.targetGroup === studentClass
+        const stat = a.status || 'Published';
+        const targ = a.targetGroup || a.audience || '';
+        return stat === 'Published' && (
+            targ === 'All Students' || 
+            targ === 'Everyone' || 
+            targ === 'Parents' || 
+            targ === 'All Parents' || 
+            targ === `Class ${studentClass}` || 
+            targ === studentClass
         );
-    }).slice(0, 3);
+    }).sort((a,b) => new Date(b.createdAt || b.publishDate || 0) - new Date(a.createdAt || a.publishDate || 0)).slice(0, 3);
 
     const totalFee = assignedFees.reduce((sum, f) => sum + Number(f.amount || 0), 0) || 85000;
     
@@ -209,19 +223,32 @@ function AnnouncementsTab() {
     const { user } = useAuth();
     const children = user?.children || [];
     const selected = user?.selectedChild || children[0] || {};
-    const studentClass = selected.class ? selected.class.split('-')[0] : '';
+    const studentClass = selected.class ? selected.class.split('-')[0].trim() : '';
 
-    const allAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
+    const localAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
+    const [apiAnnouncements, setApiAnnouncements] = useState([]);
+    
+    useEffect(() => {
+        fetch('/api/collaborate/announcements')
+            .then(r => r.json())
+            .then(d => { if (Array.isArray(d)) setApiAnnouncements(d); })
+            .catch(e => console.error("Error fetching announcements:", e));
+    }, []);
+
+    const allAnnouncements = [...localAnnouncements, ...apiAnnouncements];
     
     const announcements = allAnnouncements.filter(a => {
-        // Show if published AND (targeted to All, Parents, or specific Class)
-        return a.status === 'Published' && (
-            a.targetGroup === 'All Students' || 
-            a.targetGroup === 'Parents' || 
-            a.targetGroup === `Class ${studentClass}` ||
-            a.targetGroup === studentClass
+        const stat = a.status || 'Published';
+        const targ = a.targetGroup || a.audience || '';
+        return stat === 'Published' && (
+            targ === 'All Students' || 
+            targ === 'Everyone' || 
+            targ === 'Parents' || 
+            targ === 'All Parents' || 
+            targ === `Class ${studentClass}` ||
+            targ === studentClass
         );
-    });
+    }).sort((a,b) => new Date(b.createdAt || b.publishDate || 0) - new Date(a.createdAt || a.publishDate || 0));
     
     return (
         <div className="animate-fade-in">
@@ -337,7 +364,7 @@ function FeePaymentTab({ setTab }) {
         <div className="animate-fade-in">
             <ChildSelector/>
             <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><CreditCard size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Fee Payment</h3>
-            <div style={{ maxWidth: 700 }}>
+            <div style={{ maxWidth: 700, width: '100%' }}>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: 16 }}>Select the fee components you wish to pay. The total is calculated dynamically.</p>
                 {availableFees.map(f => (
                     <div key={f.id} className={`pp-fee-item ${selectedFees.includes(f.id) ? 'selected' : ''}`} onClick={() => toggle(f.id)}>
@@ -539,13 +566,13 @@ export default function ParentPortal() {
                 </div>
                 
                 {user?.firstLogin && (
-                    <div style={{ background: '#fff3e0', border: '1px solid #ffb74d', padding: '10px 16px', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="pp-first-login-notice">
                         <AlertTriangle size={20} color="#f57c00" />
-                        <div>
+                        <div style={{ flex: 1 }}>
                             <span style={{ fontWeight: 600, color: '#e65100', fontSize: '0.9rem', display: 'block' }}>First Login Notice</span>
                             <span style={{ fontSize: '0.8rem', color: '#e65100' }}>Please update your default password in Account Settings.</span>
                         </div>
-                        <button className="btn btn-outline" style={{ background: '#fff', borderColor: '#ffb74d', color: '#f57c00', marginLeft: 16, padding: '4px 12px' }} onClick={() => handleNavigate('settings')}>Update Now</button>
+                        <button className="btn btn-outline" style={{ background: '#fff', borderColor: '#ffb74d', color: '#f57c00', padding: '4px 12px', whiteSpace: 'nowrap' }} onClick={() => handleNavigate('settings')}>Update Now</button>
                     </div>
                 )}
             </div>

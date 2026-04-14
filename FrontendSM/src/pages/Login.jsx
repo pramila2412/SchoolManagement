@@ -70,9 +70,13 @@ export default function LoginPage() {
             // Dynamic Parent Login check from mzs_students
             if (loginType === 'parent') {
                 const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const loginStr = email.trim().toLowerCase();
                 
-                // Find all children belonging to this parent ID
-                const parentChildren = globalStudents.filter(s => s.parentId === email);
+                // Find all children belonging to this parent ID or parentEmail
+                const parentChildren = globalStudents.filter(s => 
+                    (s.parentId && s.parentId.toLowerCase() === loginStr) || 
+                    (s.parentEmail && s.parentEmail.toLowerCase() === loginStr)
+                );
 
                 if (parentChildren.length > 0) {
                     // Check if any of these children's parentPassword matches
@@ -81,8 +85,8 @@ export default function LoginPage() {
                     if (matchByPass) {
                         login({ 
                             name: parentChildren[0].parentName || 'Parent / Guardian',
-                            id: email,
-                            parentId: email,
+                            id: parentChildren[0].parentId,
+                            parentId: parentChildren[0].parentId,
                             parentEmail: parentChildren[0].parentEmail,
                             role: 'Parent', 
                             children: parentChildren.map(s => ({
@@ -232,6 +236,14 @@ export default function LoginPage() {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="w-full max-w-[440px] mx-auto lg:mx-0"
                 >
+                    {/* Mobile-only branding (shown when hero is hidden) */}
+                    <div className="login-mobile-brand">
+                        <h1 className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-sky-400 to-indigo-400">
+                            Mount Zion School
+                        </h1>
+                        <p className="text-white/50">School Management System</p>
+                    </div>
+
                     {/* Role Toggle */}
                     <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-xl mb-6 relative">
                         <div 

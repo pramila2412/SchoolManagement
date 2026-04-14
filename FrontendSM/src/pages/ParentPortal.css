@@ -63,6 +63,13 @@
 .pp-summary-info p { font-size: 1.4rem; font-weight: 700; line-height: 1; }
 .pp-summary-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
+/* Dashboard Panels */
+.pp-dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
 /* Profile Card */
 .pp-profile-card {
     display: flex;
@@ -133,9 +140,9 @@
 .pp-announcement.event { border-left-color: #2196f3; }
 .pp-announcement.urgent { border-left-color: #b71c1c; }
 .pp-announcement.general { border-left-color: #9e9e9e; }
-.pp-announcement h4 { font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.pp-announcement h4 { font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pp-announcement p { font-size: 0.85rem; color: var(--text-light); }
-.pp-announcement .ann-meta { display: flex; gap: 12px; margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); }
+.pp-announcement .ann-meta { display: flex; gap: 12px; margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; }
 
 .pp-ann-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; color: white; text-transform: uppercase; }
 .pp-ann-badge.holiday { background: #4caf50; }
@@ -144,6 +151,17 @@
 .pp-ann-badge.event { background: #2196f3; }
 .pp-ann-badge.urgent { background: #b71c1c; }
 .pp-ann-badge.general { background: #9e9e9e; }
+
+/* Dashboard Ann Item */
+.pp-ann-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    gap: 8px;
+}
+.pp-ann-item:last-child { border-bottom: none; }
 
 /* Fee Selector */
 .pp-fee-item {
@@ -156,10 +174,11 @@
     border-radius: var(--radius-sm);
     margin-bottom: 8px;
     transition: var(--transition-fast);
+    cursor: pointer;
 }
 .pp-fee-item.selected { border-color: var(--primary); background: #f0f9f9; }
 .pp-fee-item label { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; }
-.pp-fee-amount { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.pp-fee-amount { font-size: 1.1rem; font-weight: 700; color: var(--text); white-space: nowrap; }
 
 .pp-fee-total {
     display: flex; justify-content: space-between; align-items: center;
@@ -181,10 +200,289 @@
 .pp-contact-card h4 { margin-top: 12px; font-size: 0.95rem; color: var(--primary); }
 .pp-contact-card p { font-size: 0.9rem; color: var(--text-light); margin-top: 8px; }
 
+/* First Login Notice Banner */
+.pp-first-login-notice {
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ================================================================
+   MOBILE RESPONSIVE — Tablet (≤ 768px)
+   ================================================================ */
 @media (max-width: 768px) {
-    .pp-profile-card { flex-direction: column; align-items: center; text-align: center; }
-    .pp-detail-row { grid-template-columns: 1fr; text-align: left; }
-    .pp-calendar { grid-template-columns: repeat(7, 1fr); gap: 2px; }
-    .pp-cal-day { padding: 6px 2px; font-size: 0.75rem; }
-    .pp-summary-grid { grid-template-columns: 1fr; }
+
+    /* --- Page Header --- */
+    .parent-portal-page .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .parent-portal-page .page-header h1 {
+        font-size: 1.3rem;
+    }
+
+    /* --- Tabs: horizontal scroll strip --- */
+    .parent-portal-page .tabs-header {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 4px;
+        padding: 6px 8px;
+        scrollbar-width: none; /* Firefox */
+    }
+    .parent-portal-page .tabs-header::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    .parent-portal-page .tab-btn {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+        min-height: 44px; /* Touch-friendly */
+    }
+    /* On very small screens, hide tab text and show icon only */
+
+    /* --- Tabs Content --- */
+    .parent-portal-page .tabs-content {
+        padding: 16px 12px;
+    }
+
+    /* --- Child Selector --- */
+    .pp-child-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 14px 16px;
+    }
+    .pp-child-selector select {
+        min-width: 100%;
+        width: 100%;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+
+    /* --- Summary Grid --- */
+    .pp-summary-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .pp-summary-card {
+        padding: 14px;
+    }
+    .pp-summary-info h4 {
+        font-size: 0.7rem;
+    }
+    .pp-summary-info p {
+        font-size: 1.15rem;
+    }
+    .pp-summary-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* --- Dashboard Panels --- */
+    .pp-dash-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* --- Profile Card --- */
+    .pp-profile-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px 16px;
+        gap: 20px;
+    }
+    .pp-profile-photo {
+        width: 110px;
+        height: 110px;
+    }
+    .pp-profile-details h2 {
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+    }
+    .pp-detail-row {
+        grid-template-columns: 1fr;
+        text-align: left;
+        gap: 4px;
+        padding: 8px 0;
+    }
+
+    /* --- Attendance --- */
+    .pp-att-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .pp-att-stat {
+        padding: 10px 6px;
+    }
+    .pp-att-stat h4 {
+        font-size: 0.65rem;
+    }
+    .pp-att-stat p {
+        font-size: 1.1rem;
+    }
+    .pp-calendar {
+        gap: 2px;
+    }
+    .pp-cal-header {
+        font-size: 0.65rem;
+        padding: 6px 2px;
+    }
+    .pp-cal-day {
+        padding: 6px 2px;
+        font-size: 0.75rem;
+    }
+
+    /* --- Announcements --- */
+    .pp-announcement {
+        padding: 14px 16px;
+    }
+    .pp-announcement h4 {
+        font-size: 0.88rem;
+    }
+
+    /* --- Fee Payment --- */
+    .pp-fee-item {
+        padding: 14px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pp-fee-item label {
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+    .pp-fee-amount {
+        font-size: 1rem;
+    }
+    .pp-fee-total {
+        padding: 16px 18px;
+        font-size: 1rem;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* --- Contact --- */
+    .pp-contact-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .pp-contact-card {
+        padding: 20px 16px;
+    }
+
+    /* --- Tables (certificates, payment history) --- */
+    .parent-portal-page .table-responsive {
+        margin: 0 -12px;
+        padding: 0 12px;
+        width: calc(100% + 24px);
+    }
+
+    /* --- First Login Notice --- */
+    .pp-first-login-notice {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .pp-first-login-notice .btn {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-top: 4px;
+    }
+
+    /* --- Settings form --- */
+    .parent-portal-page .card {
+        padding: 16px !important;
+    }
+}
+
+/* ================================================================
+   MOBILE RESPONSIVE — Small phones (≤ 480px)
+   ================================================================ */
+@media (max-width: 480px) {
+    .parent-portal-page .tabs-content {
+        padding: 14px 10px;
+    }
+
+    /* Tab buttons: icon-only on very small screens */
+    .parent-portal-page .tab-btn {
+        padding: 10px;
+        font-size: 0;
+        gap: 0;
+    }
+    .parent-portal-page .tab-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .parent-portal-page .tab-btn.active {
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+
+    /* Summary cards single column */
+    .pp-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Attendance stats: 2 per row + 1 */
+    .pp-att-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Quick action buttons */
+    .parent-portal-page .hr-quick-btn {
+        font-size: 0.85rem;
+        padding: 12px;
+        min-height: 48px;
+    }
+
+    /* Page header */
+    .parent-portal-page .page-header h1 {
+        font-size: 1.15rem;
+    }
+
+    /* Breadcrumb */
+    .parent-portal-page .page-breadcrumb {
+        font-size: 0.75rem;
+    }
+
+    /* Profile photo smaller */
+    .pp-profile-photo {
+        width: 90px;
+        height: 90px;
+    }
+
+    /* Fee pay button */
+    .parent-portal-page button[style*="width: 100%"] {
+        min-height: 50px;
+        font-size: 1rem !important;
+    }
+}
+
+/* ================================================================
+   MOBILE RESPONSIVE — Extra small (≤ 360px)
+   ================================================================ */
+@media (max-width: 360px) {
+    .pp-child-selector {
+        padding: 10px 12px;
+    }
+    .pp-summary-card {
+        padding: 10px;
+    }
+    .pp-summary-info p {
+        font-size: 1rem;
+    }
+    .pp-cal-day {
+        padding: 4px 1px;
+        font-size: 0.68rem;
+    }
+    .pp-cal-header {
+        font-size: 0.6rem;
+        padding: 4px 1px;
+    }
 }

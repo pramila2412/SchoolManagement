@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,7 +6,9 @@ import { classes } from '../data/mockData';
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
     Video, CheckSquare, Clipboard, Activity, Settings, Save, PlusCircle,
-    Trash2, Pin, Lock, Send, Eye, Calendar, Clock, ChevronRight
+    Trash2, Pin, Lock, Send, Eye, Calendar, Clock, ChevronRight,
+    Search, X, Paperclip, Check, CheckCheck, AlertCircle, Radio,
+    FileText, Image as ImageIcon
 } from 'lucide-react';
 import './Collaborate.css';
 
@@ -311,20 +313,474 @@ function FilesTab() {
 
 // ===== MESSAGES =====
 function MessagesTab() {
-    const [conversations] = useLocalStorage('collab_conversations', [{id:1,name:'John Teacher',preview:'Hi, regarding the meeting...'},{id:2,name:'Science Dept.',preview:'New curriculum updates'},{id:3,name:'Parent Group',preview:'Annual day schedule'}]);
-    const [activeCon, setActiveCon] = useState(1);
-    const [messages, setMessages] = useLocalStorage('collab_messages', [{text:'Hi, regarding the meeting tomorrow.',sent:false},{text:'Yes, I will be there at 10 AM.',sent:true},{text:'Great, please bring the reports.',sent:false}]);
+    const { user } = useAuth();
+    const currentUser = user?.name || user?.username || 'Admin';
+
+    // Conversations & messages stored in localStorage
+    const [conversations, setConversations] = useLocalStorage('collab_conversations_v2', [
+        { id: 'conv_1', type: 'direct', name: 'Rajesh Kumar', role: 'Teacher', participants: ['Admin', 'Rajesh Kumar'], createdAt: new Date(Date.now() - 86400000).toISOString(), lastMessage: { text: 'Please share the exam schedule for Class 10.', sender: 'Rajesh Kumar', time: new Date(Date.now() - 3600000).toISOString() }, unread: 1 },
+        { id: 'conv_2', type: 'group', name: 'Science Department', participants: ['Admin', 'Rajesh Kumar', 'Priya Sharma', 'Amit Patel'], createdAt: new Date(Date.now() - 172800000).toISOString(), lastMessage: { text: 'Lab equipment order has been placed.', sender: 'Admin', time: new Date(Date.now() - 7200000).toISOString() }, unread: 0 },
+        { id: 'conv_3', type: 'direct', name: 'Priya Sharma', role: 'Parent', participants: ['Admin', 'Priya Sharma'], createdAt: new Date(Date.now() - 259200000).toISOString(), lastMessage: { text: "Thank you for the update on Arjun's progress.", sender: 'Priya Sharma', time: new Date(Date.now() - 86400000).toISOString() }, unread: 2 },
+        { id: 'conv_4', type: 'broadcast', name: 'All Staff Announcement', participants: ['All Staff'], createdAt: new Date(Date.now() - 345600000).toISOString(), lastMessage: { text: 'Staff meeting scheduled for Friday at 3 PM.', sender: 'Admin', time: new Date(Date.now() - 172800000).toISOString() }, unread: 0 },
+    ]);
+
+    const [allMessages, setAllMessages] = useLocalStorage('collab_all_messages', {
+        'conv_1': [
+            { id: 'm1', text: 'Good morning! Can we discuss the upcoming exam schedule?', sender: 'Rajesh Kumar', time: new Date(Date.now() - 7200000).toISOString(), status: 'read' },
+            { id: 'm2', text: "Sure, I'll prepare the draft and share it by tomorrow.", sender: 'Admin', time: new Date(Date.now() - 5400000).toISOString(), status: 'read' },
+            { id: 'm3', text: 'Please share the exam schedule for Class 10.', sender: 'Rajesh Kumar', time: new Date(Date.now() - 3600000).toISOString(), status: 'read' },
+        ],
+        'conv_2': [
+            { id: 'm4', text: 'Team, we need to finalize the lab equipment list for this semester.', sender: 'Admin', time: new Date(Date.now() - 86400000).toISOString(), status: 'delivered' },
+            { id: 'm5', text: "I'll compile the list from all sections and share by EOD.", sender: 'Priya Sharma', time: new Date(Date.now() - 43200000).toISOString(), status: 'read' },
+            { id: 'm6', text: 'Lab equipment order has been placed.', sender: 'Admin', time: new Date(Date.now() - 7200000).toISOString(), status: 'delivered' },
+        ],
+        'conv_3': [
+            { id: 'm7', text: "Hello, I wanted to check on Arjun's attendance this month.", sender: 'Priya Sharma', time: new Date(Date.now() - 172800000).toISOString(), status: 'read' },
+            { id: 'm8', text: 'Arjun has been regular. His attendance is 95% this month.', sender: 'Admin', time: new Date(Date.now() - 129600000).toISOString(), status: 'read' },
+            { id: 'm9', text: "Thank you for the update on Arjun's progress.", sender: 'Priya Sharma', time: new Date(Date.now() - 86400000).toISOString(), status: 'read' },
+        ],
+        'conv_4': [
+            { id: 'm10', text: 'Staff meeting scheduled for Friday at 3 PM. Attendance is mandatory.', sender: 'Admin', time: new Date(Date.now() - 172800000).toISOString(), status: 'delivered' },
+        ],
+    });
+
+    const [activeConvId, setActiveConvId] = useState('conv_1');
     const [input, setInput] = useState('');
-    const sendMsg = () => { if(!input.trim()) return; setMessages(m=>[...m,{text:input,sent:true}]); setInput(''); };
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showNewMsg, setShowNewMsg] = useState(false);
+    const [newMsgType, setNewMsgType] = useState('direct');
+    const [recipientSearch, setRecipientSearch] = useState('');
+    const [selectedRecipients, setSelectedRecipients] = useState([]);
+    const [groupName, setGroupName] = useState('');
+    const [attachment, setAttachment] = useState(null);
+    const [filterType, setFilterType] = useState('all');
+    const chatEndRef = useRef(null);
+
+    // Available contacts (from HR and Students)
+    const availableContacts = useMemo(() => {
+        const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
+        const allStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+        
+        const contacts = [
+            ...hrStaff.map(s => ({ 
+                name: s.name, 
+                role: s.role || s.dept || 'Staff' 
+            })),
+            ...allStudents.map(s => ({ 
+                name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name, 
+                role: `Student - ${s.class || s.grade || ''}`.trim() 
+            })),
+            ...allStudents
+                .filter(s => s.parentName || s.fatherName)
+                .map(s => ({
+                    name: s.parentName || s.fatherName,
+                    role: `Parent of ${s.firstName || s.name}`.trim()
+                }))
+        ];
+        
+        const seen = new Set();
+        return contacts.filter(c => {
+            if (!c.name || seen.has(c.name) || c.name === currentUser) return false;
+            seen.add(c.name);
+            return true;
+        });
+    }, [currentUser]);
+
+    // Auto scroll to bottom on new messages
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [allMessages, activeConvId]);
+
+    const activeConversation = conversations.find(c => c.id === activeConvId);
+    const activeMessages = allMessages[activeConvId] || [];
+
+    // Filter conversations by search and type
+    const filteredConversations = conversations.filter(c => {
+        const matchesSearch = !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesType = filterType === 'all' || c.type === filterType;
+        return matchesSearch && matchesType;
+    }).sort((a, b) => {
+        const timeA = a.lastMessage?.time ? new Date(a.lastMessage.time) : new Date(a.createdAt);
+        const timeB = b.lastMessage?.time ? new Date(b.lastMessage.time) : new Date(b.createdAt);
+        return timeB - timeA;
+    });
+
+    // Filtered contacts for recipient search
+    const filteredContacts = availableContacts.filter(c =>
+        c.name.toLowerCase().includes(recipientSearch.toLowerCase()) &&
+        !selectedRecipients.find(r => r.name === c.name)
+    );
+
+    // Mark conversation as read
+    const openConversation = (convId) => {
+        setActiveConvId(convId);
+        setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread: 0 } : c));
+    };
+
+    // Send message
+    const sendMessage = () => {
+        if (!input.trim() && !attachment) return;
+        if (!activeConvId) return;
+
+        const newMsg = {
+            id: `msg_${Date.now()}`,
+            text: input.trim(),
+            sender: currentUser,
+            time: new Date().toISOString(),
+            status: 'sent',
+            attachment: attachment ? { name: attachment.name, size: (attachment.size / 1024 / 1024).toFixed(2) + ' MB', type: attachment.type } : null,
+        };
+
+        // Simulate status progression: sent -> delivered -> read
+        const msgId = newMsg.id;
+        setTimeout(() => {
+            setAllMessages(prev => ({
+                ...prev,
+                [activeConvId]: (prev[activeConvId] || []).map(m => m.id === msgId ? { ...m, status: 'delivered' } : m)
+            }));
+        }, 1500);
+        setTimeout(() => {
+            setAllMessages(prev => ({
+                ...prev,
+                [activeConvId]: (prev[activeConvId] || []).map(m => m.id === msgId ? { ...m, status: 'read' } : m)
+            }));
+        }, 4000);
+
+        setAllMessages(prev => ({
+            ...prev,
+            [activeConvId]: [...(prev[activeConvId] || []), newMsg]
+        }));
+
+        // Update conversation lastMessage
+        setConversations(prev => prev.map(c => c.id === activeConvId ? {
+            ...c,
+            lastMessage: { text: attachment ? `📎 ${attachment.name}` : input.trim(), sender: currentUser, time: new Date().toISOString() }
+        } : c));
+
+        setInput('');
+        setAttachment(null);
+    };
+
+    // Handle file attachment (PDF / Image, max 10 MB)
+    const handleAttachment = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size exceeds 10 MB limit.');
+            return;
+        }
+        const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            alert('Only PDF and Image files are allowed.');
+            return;
+        }
+        setAttachment(file);
+        e.target.value = '';
+    };
+
+    // Create new conversation
+    const createConversation = () => {
+        if (selectedRecipients.length === 0) return;
+        if (newMsgType === 'direct') {
+            const existing = conversations.find(c => c.type === 'direct' && c.participants.includes(selectedRecipients[0].name));
+            if (existing) { setActiveConvId(existing.id); setShowNewMsg(false); setSelectedRecipients([]); setRecipientSearch(''); return; }
+        }
+        const convId = `conv_${Date.now()}`;
+        const newConv = {
+            id: convId,
+            type: newMsgType,
+            name: newMsgType === 'direct' ? selectedRecipients[0].name
+                : newMsgType === 'group' ? (groupName || selectedRecipients.map(r => r.name).join(', '))
+                : `Broadcast: ${selectedRecipients.map(r => r.name).join(', ')}`,
+            role: newMsgType === 'direct' ? selectedRecipients[0].role : undefined,
+            participants: newMsgType === 'broadcast' ? selectedRecipients.map(r => r.name) : [currentUser, ...selectedRecipients.map(r => r.name)],
+            createdAt: new Date().toISOString(),
+            lastMessage: null,
+            unread: 0,
+        };
+        setConversations(prev => [newConv, ...prev]);
+        setAllMessages(prev => ({ ...prev, [convId]: [] }));
+        setActiveConvId(convId);
+        setShowNewMsg(false);
+        setSelectedRecipients([]);
+        setGroupName('');
+        setRecipientSearch('');
+        setNewMsgType('direct');
+    };
+
+    // Delete conversation
+    const deleteConversation = (convId, e) => {
+        e?.stopPropagation();
+        if (!window.confirm('Delete this conversation?')) return;
+        setConversations(prev => prev.filter(c => c.id !== convId));
+        setAllMessages(prev => { const copy = { ...prev }; delete copy[convId]; return copy; });
+        if (activeConvId === convId) {
+            const remaining = conversations.filter(c => c.id !== convId);
+            setActiveConvId(remaining[0]?.id || null);
+        }
+    };
+
+    // Status indicator component
+    const StatusIcon = ({ status }) => {
+        switch (status) {
+            case 'sent': return <Check size={13} className="msg-status-icon msg-status-sent" />;
+            case 'delivered': return <CheckCheck size={13} className="msg-status-icon msg-status-delivered" />;
+            case 'read': return <CheckCheck size={13} className="msg-status-icon msg-status-read" />;
+            case 'failed': return <AlertCircle size={13} className="msg-status-icon msg-status-failed" />;
+            default: return null;
+        }
+    };
+
+    // Format time for display
+    const formatTime = (isoStr) => {
+        if (!isoStr) return '';
+        const d = new Date(isoStr);
+        const now = new Date();
+        const diffDays = Math.floor((now - d) / 86400000);
+        const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        if (diffDays === 0) return timeStr;
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return d.toLocaleDateString('en-IN', { weekday: 'short' });
+        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    };
+
+    const getInitials = (name) => name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+    const totalUnread = conversations.reduce((sum, c) => sum + (c.unread || 0), 0);
 
     return (<div className="animate-fade-in">
-        <div className="msg-container">
-            <div className="msg-sidebar">{conversations.map(c=><div key={c.id} className={`msg-sidebar-item ${activeCon===c.id?'active':''}`} onClick={()=>setActiveCon(c.id)}><h5>{c.name}</h5><p>{c.preview}</p></div>)}</div>
-            <div className="msg-chat-area">
-                <div className="msg-chat-messages">{messages.map((m,i)=><div key={i} className={`msg-bubble ${m.sent?'sent':'received'}`}>{m.text}</div>)}</div>
-                <div className="msg-input-bar"><input className="form-input" placeholder="Type a message..." value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendMsg()} /><button className="btn btn-primary" onClick={sendMsg}><Send size={16}/></button></div>
+        <div className="msg-container-v2">
+            {/* ===== LEFT SIDEBAR ===== */}
+            <div className="msg-sidebar-v2">
+                <div className="msg-sidebar-header">
+                    <h3><Mail size={18} /> Messages {totalUnread > 0 && <span className="msg-unread-total">{totalUnread}</span>}</h3>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowNewMsg(true)} title="New Message"><PlusCircle size={14} /> New</button>
+                </div>
+
+                <div className="msg-search-bar">
+                    <Search size={15} className="msg-search-icon" />
+                    <input placeholder="Search conversations..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    {searchQuery && <button className="msg-search-clear" onClick={() => setSearchQuery('')}><X size={14} /></button>}
+                </div>
+
+                <div className="msg-type-filters">
+                    {[{ key: 'all', label: 'All' }, { key: 'direct', label: 'Direct' }, { key: 'group', label: 'Groups' }, { key: 'broadcast', label: 'Broadcast' }].map(f =>
+                        <button key={f.key} className={`msg-filter-btn ${filterType === f.key ? 'active' : ''}`} onClick={() => setFilterType(f.key)}>{f.label}</button>
+                    )}
+                </div>
+
+                <div className="msg-conv-list">
+                    {filteredConversations.map(c => (
+                        <div key={c.id} className={`msg-conv-item ${activeConvId === c.id ? 'active' : ''} ${c.unread ? 'has-unread' : ''}`} onClick={() => openConversation(c.id)}>
+                            <div className={`msg-conv-avatar msg-avatar-${c.type}`}>{getInitials(c.name)}</div>
+                            <div className="msg-conv-info">
+                                <div className="msg-conv-top-row">
+                                    <h5>
+                                        {c.name}
+                                        {c.type === 'direct' && c.role && <span style={{ fontSize: '0.8em', opacity: 0.7, fontWeight: 'normal', marginLeft: '4px' }}>({c.role})</span>}
+                                    </h5>
+                                    <span className="msg-conv-time">{c.lastMessage ? formatTime(c.lastMessage.time) : ''}</span>
+                                </div>
+                                <div className="msg-conv-bottom-row">
+                                    <p>{c.lastMessage ? (c.lastMessage.sender === currentUser ? `You: ${c.lastMessage.text}` : c.lastMessage.text) : 'No messages yet'}</p>
+                                    <div className="msg-conv-badges">
+                                        {c.unread > 0 && <span className="msg-unread-badge">{c.unread}</span>}
+                                    </div>
+                                </div>
+                            </div>
+                            <span className={`msg-type-indicator msg-indicator-${c.type}`} title={c.type}>
+                                {c.type === 'direct' ? <Mail size={11} /> : c.type === 'group' ? <Users size={11} /> : <Radio size={11} />}
+                            </span>
+                        </div>
+                    ))}
+                    {filteredConversations.length === 0 && <div className="msg-no-conv"><Mail size={28} /><p>No conversations found</p></div>}
+                </div>
+            </div>
+
+            {/* ===== RIGHT CHAT AREA ===== */}
+            <div className="msg-chat-area-v2">
+                {activeConversation ? (<>
+                    {/* Chat Header */}
+                    <div className="msg-chat-header">
+                        <div className="msg-chat-header-left">
+                            <div className={`msg-conv-avatar msg-avatar-${activeConversation.type}`}>{getInitials(activeConversation.name)}</div>
+                            <div>
+                                <h4>
+                                    {activeConversation.name}
+                                    {activeConversation.type === 'direct' && activeConversation.role && <span style={{ fontSize: '0.85em', opacity: 0.8, fontWeight: 'normal', marginLeft: '6px' }}>({activeConversation.role})</span>}
+                                </h4>
+                                <span className="msg-chat-subtitle">
+                                    {activeConversation.type === 'direct' ? (activeConversation.role || 'User') :
+                                     activeConversation.type === 'group' ? `${activeConversation.participants?.length || 0} participants` :
+                                     `Broadcast · ${activeConversation.participants?.length || 0} recipients`}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="msg-chat-header-right">
+                            <span className={`msg-type-pill msg-pill-${activeConversation.type}`}>
+                                {activeConversation.type === 'direct' ? <><Mail size={12} /> Direct</> :
+                                 activeConversation.type === 'group' ? <><Users size={12} /> Group</> :
+                                 <><Radio size={12} /> Broadcast</>}
+                            </span>
+                            <button className="btn-icon" title="Delete conversation" onClick={(e) => deleteConversation(activeConversation.id, e)}><Trash2 size={16} /></button>
+                        </div>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="msg-messages-area">
+                        {activeMessages.length === 0 && <div className="msg-empty-chat"><Send size={36} /><p>No messages yet. Start the conversation!</p></div>}
+                        {activeMessages.map((m, i) => {
+                            const isSent = m.sender === currentUser;
+                            const showDate = i === 0 || new Date(m.time).toDateString() !== new Date(activeMessages[i - 1].time).toDateString();
+                            return (
+                                <React.Fragment key={m.id}>
+                                    {showDate && <div className="msg-date-divider"><span>{new Date(m.time).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
+                                    <div className={`msg-bubble-v2 ${isSent ? 'sent' : 'received'}`}>
+                                        {!isSent && activeConversation.type !== 'direct' && <span className="msg-sender-label">{m.sender}</span>}
+                                        {m.attachment && (
+                                            <div className="msg-file-chip">
+                                                {m.attachment.type?.startsWith('image/') ? <ImageIcon size={15} /> : <FileText size={15} />}
+                                                <span className="msg-file-name">{m.attachment.name}</span>
+                                                <span className="msg-file-size">{m.attachment.size}</span>
+                                            </div>
+                                        )}
+                                        {m.text && <p className="msg-text">{m.text}</p>}
+                                        <div className="msg-bubble-meta">
+                                            <span className="msg-timestamp">{new Date(m.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                            {isSent && <StatusIcon status={m.status} />}
+                                        </div>
+                                    </div>
+                                </React.Fragment>
+                            );
+                        })}
+                        <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Attachment Preview */}
+                    {attachment && (
+                        <div className="msg-attach-preview">
+                            <Paperclip size={14} />
+                            <span className="msg-attach-name">{attachment.name}</span>
+                            <span className="msg-attach-size">({(attachment.size / 1024 / 1024).toFixed(2)} MB)</span>
+                            <button className="btn-icon" onClick={() => setAttachment(null)}><X size={14} /></button>
+                        </div>
+                    )}
+
+                    {/* Input Bar */}
+                    <div className="msg-input-bar-v2">
+                        <label className="msg-attach-trigger" title="Attach file (PDF / Image, max 10 MB)">
+                            <Paperclip size={18} />
+                            <input type="file" accept=".pdf,image/*" onChange={handleAttachment} style={{ display: 'none' }} />
+                        </label>
+                        <input className="form-input msg-text-input" placeholder="Type a message..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
+                        <button className="btn btn-primary msg-send-btn" onClick={sendMessage} disabled={!input.trim() && !attachment}><Send size={16} /></button>
+                    </div>
+                </>) : (
+                    <div className="msg-no-selection">
+                        <div className="msg-no-sel-icon"><Mail size={48} /></div>
+                        <h3>Select a conversation</h3>
+                        <p>Choose from your existing conversations or start a new one</p>
+                        <button className="btn btn-primary" onClick={() => setShowNewMsg(true)}><PlusCircle size={16} /> New Message</button>
+                    </div>
+                )}
             </div>
         </div>
+
+        {/* ===== NEW MESSAGE MODAL ===== */}
+        {showNewMsg && (
+            <div className="msg-modal-overlay" onClick={() => setShowNewMsg(false)}>
+                <div className="msg-modal" onClick={e => e.stopPropagation()}>
+                    <div className="msg-modal-header">
+                        <h3><PlusCircle size={18} /> New Message</h3>
+                        <button className="btn-icon" onClick={() => { setShowNewMsg(false); setSelectedRecipients([]); setRecipientSearch(''); setGroupName(''); setNewMsgType('direct'); }}><X size={18} /></button>
+                    </div>
+
+                    <div className="msg-modal-body">
+                        <div className="form-group">
+                            <label className="form-label">Message Type</label>
+                            <div className="msg-type-selector">
+                                {[
+                                    { key: 'direct', label: 'Direct Message', icon: Mail, desc: 'One-on-one private conversation' },
+                                    { key: 'group', label: 'Group Message', icon: Users, desc: 'Collaboration group channel' },
+                                    { key: 'broadcast', label: 'Broadcast', icon: Radio, desc: 'One-way mass message to a role' },
+                                ].map(t => {
+                                    const Icon = t.icon;
+                                    return (
+                                        <button key={t.key} className={`msg-type-option ${newMsgType === t.key ? 'active' : ''}`} onClick={() => { setNewMsgType(t.key); setSelectedRecipients([]); }}>
+                                            <Icon size={20} />
+                                            <strong>{t.label}</strong>
+                                            <span>{t.desc}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {newMsgType === 'group' && (
+                            <div className="form-group">
+                                <label className="form-label">Group Name</label>
+                                <input className="form-input" placeholder="e.g. Science Department" value={groupName} onChange={e => setGroupName(e.target.value)} />
+                            </div>
+                        )}
+
+                        <div className="form-group">
+                            <label className="form-label">
+                                {newMsgType === 'direct' ? 'Select Recipient' : newMsgType === 'group' ? 'Add Members' : 'Select Recipients (Role / All)'}
+                            </label>
+
+                            {selectedRecipients.length > 0 && (
+                                <div className="msg-selected-chips">
+                                    {selectedRecipients.map((r, i) => (
+                                        <span key={i} className="msg-chip">
+                                            {r.name}
+                                            <button onClick={() => setSelectedRecipients(prev => prev.filter((_, idx) => idx !== i))}><X size={12} /></button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="msg-recipient-search">
+                                <Search size={14} />
+                                <input placeholder="Search by name..." value={recipientSearch} onChange={e => setRecipientSearch(e.target.value)} />
+                            </div>
+
+                            <div className="msg-contact-list">
+                                {newMsgType === 'broadcast' && (
+                                    <>
+                                        {[{ name: 'All Staff', role: 'Role' }, { name: 'All Students', role: 'Role' }, { name: 'All Parents', role: 'Role' }, { name: 'All Users', role: 'Everyone' }]
+                                            .filter(r => !selectedRecipients.find(s => s.name === r.name) && r.name.toLowerCase().includes(recipientSearch.toLowerCase()))
+                                            .map((r, i) => (
+                                                <div key={`role_${i}`} className="msg-contact-row" onClick={() => { setSelectedRecipients([r]); setRecipientSearch(''); }}>
+                                                    <div className="msg-contact-avatar-sm"><Radio size={14} /></div>
+                                                    <div className="msg-contact-detail"><strong>{r.name}</strong><span>{r.role}</span></div>
+                                                </div>
+                                            ))}
+                                    </>
+                                )}
+                                {filteredContacts.slice(0, 8).map((c, i) => (
+                                    <div key={i} className="msg-contact-row" onClick={() => {
+                                        if (newMsgType === 'direct') { setSelectedRecipients([c]); }
+                                        else { setSelectedRecipients(prev => [...prev, c]); }
+                                        setRecipientSearch('');
+                                    }}>
+                                        <div className="msg-contact-avatar-sm">{getInitials(c.name)}</div>
+                                        <div className="msg-contact-detail"><strong>{c.name}</strong><span>{c.role}</span></div>
+                                    </div>
+                                ))}
+                                {filteredContacts.length === 0 && recipientSearch && <p className="msg-no-results">No contacts found for "{recipientSearch}"</p>}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="msg-modal-footer">
+                        <button className="btn btn-outline" onClick={() => { setShowNewMsg(false); setSelectedRecipients([]); setRecipientSearch(''); setGroupName(''); setNewMsgType('direct'); }}>Cancel</button>
+                        <button className="btn btn-primary" onClick={createConversation} disabled={selectedRecipients.length === 0}>
+                            <Send size={14} /> Start Conversation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>);
 }
 

@@ -72,20 +72,18 @@ function StaffTab() {
     const [searchTerm, setSearchTerm] = useState('');
     const [deptFilter, setDeptFilter] = useState('All Departments');
     const [typeFilter, setTypeFilter] = useState('All Types');
-    const [filteredStaff, setFilteredStaff] = useState([]);
-    const [hasSearched, setHasSearched] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
 
-    const handleSearch = () => {
+    const filteredStaff = staff.filter(s => {
         const term = searchTerm.toLowerCase();
-        const results = staff.filter(s => {
-            const matchSearch = !term || `${s.name} ${s.id} ${s.role}`.toLowerCase().includes(term);
-            const matchDept = deptFilter === 'All Departments' || s.dept === deptFilter;
-            const matchType = typeFilter === 'All Types' || s.type === typeFilter;
-            return matchSearch && matchDept && matchType;
-        });
-        setFilteredStaff(results);
-        setHasSearched(true);
+        const matchSearch = !term || `${s.name} ${s.id} ${s.role}`.toLowerCase().includes(term);
+        const matchDept = deptFilter === 'All Departments' || s.dept === deptFilter;
+        const matchType = typeFilter === 'All Types' || s.type === typeFilter;
+        return matchSearch && matchDept && matchType;
+    });
+
+    const handleSearch = () => {
+        // Filtering is reactive based on state
     };
 
     const [isAdding, setIsAdding] = useState(searchParams.get('action') === 'add');
@@ -144,7 +142,7 @@ function StaffTab() {
                     <button className="btn btn-outline" onClick={closeAdd}>Back to List</button>
                 ) : (
                     <div style={{ display: 'flex', gap: 10 }}>
-                        <button className="btn btn-outline" onClick={() => { setShowSearch(!showSearch); if (showSearch) { setHasSearched(false); } }}><Search size={16}/> {showSearch ? 'Hide Search' : 'Search'}</button>
+                        <button className="btn btn-outline" onClick={() => { setShowSearch(!showSearch); if (showSearch) { setSearchTerm(''); setDeptFilter('All Departments'); setTypeFilter('All Types'); } }}><Search size={16}/> {showSearch ? 'Hide Search' : 'Search'}</button>
                         <button className="btn btn-primary" onClick={() => setIsAdding(true)}><UserPlus size={16}/> Add Staff</button>
                     </div>
                 )}
@@ -186,8 +184,7 @@ function StaffTab() {
                             </div>
                         </div>
                     )}
-                    {hasSearched && (
-                        <div className="table-responsive">
+                    <div className="table-responsive">
                             <div style={{ padding: '8px 0', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 4 }}><Filter size={14} style={{ verticalAlign: 'middle', marginRight: 4 }}/> {filteredStaff.length} staff member(s) found</div>
                             <table className="data-table"><thead><tr><th>Employee ID</th><th>Name</th><th>Role</th><th>Department</th><th>Type</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
                                 <tbody>{filteredStaff.length > 0 ? filteredStaff.map(s => (
@@ -199,7 +196,6 @@ function StaffTab() {
                                     <tr><td colSpan="8" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No staff members match your search criteria</td></tr>
                                 )}</tbody></table>
                         </div>
-                    )}
                 </>
             )}
         </div>

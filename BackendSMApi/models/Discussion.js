@@ -2,8 +2,11 @@ const mongoose = require('mongoose');
 
 const replySchema = new mongoose.Schema({
     author: { type: String, required: true },
+    authorRole: { type: String, default: 'Staff' },
     content: { type: String, required: true },
-    likes: { type: Number, default: 0 },
+    attachment: String,
+    parentReplyIdx: { type: Number, default: null },
+    likes: [{ user: String, reaction: String }],
     createdAt: { type: Date, default: Date.now },
 });
 
@@ -15,10 +18,14 @@ const discussionSchema = new mongoose.Schema({
     targetGroup: String,
     targetClass: String,
     author: { type: String, default: 'Admin' },
+    authorRole: { type: String, default: 'Super Admin' },
+    attachment: String,
     replies: [replySchema],
-    likes: { type: Number, default: 0 },
+    likes: [{ user: String, reaction: String }],
     pinned: { type: Boolean, default: false },
     locked: { type: Boolean, default: false },
+    editedAt: Date,
     status: { type: String, enum: ['Open', 'Closed', 'Flagged'], default: 'Open' },
 }, { timestamps: true });
+
 module.exports = mongoose.model('Discussion', discussionSchema);

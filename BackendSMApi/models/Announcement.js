@@ -7,11 +7,13 @@ const announcementSchema = new mongoose.Schema({
     audience: { type: String, enum: ['Everyone', 'All Staff', 'All Students', 'All Parents', 'Specific Class', 'Specific Group'], required: true },
     targetClass: String,
     targetGroup: String,
-    attachments: [{ fileName: String, fileUrl: String }],
+    attachment: String,
     publishMode: { type: String, enum: ['Immediate', 'Scheduled'], default: 'Immediate' },
-    scheduledDate: Date,
+    publishDate: String,
+    publishTime: String,
     sendNotification: { type: Boolean, default: false },
     status: { type: String, enum: ['Draft', 'Scheduled', 'Published', 'Archived'], default: 'Published' },
     createdBy: { type: String, default: 'Admin' },
 }, { timestamps: true });
+
 module.exports = mongoose.model('Announcement', announcementSchema);

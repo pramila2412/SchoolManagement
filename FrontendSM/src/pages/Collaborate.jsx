@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { classes } from '../data/mockData';
@@ -30,64 +29,99 @@ const convertToBase64 = (file) => {
 
 // ===== DASHBOARD =====
 function DashboardTab({ onNavigate }) {
-    const { data: kpi } = useApi('/dashboard');
+    const { user } = useAuth();
+    const userName = user?.name || '';
+    const { data: kpi } = useApi(`/dashboard?user=${encodeURIComponent(userName)}`);
+    const roleStr = user?.role?.toLowerCase() || '';
+    const isStaff = roleStr.includes('admin') || roleStr.includes('principal') || roleStr.includes('teacher') || roleStr.includes('staff');
+    const isParent = roleStr.includes('parent');
+    const isStudent = roleStr.includes('student');
+
     const cards = [
-        { label:'Active Discussions', val:kpi.activeDiscussions||0, color:'var(--info)', bg:'var(--info-light)', icon:MessageSquare },
-        { label:'Messages Today', val:kpi.messagesToday||0, color:'var(--accent)', bg:'var(--accent-light)', icon:Mail },
-        { label:'Files Shared Today', val:kpi.sharedFilesToday||0, color:'var(--warning)', bg:'var(--warning-light)', icon:FileUp },
-        { label:'Announcements (7d)', val:kpi.announcementsThisWeek||0, color:'var(--success)', bg:'var(--success-light)', icon:Megaphone },
-        { label:'Active Groups', val:kpi.activeGroups||0, color:'var(--primary)', bg:'rgba(11,60,93,0.1)', icon:Users },
-        { label:'Pending Tasks', val:kpi.pendingTasks||0, color:'var(--danger)', bg:'var(--danger-light)', icon:CheckSquare },
+        ...(!isParent ? [{ label:'Active Discussions', val:kpi.activeDiscussions||0, color:'var(--info)', bg:'var(--info-light)', icon:MessageSquare }] : []),
+        { label:'Messages Sent Today', val:kpi.messagesToday||0, color:'var(--accent)', bg:'var(--accent-light)', icon:Mail },
+        ...(!isParent ? [{ label:'Shared Files', val:kpi.sharedFilesToday||0, color:'var(--warning)', bg:'var(--warning-light)', icon:FileUp }] : []),
+        { label:'Announcements Posted', val:kpi.announcementsThisWeek||0, color:'var(--success)', bg:'var(--success-light)', icon:Megaphone },
+        { label:'Groups Created', val:kpi.activeGroups||0, color:'var(--primary)', bg:'rgba(11,60,93,0.1)', icon:Users },
+        ...(isStaff ? [{ label:'Pending Replies', val:kpi.pendingReplies||0, color:'var(--danger)', bg:'var(--danger-light)', icon:Clock }] : []),
     ];
+    
+    // Quick actions (hide write-only actions for student/parent)
     const actions = [
-        { label:'Create Announcement', icon:Megaphone, tab:'announcements' }, { label:'Start Discussion', icon:MessageSquare, tab:'discussions' },
-        { label:'Share File', icon:FileUp, tab:'files' }, { label:'Create Group', icon:Users, tab:'groups' },
-        { label:'Schedule Meeting', icon:Video, tab:'meetings' }, { label:'Post Notice', icon:Clipboard, tab:'notices' },
+        ...(isStaff ? [
+            { label:'Create Announcement', icon:Megaphone, tab:'announcements' }, 
+            { label:'Schedule Meeting', icon:Video, tab:'meetings' }, 
+            { label:'Post Notice', icon:Clipboard, tab:'notices' }
+        ] : []),
+        ...(!isParent ? [{ label:'Start Discussion', icon:MessageSquare, tab:'discussions' }] : []),
+        ...(!isParent ? [{ label:'Share File', icon:FileUp, tab:'files' }] : []),
+        { label:'Create Group', icon:Users, tab:'groups' },
     ];
+    const { data: activities } = useApi(`/activity?user=${encodeURIComponent(userName)}&role=${encodeURIComponent(roleStr)}`);
+
+    const getIcon = (name) => {
+        switch (name) {
+            case 'Megaphone': return Megaphone;
+            case 'MessageSquare': return MessageSquare;
+            case 'FileUp': return FileUp;
+            case 'Video': return Video;
+            case 'CheckSquare': return CheckSquare;
+            case 'Clipboard': return Clipboard;
+            default: return Activity;
+        }
+    };
+
     return (<div className="animate-fade-in">
         <div className="collab-kpi-grid">{cards.map((c,i)=>{const I=c.icon;return <div className="collab-kpi-card" key={i}><div className="collab-kpi-icon" style={{background:c.bg}}><I size={24} style={{color:c.color}}/></div><div className="collab-kpi-info"><h4>{c.val}</h4><p>{c.label}</p></div></div>})}</div>
         <div className="collab-section-divider"><Activity size={18}/> Quick Actions</div>
-        <div className="collab-quick-actions">{actions.map((a,i)=>{const I=a.icon;return <button key={i} className="collab-quick-btn" onClick={()=>onNavigate(a.tab)}><I size={18}/>{a.label}</button>})}</div>
+        <div className="collab-quick-actions" style={{marginBottom: 30}}>{actions.map((a,i)=>{const I=a.icon;return <button key={i} className="collab-quick-btn" onClick={()=>onNavigate(a.tab)}><I size={18}/>{a.label}</button>})}</div>
+        
+        <div className="collab-section-divider"><Clock size={18}/> Activity Stream & Notifications</div>
+        <div className="activity-stream" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 15 }}>
+            {activities?.length > 0 ? activities.map(act => {
+                const Icon = getIcon(act.iconName);
+                return (
+                    <div key={act.id + act.type} style={{ display: 'flex', gap: 12, alignItems: 'center', background: '#fff', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <div style={{ padding: 8, borderRadius: '50%', background: 'rgba(0,0,0,0.03)', color: act.color }}>
+                            <Icon size={18} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <h5 style={{ margin: 0, fontSize: '0.9rem' }}>{act.type} <span style={{ fontWeight: 'normal', color: 'var(--text-light)', marginLeft: 6 }}>{act.title}</span></h5>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-light)' }}>{act.desc}</p>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                            {new Date(act.time).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                );
+            }) : <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>No recent activity to show.</p>}
+        </div>
     </div>);
 }
 
 // ===== ANNOUNCEMENTS =====
 function AnnouncementsTab() {
     const { user } = useAuth();
-    const { data: apiList, refresh } = useApi('/announcements');
-    const [form, setForm] = useState({title:'',content:'',category:'General',audience:'Everyone',publishMode:'Immediate',sendNotification:false,status:'Published'});
+    const { data: list, refresh } = useApi('/announcements');
+    const [form, setForm] = useState({title:'',content:'',category:'General',audience:'All Staff',publishMode:'Immediate',publishDate:'',publishTime:'',sendNotification:false,status:'Published',attachment:null});
     const [show, setShow] = useState(false);
+
+    const handleFile = e => {
+        const file = e.target.files[0];
+        if(file) setForm({...form, attachment: file.name});
+    };
     
     // Permission check
     const isStaff = user?.role?.includes('Admin') || user?.role?.includes('Staff') || user?.role?.includes('Teacher');
 
-    // Load from localStorage (unified source)
-    const localAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
-    const filteredLocal = localAnnouncements.filter(a => {
-        if (isStaff) return true; // Staff see all
-        
-        // Students see published ones for them or all
-        const studentClass = user?.class || '';
-        return a.status === 'Published' && (
-            a.targetGroup === 'All Students' || 
-            a.targetGroup === 'Everyone' || 
-            a.targetGroup === `Class ${studentClass}` ||
-            a.targetGroup === studentClass
-        );
-    }).map(a => ({
-        ...a,
-        _id: a.id,
-        content: a.message,
-        category: a.category || a.targetGroup,
-        source: 'Local'
-    }));
-
-    // Merge API and Local
-    const list = [...filteredLocal, ...apiList].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/announcements`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({title:'',content:'',category:'General',audience:'Everyone',publishMode:'Immediate',sendNotification:false,status:'Published'}); setShow(false); refresh(); };
+    const handleSubmit = async e => { 
+        e.preventDefault(); 
+        await fetch(`${API}/announcements`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form, createdBy: user?.name || 'Admin'})}); 
+        setForm({title:'',content:'',category:'General',audience:'All Staff',publishMode:'Immediate',publishDate:'',publishTime:'',sendNotification:false,status:'Published',attachment:null}); 
+        setShow(false); 
+        refresh(); 
+    };
     const handleDelete = async id => { 
-        // Only delete API ones here; Local ones are managed in the other screen
         await fetch(`${API}/announcements/${id}`,{method:'DELETE'}); refresh(); 
     };
     const statusCls = s => s==='Draft'?'badge-draft':s==='Scheduled'?'badge-scheduled':s==='Published'?'badge-published':'badge-completed';
@@ -99,24 +133,44 @@ function AnnouncementsTab() {
         </div>
         {show && <div className="collab-form-panel"><h3><Megaphone size={18}/> New Announcement</h3><form className="collab-form" onSubmit={handleSubmit}>
             <div className="form-group"><label className="form-label">Title *</label><input className="form-input" required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
-            <div className="form-group"><label className="form-label">Content *</label><textarea className="form-textarea" rows="3" required value={form.content} onChange={e=>setForm({...form,content:e.target.value})} /></div>
+            <div className="form-group"><label className="form-label">Message Content *</label><textarea className="form-textarea" rows="4" required placeholder="Use rich text formatting here..." value={form.content} onChange={e=>setForm({...form,content:e.target.value})} /></div>
             <div className="form-row">
                 <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}><option>Academic</option><option>General</option><option>Urgent</option><option>Event</option><option>Holiday</option></select></div>
-                <div className="form-group"><label className="form-label">Audience *</label><select className="form-select" value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}><option>Everyone</option><option>All Staff</option><option>All Students</option><option>All Parents</option><option>Specific Class</option><option>Specific Group</option></select></div>
+                <div className="form-group"><label className="form-label">Audience *</label><select className="form-select" value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}><option>All Staff</option><option>All Students</option><option>All Parents</option><option>Specific Class</option><option>Specific Group</option><option>Everyone</option></select></div>
             </div>
-            <div className="form-actions"><button type="submit" className="btn btn-primary"><Send size={16}/> Publish</button></div>
+            <div className="form-row">
+                <div className="form-group"><label className="form-label">Attach File (Optional)</label><input type="file" className="form-input" onChange={handleFile} accept=".pdf,.doc,.docx,.jpg,.png,.jpeg" style={{padding:'6px'}}/></div>
+                <div className="form-group"><label className="form-label">Status Type</label><select className="form-select" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option>Draft</option><option>Scheduled</option><option>Published</option><option>Archived</option></select></div>
+            </div>
+            <div className="form-row">
+                <div className="form-group"><label className="form-label">Publish Mode</label><select className="form-select" value={form.publishMode} onChange={e=>{setForm({...form,publishMode:e.target.value, status: e.target.value === 'Scheduled' ? 'Scheduled' : 'Published'})}}><option>Immediate</option><option>Scheduled</option></select></div>
+                {form.publishMode === 'Scheduled' && (
+                    <div className="form-group" style={{display:'flex', gap:10}}>
+                        <div style={{flex:1}}><label className="form-label">Date</label><input type="date" className="form-input" value={form.publishDate} onChange={e=>setForm({...form,publishDate:e.target.value})} /></div>
+                        <div style={{flex:1}}><label className="form-label">Time</label><input type="time" className="form-input" value={form.publishTime} onChange={e=>setForm({...form,publishTime:e.target.value})} /></div>
+                    </div>
+                )}
+            </div>
+            <div className="form-group" style={{display:'flex', alignItems:'center', gap: 8, marginTop: 10}}>
+                <input type="checkbox" id="sendNotification" checked={form.sendNotification} onChange={e=>setForm({...form,sendNotification:e.target.checked})} style={{width:'auto'}} />
+                <label htmlFor="sendNotification" className="form-label" style={{margin:0, cursor:'pointer'}}>Send Push/SMS Notification to Target Audience</label>
+            </div>
+            <div className="form-actions"><button type="submit" className="btn btn-primary"><Send size={16}/> {form.status === 'Draft' ? 'Save Draft' : form.status === 'Scheduled' ? 'Schedule' : 'Publish'}</button></div>
         </form></div>}
-        {list.map(a => <div key={a._id} className="notice-card">
+        {list.map(a => <div key={a._id} className="notice-card" style={a.status==='Archived'?{opacity:0.6}:a.status==='Draft'?{borderColor:'var(--text-light)'}:{}}>
             <div style={{display:'flex',justifyContent:'space-between'}}>
                 <h4>{a.title}</h4>
                 <div style={{display:'flex',gap:8,alignItems:'center'}}>
                     <span className={`badge ${statusCls(a.status)}`}>{a.status}</span>
                     <span className="badge badge-info">{a.category}</span>
-                    {isStaff && a.source !== 'Local' && <button className="btn-icon" onClick={()=>handleDelete(a._id)}><Trash2 size={14}/></button>}
+                    {isStaff && <button className="btn-icon" onClick={()=>handleDelete(a._id)}><Trash2 size={14}/></button>}
                 </div>
             </div>
-            <div className="notice-meta"><span>To: {a.audience || a.targetGroup}</span><span>{new Date(a.createdAt || a.publishDate).toLocaleDateString('en-IN')}</span></div>
+            <div className="notice-meta"><span>To: {a.audience}</span><span>{new Date(a.createdAt).toLocaleDateString('en-IN')}</span></div>
             <div className="notice-body" style={{ whiteSpace: 'pre-wrap' }}>{a.content}</div>
+            {a.attachment && <div style={{marginTop:10, padding:'6px 12px', background:'rgba(0,0,0,0.03)', borderRadius:6, display:'inline-flex', alignItems:'center', gap:6, fontSize:'0.85em', color:'var(--primary)'}}>
+                <Paperclip size={14}/> {a.attachment}
+            </div>}
         </div>)}
         {list.length===0&&<div className="collab-empty"><Megaphone size={40}/><p>No announcements yet</p></div>}
     </div>);
@@ -124,63 +178,230 @@ function AnnouncementsTab() {
 
 // ===== DISCUSSIONS =====
 function DiscussionsTab() {
-    const { data: list, refresh } = useApi('/discussions');
-    const [form, setForm] = useState({title:'',content:'',category:'General',visibility:'School-wide',author:'Admin'});
+    const { user } = useAuth();
+    const roleStr = user?.role?.toLowerCase() || '';
+    const isAdmin = roleStr.includes('admin') || roleStr.includes('principal') || roleStr.includes('super admin');
+    const isStaff = isAdmin || roleStr.includes('teacher') || roleStr.includes('staff');
+    const currentUser = user?.name || 'User';
+
+    const { data: discussions, refresh } = useApi('/discussions');
+    const [form, setForm] = useState({title:'',content:'',category:'General',visibility:'School-wide',attachment:null});
     const [show, setShow] = useState(false);
     const [replyTo, setReplyTo] = useState(null);
     const [replyText, setReplyText] = useState('');
-    const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/discussions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({title:'',content:'',category:'General',visibility:'School-wide',author:'Admin'}); setShow(false); refresh(); };
-    const handleReply = async id => { await fetch(`${API}/discussions/${id}/reply`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author:'Admin',content:replyText})}); setReplyText(''); setReplyTo(null); refresh(); };
-    const handlePin = async id => { await fetch(`${API}/discussions/${id}/pin`,{method:'PUT'}); refresh(); };
-    const handleLock = async id => { await fetch(`${API}/discussions/${id}/lock`,{method:'PUT'}); refresh(); };
-    const handleDelete = async id => { await fetch(`${API}/discussions/${id}`,{method:'DELETE'}); refresh(); };
+    const [replyAttachment, setReplyAttachment] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterCategory, setFilterCategory] = useState('All');
+    const [editingId, setEditingId] = useState(null);
+    const [editText, setEditText] = useState('');
+    const [expandedThread, setExpandedThread] = useState(null);
+    const [reactMenuId, setReactMenuId] = useState(null);
+
+    const handleFileUpload = (e) => { const f = e.target.files?.[0]; if(f) setForm({...form, attachment: f.name}); };
+    const handleReplyFile = (e) => { const f = e.target.files?.[0]; if(f) setReplyAttachment(f.name); };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        await fetch(`${API}/discussions`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+            title: form.title, content: form.content, category: form.category, visibility: form.visibility,
+            attachment: form.attachment, author: currentUser, authorRole: user?.role || 'Staff',
+        })});
+        setForm({title:'',content:'',category:'General',visibility:'School-wide',attachment:null});
+        setShow(false);
+        refresh();
+    };
+
+    const handleReply = async (threadId, parentReplyIdx = null) => {
+        if (!replyText.trim()) return;
+        await fetch(`${API}/discussions/${threadId}/reply`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+            author: currentUser, authorRole: user?.role || 'Staff', content: replyText.trim(),
+            attachment: replyAttachment, parentReplyIdx,
+        })});
+        setReplyText(''); setReplyAttachment(null); setReplyTo(null);
+        refresh();
+    };
+
+    const handlePin = async id => { await fetch(`${API}/discussions/${id}/pin`, {method:'PUT'}); refresh(); };
+    const handleLock = async id => { await fetch(`${API}/discussions/${id}/lock`, {method:'PUT'}); refresh(); };
+    const handleDelete = async id => { if(!window.confirm('Delete this discussion thread? This action is logged.')) return; await fetch(`${API}/discussions/${id}`, {method:'DELETE'}); refresh(); };
+    const handleDeleteReply = async (threadId, replyIdx) => { if(!window.confirm('Delete this reply?')) return; await fetch(`${API}/discussions/${threadId}/reply/${replyIdx}`, {method:'DELETE'}); refresh(); };
+
+    const handleEditPost = (threadId) => {
+        const thread = discussions.find(d => d._id === threadId);
+        if(thread){ setEditingId(threadId); setEditText(thread.content); }
+    };
+    const saveEdit = async (threadId) => {
+        await fetch(`${API}/discussions/${threadId}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ content: editText }) });
+        setEditingId(null); setEditText('');
+        refresh();
+    };
+
+    const handleLikeThread = async (threadId, reaction) => {
+        await fetch(`${API}/discussions/${threadId}/like`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ user: currentUser, reaction }) });
+        setReactMenuId(null);
+        refresh();
+    };
+
+    const handleLikeReply = async (threadId, replyIdx, reaction) => {
+        await fetch(`${API}/discussions/${threadId}/reply/${replyIdx}/like`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ user: currentUser, reaction }) });
+        refresh();
+    };
+
+    const reactions = ['👍 Like', '💡 Helpful', '❤️ Love', '🎉 Celebrate'];
+
+    // Client-side search & filter (server already sorts by pinned + date)
+    const filtered = discussions.filter(d => {
+        const matchesSearch = !searchQuery || d.title?.toLowerCase().includes(searchQuery.toLowerCase()) || d.content?.toLowerCase().includes(searchQuery.toLowerCase()) || d.author?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = filterCategory === 'All' || d.category === filterCategory;
+        return matchesSearch && matchesCategory;
+    });
+
+    const renderLikes = (likes) => {
+        if (!likes || likes.length === 0) return null;
+        const grouped = {};
+        likes.forEach(l => { const r = l.reaction.split(' ')[0]; grouped[r] = (grouped[r]||0)+1; });
+        return <div style={{display:'flex',gap:6,marginTop:6,flexWrap:'wrap'}}>{Object.entries(grouped).map(([emoji, count]) => <span key={emoji} style={{padding:'2px 8px',background:'rgba(28,167,166,0.1)',borderRadius:12,fontSize:'0.8em',display:'inline-flex',alignItems:'center',gap:3}}>{emoji} {count}</span>)}</div>;
+    };
 
     return (<div className="animate-fade-in">
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>Discussion Forum</h3><button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> New Topic</button></div>
-        {show && <div className="collab-form-panel"><h3><MessageSquare size={18}/> Create Discussion</h3><form className="collab-form" onSubmit={handleSubmit}>
-            <div className="form-group"><label className="form-label">Topic Title *</label><input className="form-input" required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
-            <div className="form-group"><label className="form-label">Content *</label><textarea className="form-textarea" rows="3" required value={form.content} onChange={e=>setForm({...form,content:e.target.value})} /></div>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:10}}>
+            <h3 style={{margin:0}}>Discussion Forum</h3>
+            {isStaff && <button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> New Topic</button>}
+        </div>
+
+        {/* Search & Filter Bar */}
+        <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap'}}>
+            <div style={{flex:1,position:'relative',minWidth:200}}>
+                <Search size={15} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'var(--text-light)'}} />
+                <input className="form-input" style={{paddingLeft:32}} placeholder="Search by keyword, author, or category..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} />
+            </div>
+            <select className="form-select" style={{width:'auto',minWidth:140}} value={filterCategory} onChange={e=>setFilterCategory(e.target.value)}>
+                <option value="All">All Categories</option>
+                <option>Academic</option><option>General</option><option>Q&A</option><option>Events</option><option>Feedback</option>
+            </select>
+        </div>
+
+        {/* Create Form */}
+        {show && <div className="collab-form-panel"><h3><MessageSquare size={18}/> Create New Discussion Thread</h3><form className="collab-form" onSubmit={handleSubmit}>
+            <div className="form-group"><label className="form-label">Topic Title *</label><input className="form-input" required placeholder="Enter a clear, descriptive title..." value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
+            <div className="form-group"><label className="form-label">Description / Opening Post *</label><textarea className="form-textarea" rows="4" required placeholder="Start the conversation..." value={form.content} onChange={e=>setForm({...form,content:e.target.value})} /></div>
             <div className="form-row">
                 <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}><option>Academic</option><option>General</option><option>Q&A</option><option>Events</option><option>Feedback</option></select></div>
                 <div className="form-group"><label className="form-label">Visibility</label><select className="form-select" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}><option>School-wide</option><option>Specific Group</option><option>Class</option></select></div>
             </div>
-            <div className="form-actions"><button type="submit" className="btn btn-primary"><Send size={16}/> Create</button></div>
+            <div className="form-group"><label className="form-label">Attach Files (Optional)</label><input type="file" className="form-input" onChange={handleFileUpload} accept=".pdf,.doc,.docx,.jpg,.png,.jpeg,.gif" style={{padding:'6px'}}/></div>
+            <div className="form-actions"><button type="submit" className="btn btn-primary"><Send size={16}/> Create Discussion</button></div>
         </form></div>}
-        {list.map(d => <div key={d._id} className={`discussion-thread ${d.pinned?'pinned':''} ${d.locked?'locked':''}`}>
-            <div className="discussion-header"><h4>{d.pinned&&<Pin size={14} style={{marginRight:6,color:'var(--accent)'}}/>}{d.title}{d.locked&&<Lock size={14} style={{marginLeft:6,color:'var(--warning)'}}/>}</h4>
-                <span className="badge badge-info">{d.category}</span></div>
-            <div className="discussion-meta"><span>By {d.author}</span><span>{d.visibility}</span><span>{new Date(d.createdAt).toLocaleDateString('en-IN')}</span><span>{d.replies?.length||0} replies</span></div>
-            <div className="discussion-body">{d.content}</div>
-            {d.replies?.map((r,i)=><div key={i} className="reply-card"><strong>{r.author}:</strong> {r.content} <span style={{fontSize:'0.72rem',color:'var(--text-light)',marginLeft:8}}>{new Date(r.createdAt).toLocaleDateString('en-IN')}</span></div>)}
-            <div className="discussion-actions">
-                {!d.locked&&<button className="btn btn-outline btn-sm" onClick={()=>setReplyTo(replyTo===d._id?null:d._id)}><MessageSquare size={14}/> Reply</button>}
-                <button className="btn btn-outline btn-sm" onClick={()=>handlePin(d._id)}><Pin size={14}/> {d.pinned?'Unpin':'Pin'}</button>
-                <button className="btn btn-outline btn-sm" onClick={()=>handleLock(d._id)}><Lock size={14}/> {d.locked?'Unlock':'Lock'}</button>
-                <button className="btn btn-outline btn-sm" onClick={()=>handleDelete(d._id)}><Trash2 size={14}/></button>
+
+        {/* Discussion Threads */}
+        {filtered.map(d => <div key={d._id} className={`discussion-thread ${d.pinned?'pinned':''} ${d.locked?'locked':''}`}>
+            <div className="discussion-header">
+                <h4 style={{cursor:'pointer'}} onClick={()=>setExpandedThread(expandedThread===d._id?null:d._id)}>
+                    {d.pinned&&<Pin size={14} style={{marginRight:6,color:'var(--accent)'}}/>}
+                    {d.title}
+                    {d.locked&&<Lock size={14} style={{marginLeft:6,color:'var(--warning)'}}/>}
+                </h4>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                    <span className="badge badge-info">{d.category}</span>
+                    <span className="badge badge-draft">{d.visibility}</span>
+                </div>
             </div>
-            {replyTo===d._id && <div style={{display:'flex',gap:10,marginTop:12}}><input className="form-input" style={{flex:1}} placeholder="Write a reply..." value={replyText} onChange={e=>setReplyText(e.target.value)} /><button className="btn btn-primary btn-sm" onClick={()=>handleReply(d._id)}><Send size={14}/></button></div>}
+            <div className="discussion-meta">
+                <span>By <strong>{d.author}</strong> {d.authorRole && <span style={{opacity:0.7}}>({d.authorRole})</span>}</span>
+                <span>{new Date(d.createdAt).toLocaleDateString('en-IN')}</span>
+                <span>{d.replies?.length||0} replies</span>
+            </div>
+            <div className="discussion-body" style={{whiteSpace:'pre-wrap'}}>{editingId === d._id ? (
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    <textarea className="form-textarea" rows="3" value={editText} onChange={e=>setEditText(e.target.value)} />
+                    <div style={{display:'flex',gap:8}}><button className="btn btn-primary btn-sm" onClick={()=>saveEdit(d._id)}>Save</button><button className="btn btn-outline btn-sm" onClick={()=>setEditingId(null)}>Cancel</button></div>
+                </div>
+            ) : d.content}
+            </div>
+            {d.editedAt && <div style={{fontSize:'0.75em',color:'var(--text-light)',marginTop:4,fontStyle:'italic'}}>Edited {new Date(d.editedAt).toLocaleString('en-IN')}</div>}
+            {d.attachment && <div style={{marginTop:8,padding:'6px 12px',background:'rgba(0,0,0,0.03)',borderRadius:6,display:'inline-flex',alignItems:'center',gap:6,fontSize:'0.85em',color:'var(--primary)'}}><Paperclip size={14}/> {d.attachment}</div>}
+            
+            {/* Like/React on thread */}
+            {renderLikes(d.likes)}
+            
+            <div className="discussion-actions" style={{flexWrap:'wrap'}}>
+                {/* React button */}
+                <div style={{position:'relative'}}>
+                    <button className="btn btn-outline btn-sm" onClick={()=>setReactMenuId(reactMenuId===d._id?null:d._id)}>👍 React</button>
+                    {reactMenuId === d._id && <div style={{position:'absolute',bottom:'110%',left:0,background:'#fff',border:'1px solid var(--border)',borderRadius:8,padding:'4px 6px',display:'flex',gap:4,zIndex:10,boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
+                        {reactions.map(r => <button key={r} className="btn-icon" style={{padding:'4px 8px',fontSize:'0.85em'}} onClick={()=>handleLikeThread(d._id, r)}>{r}</button>)}
+                    </div>}
+                </div>
+                {!d.locked&&<button className="btn btn-outline btn-sm" onClick={()=>setReplyTo(replyTo===d._id?null:d._id)}><MessageSquare size={14}/> Reply</button>}
+                {isAdmin && <button className="btn btn-outline btn-sm" onClick={()=>handlePin(d._id)}><Pin size={14}/> {d.pinned?'Unpin':'Pin'}</button>}
+                {isAdmin && <button className="btn btn-outline btn-sm" onClick={()=>handleLock(d._id)}><Lock size={14}/> {d.locked?'Unlock':'Lock'}</button>}
+                {isAdmin && <button className="btn btn-outline btn-sm" onClick={()=>handleEditPost(d._id)}><Eye size={14}/> Edit</button>}
+                {isAdmin && <button className="btn btn-outline btn-sm" onClick={()=>handleDelete(d._id)}><Trash2 size={14}/> Delete</button>}
+            </div>
+
+            {/* Replies */}
+            {(expandedThread === d._id || (d.replies?.length || 0) <= 3) && d.replies?.map((r,i) => (
+                <div key={r.id||i} className="reply-card" style={{marginLeft: r.parentReplyIdx != null ? 32 : 0}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span><strong>{r.author}</strong> {r.authorRole && <span style={{opacity:0.6,fontSize:'0.85em'}}>({r.authorRole})</span>}</span>
+                        <span style={{fontSize:'0.72rem',color:'var(--text-light)'}}>{new Date(r.createdAt).toLocaleDateString('en-IN')}</span>
+                    </div>
+                    <div style={{marginTop:4,whiteSpace:'pre-wrap'}}>{r.content}</div>
+                    {r.attachment && <div style={{marginTop:4,fontSize:'0.82em',color:'var(--primary)',display:'inline-flex',alignItems:'center',gap:4}}><Paperclip size={12}/>{r.attachment}</div>}
+                    {renderLikes(r.likes)}
+                    <div style={{display:'flex',gap:6,marginTop:6}}>
+                        <button className="btn-icon" style={{fontSize:'0.78em',padding:'2px 6px'}} onClick={()=>handleLikeReply(d._id, i, '👍 Like')}>👍</button>
+                        <button className="btn-icon" style={{fontSize:'0.78em',padding:'2px 6px'}} onClick={()=>handleLikeReply(d._id, i, '💡 Helpful')}>💡</button>
+                        {!d.locked && <button className="btn-icon" style={{fontSize:'0.78em',padding:'2px 6px'}} onClick={()=>{setReplyTo(`${d._id}__nested_${i}`);setReplyText(`@${r.author} `);}}>↩ Reply</button>}
+                        {isAdmin && <button className="btn-icon" style={{fontSize:'0.78em',padding:'2px 6px',color:'var(--danger)'}} onClick={()=>handleDeleteReply(d._id, i)}><Trash2 size={12}/></button>}
+                    </div>
+                </div>
+            ))}
+            {(d.replies?.length||0) > 3 && expandedThread !== d._id && (
+                <button className="btn btn-outline btn-sm" style={{marginTop:8}} onClick={()=>setExpandedThread(d._id)}>Show all {d.replies.length} replies</button>
+            )}
+
+            {/* Reply input */}
+            {(replyTo===d._id || replyTo?.startsWith(`${d._id}__nested`)) && <div style={{marginTop:12,padding:12,background:'rgba(0,0,0,0.02)',borderRadius:8}}>
+                <textarea className="form-textarea" rows="2" style={{marginBottom:8}} placeholder="Write a reply... Use @name to mention users" value={replyText} onChange={e=>setReplyText(e.target.value)} />
+                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                    <label style={{cursor:'pointer',fontSize:'0.85em',color:'var(--primary)',display:'flex',alignItems:'center',gap:4}}>
+                        <Paperclip size={14}/> Attach
+                        <input type="file" style={{display:'none'}} onChange={handleReplyFile} />
+                    </label>
+                    {replyAttachment && <span style={{fontSize:'0.82em',color:'var(--text-light)'}}>{replyAttachment}</span>}
+                    <div style={{flex:1}}></div>
+                    <button className="btn btn-outline btn-sm" onClick={()=>{setReplyTo(null);setReplyText('');setReplyAttachment(null);}}>Cancel</button>
+                    <button className="btn btn-primary btn-sm" onClick={()=>{
+                        const nestedIdx = replyTo?.includes('__nested_') ? parseInt(replyTo.split('__nested_')[1]) : null;
+                        handleReply(d._id, nestedIdx);
+                    }}><Send size={14}/> Reply</button>
+                </div>
+            </div>}
         </div>)}
-        {list.length===0&&<div className="collab-empty"><MessageSquare size={40}/><p>No discussions yet</p></div>}
+        {filtered.length===0&&<div className="collab-empty"><MessageSquare size={40}/><p>{searchQuery || filterCategory !== 'All' ? 'No discussions match your search' : 'No discussions yet. Start a conversation!'}</p></div>}
     </div>);
 }
 
 // ===== GROUPS =====
 function GroupsTab() {
-    const [list, setList] = useLocalStorage('collab_groups', []);
+    const { data: list, refresh } = useApi('/groups');
+    const { user } = useAuth();
     const [form, setForm] = useState({ name: '', description: '', type: 'Custom', visibility: 'Closed', members: [], groupAdmin: ['Admin'] });
     const [show, setShow] = useState(false);
     const [memberName, setMemberName] = useState('');
     const addMember = () => { if (!memberName) return; setForm(f => ({ ...f, members: [...f.members, { name: memberName, role: 'Teacher' }] })); setMemberName(''); };
     const handleSubmit = async e => {
         e.preventDefault();
-        const newGroup = { ...form, _id: Date.now().toString(), createdAt: new Date().toISOString() };
-        setList([...list, newGroup]);
+        await fetch(`${API}/groups`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...form, createdBy: user?.name || 'Admin'}) });
         setForm({ name: '', description: '', type: 'Custom', visibility: 'Closed', members: [], groupAdmin: ['Admin'] });
         setShow(false);
+        refresh();
     };
-    const handleDelete = id => {
+    const handleDelete = async id => {
         if (window.confirm("Are you sure you want to delete this group?")) {
-            setList(list.filter(g => g._id !== id));
+            await fetch(`${API}/groups/${id}`, {method:'DELETE'});
+            refresh();
         }
     };
 
@@ -206,8 +427,9 @@ function GroupsTab() {
 // ===== FILES =====
 // ===== FILES =====
 function FilesTab() {
-    const [list, setList] = useLocalStorage('collab_files', []);
-    const [existingGroups] = useLocalStorage('collab_groups', []);
+    const { data: list, refresh } = useApi('/files');
+    const { data: existingGroups } = useApi('/groups');
+    const { user } = useAuth();
     const [form, setForm] = useState({ title: '', description: '', category: 'Study Material', audience: 'Everyone', targetId: '', accessLevel: 'Download Allowed', expiryDate: '', file: null });
     const [show, setShow] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -215,8 +437,8 @@ function FilesTab() {
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
-            if (selectedFile.size > 5 * 1024 * 1024) {
-                alert("File too large! Max 5MB allowed for local storage.");
+            if (selectedFile.size > 25 * 1024 * 1024) {
+                alert("File too large! Max 25MB allowed.");
                 return;
             }
             setForm({ ...form, file: selectedFile });
@@ -229,24 +451,17 @@ function FilesTab() {
         setIsUploading(true);
         try {
             const base64 = await convertToBase64(form.file);
-            const newFile = {
-                _id: Date.now().toString(),
-                title: form.title,
-                description: form.description,
-                fileName: form.file.name,
+            await fetch(`${API}/files`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+                title: form.title, description: form.description, fileName: form.file.name,
                 fileSize: (form.file.size / 1024 / 1024).toFixed(2) + ' MB',
-                category: form.category,
-                audience: form.audience,
-                targetId: form.targetId,
-                accessLevel: form.accessLevel,
-                expiryDate: form.expiryDate,
-                fileData: base64,
-                createdAt: new Date().toISOString(),
-                uploader: 'Admin'
-            };
-            setList([newFile, ...list]);
+                fileType: form.file.type, category: form.category, audience: form.audience,
+                targetGroup: form.targetId, targetClass: form.targetId,
+                accessLevel: form.accessLevel, expiryDate: form.expiryDate || undefined,
+                fileUrl: base64, uploadedBy: user?.name || 'Admin',
+            })});
             setForm({ title: '', description: '', category: 'Study Material', audience: 'Everyone', targetId: '', accessLevel: 'Download Allowed', expiryDate: '', file: null });
             setShow(false);
+            refresh();
         } catch (err) {
             console.error("Upload failed", err);
             alert("Failed to upload file.");
@@ -255,9 +470,10 @@ function FilesTab() {
         }
     };
 
-    const handleDelete = id => {
+    const handleDelete = async id => {
         if (window.confirm("Are you sure you want to delete this file?")) {
-            setList(list.filter(f => f._id !== id));
+            await fetch(`${API}/files/${id}`, {method:'DELETE'});
+            refresh();
         }
     };
 
@@ -316,36 +532,33 @@ function MessagesTab() {
     const { user } = useAuth();
     const currentUser = user?.name || user?.username || 'Admin';
 
-    // Conversations & messages stored in localStorage
-    const [conversations, setConversations] = useLocalStorage('collab_conversations_v2', [
-        { id: 'conv_1', type: 'direct', name: 'Rajesh Kumar', role: 'Teacher', participants: ['Admin', 'Rajesh Kumar'], createdAt: new Date(Date.now() - 86400000).toISOString(), lastMessage: { text: 'Please share the exam schedule for Class 10.', sender: 'Rajesh Kumar', time: new Date(Date.now() - 3600000).toISOString() }, unread: 1 },
-        { id: 'conv_2', type: 'group', name: 'Science Department', participants: ['Admin', 'Rajesh Kumar', 'Priya Sharma', 'Amit Patel'], createdAt: new Date(Date.now() - 172800000).toISOString(), lastMessage: { text: 'Lab equipment order has been placed.', sender: 'Admin', time: new Date(Date.now() - 7200000).toISOString() }, unread: 0 },
-        { id: 'conv_3', type: 'direct', name: 'Priya Sharma', role: 'Parent', participants: ['Admin', 'Priya Sharma'], createdAt: new Date(Date.now() - 259200000).toISOString(), lastMessage: { text: "Thank you for the update on Arjun's progress.", sender: 'Priya Sharma', time: new Date(Date.now() - 86400000).toISOString() }, unread: 2 },
-        { id: 'conv_4', type: 'broadcast', name: 'All Staff Announcement', participants: ['All Staff'], createdAt: new Date(Date.now() - 345600000).toISOString(), lastMessage: { text: 'Staff meeting scheduled for Friday at 3 PM.', sender: 'Admin', time: new Date(Date.now() - 172800000).toISOString() }, unread: 0 },
-    ]);
+    // Conversations & messages from database
+    const [conversations, setConversations] = useState([]);
+    const [activeMessages, setActiveMessages] = useState([]);
+    const [loadingConvs, setLoadingConvs] = useState(true);
 
-    const [allMessages, setAllMessages] = useLocalStorage('collab_all_messages', {
-        'conv_1': [
-            { id: 'm1', text: 'Good morning! Can we discuss the upcoming exam schedule?', sender: 'Rajesh Kumar', time: new Date(Date.now() - 7200000).toISOString(), status: 'read' },
-            { id: 'm2', text: "Sure, I'll prepare the draft and share it by tomorrow.", sender: 'Admin', time: new Date(Date.now() - 5400000).toISOString(), status: 'read' },
-            { id: 'm3', text: 'Please share the exam schedule for Class 10.', sender: 'Rajesh Kumar', time: new Date(Date.now() - 3600000).toISOString(), status: 'read' },
-        ],
-        'conv_2': [
-            { id: 'm4', text: 'Team, we need to finalize the lab equipment list for this semester.', sender: 'Admin', time: new Date(Date.now() - 86400000).toISOString(), status: 'delivered' },
-            { id: 'm5', text: "I'll compile the list from all sections and share by EOD.", sender: 'Priya Sharma', time: new Date(Date.now() - 43200000).toISOString(), status: 'read' },
-            { id: 'm6', text: 'Lab equipment order has been placed.', sender: 'Admin', time: new Date(Date.now() - 7200000).toISOString(), status: 'delivered' },
-        ],
-        'conv_3': [
-            { id: 'm7', text: "Hello, I wanted to check on Arjun's attendance this month.", sender: 'Priya Sharma', time: new Date(Date.now() - 172800000).toISOString(), status: 'read' },
-            { id: 'm8', text: 'Arjun has been regular. His attendance is 95% this month.', sender: 'Admin', time: new Date(Date.now() - 129600000).toISOString(), status: 'read' },
-            { id: 'm9', text: "Thank you for the update on Arjun's progress.", sender: 'Priya Sharma', time: new Date(Date.now() - 86400000).toISOString(), status: 'read' },
-        ],
-        'conv_4': [
-            { id: 'm10', text: 'Staff meeting scheduled for Friday at 3 PM. Attendance is mandatory.', sender: 'Admin', time: new Date(Date.now() - 172800000).toISOString(), status: 'delivered' },
-        ],
-    });
+    const fetchConversations = useCallback(async () => {
+        try {
+            setLoadingConvs(true);
+            const r = await fetch(`${API}/conversations?user=${encodeURIComponent(currentUser)}`);
+            const data = await r.json();
+            setConversations(Array.isArray(data) ? data : []);
+        } catch(e) { console.error(e); }
+        finally { setLoadingConvs(false); }
+    }, [currentUser]);
 
-    const [activeConvId, setActiveConvId] = useState('conv_1');
+    useEffect(() => { fetchConversations(); }, [fetchConversations]);
+
+    const fetchMessages = useCallback(async (convId) => {
+        if (!convId) return;
+        try {
+            const r = await fetch(`${API}/conversations/${convId}/messages`);
+            const data = await r.json();
+            setActiveMessages(Array.isArray(data) ? data : []);
+        } catch(e) { console.error(e); }
+    }, []);
+
+    const [activeConvId, setActiveConvId] = useState(null);
     const [input, setInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [showNewMsg, setShowNewMsg] = useState(false);
@@ -360,9 +573,21 @@ function MessagesTab() {
     // Available contacts (from HR and Students)
     const availableContacts = useMemo(() => {
         const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
+        const systemUsers = JSON.parse(localStorage.getItem('mzs_system_users') || '[]');
         const allStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
         
+        const defaultUsers = [
+            { name: 'Super Admin', role: 'Super Admin' },
+            { name: 'Dr. Sarah', role: 'Admin / Principal' },
+            { name: 'Vijay Singh', role: 'Accountant' }
+        ];
+
         const contacts = [
+            ...defaultUsers,
+            ...systemUsers.map(u => ({
+                name: u.name,
+                role: u.role || 'Admin/Staff'
+            })),
             ...hrStaff.map(s => ({ 
                 name: s.name, 
                 role: s.role || s.dept || 'Staff' 
@@ -390,14 +615,19 @@ function MessagesTab() {
     // Auto scroll to bottom on new messages
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [allMessages, activeConvId]);
+    }, [activeMessages, activeConvId]);
 
-    const activeConversation = conversations.find(c => c.id === activeConvId);
-    const activeMessages = allMessages[activeConvId] || [];
+    // Load messages when conversation changes
+    useEffect(() => { if (activeConvId) fetchMessages(activeConvId); }, [activeConvId, fetchMessages]);
+
+    // Set first conversation as active on load
+    useEffect(() => { if (conversations.length > 0 && !activeConvId) setActiveConvId(conversations[0]._id); }, [conversations, activeConvId]);
+
+    const activeConversation = conversations.find(c => c._id === activeConvId);
 
     // Filter conversations by search and type
     const filteredConversations = conversations.filter(c => {
-        const matchesSearch = !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = !searchQuery || c.name?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = filterType === 'all' || c.type === filterType;
         return matchesSearch && matchesType;
     }).sort((a, b) => {
@@ -413,53 +643,29 @@ function MessagesTab() {
     );
 
     // Mark conversation as read
-    const openConversation = (convId) => {
+    const openConversation = async (convId) => {
         setActiveConvId(convId);
-        setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread: 0 } : c));
+        await fetch(`${API}/conversations/${convId}/read`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ user: currentUser }) });
+        fetchConversations();
     };
 
     // Send message
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (!input.trim() && !attachment) return;
         if (!activeConvId) return;
 
-        const newMsg = {
-            id: `msg_${Date.now()}`,
-            text: input.trim(),
+        const msgBody = {
             sender: currentUser,
-            time: new Date().toISOString(),
-            status: 'sent',
-            attachment: attachment ? { name: attachment.name, size: (attachment.size / 1024 / 1024).toFixed(2) + ' MB', type: attachment.type } : null,
+            content: input.trim(),
+            attachment: attachment ? { name: attachment.name, size: (attachment.size / 1024 / 1024).toFixed(2) + ' MB', type: attachment.type } : undefined,
         };
 
-        // Simulate status progression: sent -> delivered -> read
-        const msgId = newMsg.id;
-        setTimeout(() => {
-            setAllMessages(prev => ({
-                ...prev,
-                [activeConvId]: (prev[activeConvId] || []).map(m => m.id === msgId ? { ...m, status: 'delivered' } : m)
-            }));
-        }, 1500);
-        setTimeout(() => {
-            setAllMessages(prev => ({
-                ...prev,
-                [activeConvId]: (prev[activeConvId] || []).map(m => m.id === msgId ? { ...m, status: 'read' } : m)
-            }));
-        }, 4000);
-
-        setAllMessages(prev => ({
-            ...prev,
-            [activeConvId]: [...(prev[activeConvId] || []), newMsg]
-        }));
-
-        // Update conversation lastMessage
-        setConversations(prev => prev.map(c => c.id === activeConvId ? {
-            ...c,
-            lastMessage: { text: attachment ? `📎 ${attachment.name}` : input.trim(), sender: currentUser, time: new Date().toISOString() }
-        } : c));
+        await fetch(`${API}/conversations/${activeConvId}/messages`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(msgBody) });
 
         setInput('');
         setAttachment(null);
+        fetchMessages(activeConvId);
+        fetchConversations();
     };
 
     // Handle file attachment (PDF / Image, max 10 MB)
@@ -480,28 +686,45 @@ function MessagesTab() {
     };
 
     // Create new conversation
-    const createConversation = () => {
+    const createConversation = async () => {
         if (selectedRecipients.length === 0) return;
-        if (newMsgType === 'direct') {
-            const existing = conversations.find(c => c.type === 'direct' && c.participants.includes(selectedRecipients[0].name));
-            if (existing) { setActiveConvId(existing.id); setShowNewMsg(false); setSelectedRecipients([]); setRecipientSearch(''); return; }
+
+        let conversationParticipants = [];
+        if (newMsgType === 'broadcast') {
+            selectedRecipients.forEach(sr => {
+                if (sr.name === 'All Staff') {
+                    availableContacts.filter(c => !c.role?.includes('Student') && !c.role?.includes('Parent')).forEach(c => conversationParticipants.push(c.name));
+                } else if (sr.name === 'All Students') {
+                    availableContacts.filter(c => c.role?.includes('Student')).forEach(c => conversationParticipants.push(c.name));
+                } else if (sr.name === 'All Parents') {
+                    availableContacts.filter(c => c.role?.includes('Parent')).forEach(c => conversationParticipants.push(c.name));
+                } else if (sr.name === 'All Users') {
+                    availableContacts.forEach(c => conversationParticipants.push(c.name));
+                } else {
+                    conversationParticipants.push(sr.name);
+                }
+            });
+            conversationParticipants.push(currentUser);
+            conversationParticipants = [...new Set(conversationParticipants)];
+        } else {
+            conversationParticipants = [currentUser, ...selectedRecipients.map(r => r.name)];
         }
-        const convId = `conv_${Date.now()}`;
-        const newConv = {
-            id: convId,
+
+        const body = {
             type: newMsgType,
             name: newMsgType === 'direct' ? selectedRecipients[0].name
                 : newMsgType === 'group' ? (groupName || selectedRecipients.map(r => r.name).join(', '))
                 : `Broadcast: ${selectedRecipients.map(r => r.name).join(', ')}`,
             role: newMsgType === 'direct' ? selectedRecipients[0].role : undefined,
-            participants: newMsgType === 'broadcast' ? selectedRecipients.map(r => r.name) : [currentUser, ...selectedRecipients.map(r => r.name)],
-            createdAt: new Date().toISOString(),
-            lastMessage: null,
-            unread: 0,
+            participants: conversationParticipants,
+            createdBy: currentUser,
         };
-        setConversations(prev => [newConv, ...prev]);
-        setAllMessages(prev => ({ ...prev, [convId]: [] }));
-        setActiveConvId(convId);
+
+        const r = await fetch(`${API}/conversations`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        const newConv = await r.json();
+        
+        await fetchConversations();
+        setActiveConvId(newConv._id);
         setShowNewMsg(false);
         setSelectedRecipients([]);
         setGroupName('');
@@ -510,15 +733,15 @@ function MessagesTab() {
     };
 
     // Delete conversation
-    const deleteConversation = (convId, e) => {
+    const deleteConversation = async (convId, e) => {
         e?.stopPropagation();
         if (!window.confirm('Delete this conversation?')) return;
-        setConversations(prev => prev.filter(c => c.id !== convId));
-        setAllMessages(prev => { const copy = { ...prev }; delete copy[convId]; return copy; });
+        await fetch(`${API}/conversations/${convId}`, {method:'DELETE'});
         if (activeConvId === convId) {
-            const remaining = conversations.filter(c => c.id !== convId);
-            setActiveConvId(remaining[0]?.id || null);
+            setActiveConvId(null);
+            setActiveMessages([]);
         }
+        fetchConversations();
     };
 
     // Status indicator component
@@ -546,7 +769,10 @@ function MessagesTab() {
     };
 
     const getInitials = (name) => name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
-    const totalUnread = conversations.reduce((sum, c) => sum + (c.unread || 0), 0);
+    const totalUnread = conversations.reduce((sum, c) => {
+        const u = c.unreadCounts ? (c.unreadCounts[currentUser] || 0) : (c.unread || 0);
+        return sum + u;
+    }, 0);
 
     return (<div className="animate-fade-in">
         <div className="msg-container-v2">
@@ -570,21 +796,27 @@ function MessagesTab() {
                 </div>
 
                 <div className="msg-conv-list">
-                    {filteredConversations.map(c => (
-                        <div key={c.id} className={`msg-conv-item ${activeConvId === c.id ? 'active' : ''} ${c.unread ? 'has-unread' : ''}`} onClick={() => openConversation(c.id)}>
-                            <div className={`msg-conv-avatar msg-avatar-${c.type}`}>{getInitials(c.name)}</div>
+                    {filteredConversations.map(c => {
+                        const displayName = c.type === 'direct' ? (c.participants?.find(p => p !== currentUser) || c.name) : c.name;
+                        const otherContactInfo = c.type === 'direct' ? availableContacts.find(ac => ac.name === displayName) : null;
+                        const displayRole = c.type === 'direct' ? (otherContactInfo?.role || 'User') : c.role;
+                        const unreadCount = c.unreadCounts ? (c.unreadCounts[currentUser] || 0) : (c.unread || 0);
+
+                        return (
+                        <div key={c._id} className={`msg-conv-item ${activeConvId === c._id ? 'active' : ''} ${unreadCount > 0 ? 'has-unread' : ''}`} onClick={() => openConversation(c._id)}>
+                            <div className={`msg-conv-avatar msg-avatar-${c.type}`}>{getInitials(displayName)}</div>
                             <div className="msg-conv-info">
                                 <div className="msg-conv-top-row">
                                     <h5>
-                                        {c.name}
-                                        {c.type === 'direct' && c.role && <span style={{ fontSize: '0.8em', opacity: 0.7, fontWeight: 'normal', marginLeft: '4px' }}>({c.role})</span>}
+                                        {displayName}
+                                        {c.type === 'direct' && displayRole && <span style={{ fontSize: '0.8em', opacity: 0.7, fontWeight: 'normal', marginLeft: '4px' }}>({displayRole})</span>}
                                     </h5>
                                     <span className="msg-conv-time">{c.lastMessage ? formatTime(c.lastMessage.time) : ''}</span>
                                 </div>
                                 <div className="msg-conv-bottom-row">
                                     <p>{c.lastMessage ? (c.lastMessage.sender === currentUser ? `You: ${c.lastMessage.text}` : c.lastMessage.text) : 'No messages yet'}</p>
                                     <div className="msg-conv-badges">
-                                        {c.unread > 0 && <span className="msg-unread-badge">{c.unread}</span>}
+                                        {unreadCount > 0 && <span className="msg-unread-badge">{unreadCount}</span>}
                                     </div>
                                 </div>
                             </div>
@@ -592,7 +824,7 @@ function MessagesTab() {
                                 {c.type === 'direct' ? <Mail size={11} /> : c.type === 'group' ? <Users size={11} /> : <Radio size={11} />}
                             </span>
                         </div>
-                    ))}
+                    )})}
                     {filteredConversations.length === 0 && <div className="msg-no-conv"><Mail size={28} /><p>No conversations found</p></div>}
                 </div>
             </div>
@@ -601,40 +833,48 @@ function MessagesTab() {
             <div className="msg-chat-area-v2">
                 {activeConversation ? (<>
                     {/* Chat Header */}
-                    <div className="msg-chat-header">
-                        <div className="msg-chat-header-left">
-                            <div className={`msg-conv-avatar msg-avatar-${activeConversation.type}`}>{getInitials(activeConversation.name)}</div>
-                            <div>
-                                <h4>
-                                    {activeConversation.name}
-                                    {activeConversation.type === 'direct' && activeConversation.role && <span style={{ fontSize: '0.85em', opacity: 0.8, fontWeight: 'normal', marginLeft: '6px' }}>({activeConversation.role})</span>}
-                                </h4>
-                                <span className="msg-chat-subtitle">
-                                    {activeConversation.type === 'direct' ? (activeConversation.role || 'User') :
-                                     activeConversation.type === 'group' ? `${activeConversation.participants?.length || 0} participants` :
-                                     `Broadcast · ${activeConversation.participants?.length || 0} recipients`}
-                                </span>
+                    {(() => {
+                        const displayName = activeConversation.type === 'direct' ? (activeConversation.participants?.find(p => p !== currentUser) || activeConversation.name) : activeConversation.name;
+                        const otherContactInfo = activeConversation.type === 'direct' ? availableContacts.find(ac => ac.name === displayName) : null;
+                        const displayRole = activeConversation.type === 'direct' ? (otherContactInfo?.role || 'User') : activeConversation.role;
+
+                        return (
+                            <div className="msg-chat-header">
+                                <div className="msg-chat-header-left">
+                                    <div className={`msg-conv-avatar msg-avatar-${activeConversation.type}`}>{getInitials(displayName)}</div>
+                                    <div>
+                                        <h4>
+                                            {displayName}
+                                            {activeConversation.type === 'direct' && displayRole && <span style={{ fontSize: '0.85em', opacity: 0.8, fontWeight: 'normal', marginLeft: '6px' }}>({displayRole})</span>}
+                                        </h4>
+                                        <span className="msg-chat-subtitle">
+                                            {activeConversation.type === 'direct' ? (displayRole || 'User') :
+                                             activeConversation.type === 'group' ? `${activeConversation.participants?.length || 0} participants` :
+                                             `Broadcast · ${activeConversation.participants?.length || 0} recipients`}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="msg-chat-header-right">
+                                    <span className={`msg-type-pill msg-pill-${activeConversation.type}`}>
+                                        {activeConversation.type === 'direct' ? <><Mail size={12} /> Direct</> :
+                                         activeConversation.type === 'group' ? <><Users size={12} /> Group</> :
+                                         <><Radio size={12} /> Broadcast</>}
+                                    </span>
+                                    <button className="btn-icon" title="Delete conversation" onClick={(e) => deleteConversation(activeConversation._id, e)}><Trash2 size={16} /></button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="msg-chat-header-right">
-                            <span className={`msg-type-pill msg-pill-${activeConversation.type}`}>
-                                {activeConversation.type === 'direct' ? <><Mail size={12} /> Direct</> :
-                                 activeConversation.type === 'group' ? <><Users size={12} /> Group</> :
-                                 <><Radio size={12} /> Broadcast</>}
-                            </span>
-                            <button className="btn-icon" title="Delete conversation" onClick={(e) => deleteConversation(activeConversation.id, e)}><Trash2 size={16} /></button>
-                        </div>
-                    </div>
+                        );
+                    })()}
 
                     {/* Messages Area */}
                     <div className="msg-messages-area">
                         {activeMessages.length === 0 && <div className="msg-empty-chat"><Send size={36} /><p>No messages yet. Start the conversation!</p></div>}
                         {activeMessages.map((m, i) => {
                             const isSent = m.sender === currentUser;
-                            const showDate = i === 0 || new Date(m.time).toDateString() !== new Date(activeMessages[i - 1].time).toDateString();
+                            const showDate = i === 0 || new Date(m.createdAt).toDateString() !== new Date(activeMessages[i - 1].createdAt).toDateString();
                             return (
-                                <React.Fragment key={m.id}>
-                                    {showDate && <div className="msg-date-divider"><span>{new Date(m.time).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
+                                <React.Fragment key={m._id || i}>
+                                    {showDate && <div className="msg-date-divider"><span>{new Date(m.createdAt).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span></div>}
                                     <div className={`msg-bubble-v2 ${isSent ? 'sent' : 'received'}`}>
                                         {!isSent && activeConversation.type !== 'direct' && <span className="msg-sender-label">{m.sender}</span>}
                                         {m.attachment && (
@@ -644,9 +884,9 @@ function MessagesTab() {
                                                 <span className="msg-file-size">{m.attachment.size}</span>
                                             </div>
                                         )}
-                                        {m.text && <p className="msg-text">{m.text}</p>}
+                                        {m.content && <p className="msg-text">{m.content}</p>}
                                         <div className="msg-bubble-meta">
-                                            <span className="msg-timestamp">{new Date(m.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                            <span className="msg-timestamp">{new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                                             {isSent && <StatusIcon status={m.status} />}
                                         </div>
                                     </div>
@@ -786,35 +1026,192 @@ function MessagesTab() {
 
 // ===== MEETINGS =====
 function MeetingsTab() {
-    const { data: list, refresh } = useApi('/meetings');
-    const [form, setForm] = useState({title:'',agenda:'',type:'Online',date:'',startTime:'',endTime:'',platform:'Manual Link',meetingLink:''});
+    const { user } = useAuth();
+    const roleStr = user?.role?.toLowerCase() || '';
+    const isAdmin = roleStr.includes('admin') || roleStr.includes('principal') || roleStr.includes('super admin');
+    const isStaff = isAdmin || roleStr.includes('teacher') || roleStr.includes('staff');
+    const currentUser = user?.name || 'Admin';
+
+    const { data: meetings, refresh } = useApi('/meetings');
+    const [form, setForm] = useState({
+        title:'', agenda:'', type:'Online', date:'', startTime:'', endTime:'',
+        platform:'Zoom', meetingLink:'', participants:'', sendInvites:true, status:'Scheduled'
+    });
     const [show, setShow] = useState(false);
-    const handleSubmit = async e => { e.preventDefault(); await fetch(`${API}/meetings`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}); setForm({title:'',agenda:'',type:'Online',date:'',startTime:'',endTime:'',platform:'Manual Link',meetingLink:''}); setShow(false); refresh(); };
-    const handleDelete = async id => { await fetch(`${API}/meetings/${id}`,{method:'DELETE'}); refresh(); };
-    const statusCls = s => s==='Scheduled'?'badge-scheduled':s==='In Progress'?'badge-in-progress':s==='Completed'?'badge-completed':s==='Cancelled'?'badge-cancelled':'badge-info';
+    const [editId, setEditId] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('All');
+
+    // Auto-generate link based on platform
+    const generateLink = (platform) => {
+        if (platform === 'Zoom') return `https://zoom.us/j/${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+        if (platform === 'Google Meet') return `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`;
+        if (platform === 'Microsoft Teams') return `https://teams.microsoft.com/l/meetup-join/${Math.random().toString(36).substring(2, 12)}`;
+        return '';
+    };
+
+    const handlePlatformChange = (platform) => {
+        const autoLink = platform !== 'Manual Link' && platform !== 'N/A' ? generateLink(platform) : '';
+        setForm({...form, platform, meetingLink: autoLink});
+    };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        try {
+            if (editId) {
+                // Update existing meeting
+                await fetch(`${API}/meetings/${editId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...form,
+                        status: form.status === 'Rescheduled' ? 'Rescheduled' : form.status
+                    })
+                });
+            } else {
+                await fetch(`${API}/meetings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...form,
+                        organizer: currentUser,
+                        organizerRole: user?.role || 'Staff'
+                    })
+                });
+            }
+            setForm({title:'', agenda:'', type:'Online', date:'', startTime:'', endTime:'', platform:'Zoom', meetingLink:'', participants:'', sendInvites:true, status:'Scheduled'});
+            setShow(false);
+            setEditId(null);
+            refresh();
+        } catch (error) {
+            console.error('Failed to save meeting:', error);
+            alert('An error occurred while saving the meeting.');
+        }
+    };
+
+    const handleEdit = (meeting) => {
+        setForm({
+            title: meeting.title, agenda: meeting.agenda || '', type: meeting.type,
+            date: meeting.date, startTime: meeting.startTime, endTime: meeting.endTime,
+            platform: meeting.platform, meetingLink: meeting.meetingLink || '',
+            participants: meeting.participants || '', sendInvites: false, status: meeting.status
+        });
+        setEditId(meeting._id);
+        setShow(true);
+    };
+
+    const handleStatusChange = async (id, status) => {
+        await fetch(`${API}/meetings/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        refresh();
+    };
+
+    const handleDelete = async id => {
+        if (!window.confirm('Delete this meeting?')) return;
+        await fetch(`${API}/meetings/${id}`, { method: 'DELETE' });
+        refresh();
+    };
+
+    // Auto-detect status based on date/time
+    const getAutoStatus = (m) => {
+        if (m.status === 'Cancelled' || m.status === 'Rescheduled') return m.status;
+        const now = new Date();
+        const meetDate = new Date(`${m.date}T${m.startTime || '00:00'}`);
+        const endDate = new Date(`${m.date}T${m.endTime || '23:59'}`);
+        if (now > endDate) return 'Completed';
+        if (now >= meetDate && now <= endDate) return 'In Progress';
+        return 'Scheduled';
+    };
+
+    const statusCls = s => s==='Scheduled'?'badge-scheduled':s==='In Progress'?'badge-in-progress':s==='Completed'?'badge-completed':s==='Cancelled'?'badge-cancelled':s==='Rescheduled'?'badge-info':'badge-draft';
+
+    const platformIcon = p => {
+        if (p === 'Zoom') return '📹';
+        if (p === 'Google Meet') return '🟢';
+        if (p === 'Microsoft Teams') return '🟣';
+        if (p === 'Manual Link') return '🔗';
+        return '📍';
+    };
+
+    // Filter
+    const filtered = meetings.map(m => ({...m, status: getAutoStatus(m)})).filter(m => {
+        return filterStatus === 'All' || m.status === filterStatus;
+    }).sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.startTime || '00:00'}`);
+        const dateB = new Date(`${b.date}T${b.startTime || '00:00'}`);
+        return dateB - dateA;
+    });
 
     return (<div className="animate-fade-in">
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>Meetings</h3><button className="btn btn-primary" onClick={()=>setShow(!show)}><PlusCircle size={16}/> Schedule</button></div>
-        {show && <div className="collab-form-panel"><h3><Video size={18}/> Schedule Meeting</h3><form className="collab-form" onSubmit={handleSubmit}>
-            <div className="form-group"><label className="form-label">Title *</label><input className="form-input" required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
-            <div className="form-group"><label className="form-label">Agenda</label><textarea className="form-textarea" rows="2" value={form.agenda} onChange={e=>setForm({...form,agenda:e.target.value})} /></div>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:10}}>
+            <h3 style={{margin:0}}>Meetings & Events</h3>
+            {isStaff && <button className="btn btn-primary" onClick={()=>{setShow(!show);setEditId(null);setForm({title:'',agenda:'',type:'Online',date:'',startTime:'',endTime:'',platform:'Zoom',meetingLink:'',participants:'',sendInvites:true,status:'Scheduled'});}}><PlusCircle size={16}/> Schedule Meeting</button>}
+        </div>
+
+        {/* Filter Bar */}
+        <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+            {['All','Scheduled','In Progress','Completed','Cancelled','Rescheduled'].map(s => (
+                <button key={s} className={`btn btn-sm ${filterStatus===s?'btn-primary':'btn-outline'}`} onClick={()=>setFilterStatus(s)}>{s}</button>
+            ))}
+        </div>
+
+        {/* Create/Edit Form */}
+        {show && <div className="collab-form-panel"><h3><Video size={18}/> {editId ? 'Edit Meeting' : 'Schedule New Meeting'}</h3><form className="collab-form" onSubmit={handleSubmit}>
+            <div className="form-group"><label className="form-label">Meeting Title *</label><input className="form-input" required placeholder="e.g. Staff Weekly Sync" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
+            <div className="form-group"><label className="form-label">Agenda / Description</label><textarea className="form-textarea" rows="3" placeholder="Meeting objectives and discussion points..." value={form.agenda} onChange={e=>setForm({...form,agenda:e.target.value})} /></div>
             <div className="form-row">
-                <div className="form-group"><label className="form-label">Type</label><select className="form-select" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option>Online</option><option>In-person</option><option>Hybrid</option></select></div>
+                <div className="form-group"><label className="form-label">Meeting Type *</label><select className="form-select" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option>Online</option><option>In-person</option><option>Hybrid</option></select></div>
                 <div className="form-group"><label className="form-label">Date *</label><input type="date" className="form-input" required value={form.date} onChange={e=>setForm({...form,date:e.target.value})} /></div>
             </div>
             <div className="form-row">
                 <div className="form-group"><label className="form-label">Start Time *</label><input type="time" className="form-input" required value={form.startTime} onChange={e=>setForm({...form,startTime:e.target.value})} /></div>
                 <div className="form-group"><label className="form-label">End Time *</label><input type="time" className="form-input" required value={form.endTime} onChange={e=>setForm({...form,endTime:e.target.value})} /></div>
             </div>
-            <div className="form-row">
-                <div className="form-group"><label className="form-label">Platform</label><select className="form-select" value={form.platform} onChange={e=>setForm({...form,platform:e.target.value})}><option>Zoom</option><option>Google Meet</option><option>Microsoft Teams</option><option>Manual Link</option><option>N/A</option></select></div>
-                <div className="form-group"><label className="form-label">Meeting Link</label><input className="form-input" placeholder="https://..." value={form.meetingLink} onChange={e=>setForm({...form,meetingLink:e.target.value})} /></div>
+            <div className="form-group"><label className="form-label">Participants</label><input className="form-input" placeholder="Enter names separated by commas, or type 'All Staff', 'Class 10A'..." value={form.participants} onChange={e=>setForm({...form,participants:e.target.value})} /></div>
+            {(form.type === 'Online' || form.type === 'Hybrid') && <>
+                <div className="form-row">
+                    <div className="form-group"><label className="form-label">Platform</label><select className="form-select" value={form.platform} onChange={e=>handlePlatformChange(e.target.value)}><option>Zoom</option><option>Google Meet</option><option>Microsoft Teams</option><option>Manual Link</option></select></div>
+                    <div className="form-group"><label className="form-label">Meeting Link {form.platform !== 'Manual Link' && <span style={{fontSize:'0.8em',color:'var(--success)'}}>(Auto-generated)</span>}</label><input className="form-input" placeholder="https://..." value={form.meetingLink} onChange={e=>setForm({...form,meetingLink:e.target.value})} /></div>
+                </div>
+            </>}
+            {editId && <div className="form-group"><label className="form-label">Status</label><select className="form-select" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option><option>Rescheduled</option></select></div>}
+            <div className="form-group" style={{display:'flex',alignItems:'center',gap:8,marginTop:10}}>
+                <input type="checkbox" id="sendMeetInvites" checked={form.sendInvites} onChange={e=>setForm({...form,sendInvites:e.target.checked})} style={{width:'auto'}} />
+                <label htmlFor="sendMeetInvites" className="form-label" style={{margin:0,cursor:'pointer'}}>Send Invites (in-app notification & email) to Participants</label>
             </div>
-            <div className="form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Schedule</button></div>
+            <div className="form-actions">
+                {editId && <button type="button" className="btn btn-outline" onClick={()=>{setShow(false);setEditId(null);}}>Cancel</button>}
+                <button type="submit" className="btn btn-primary"><Save size={16}/> {editId ? 'Update Meeting' : 'Schedule Meeting'}</button>
+            </div>
         </form></div>}
-        {list.map(m=><div className="meeting-card" key={m._id}><div className="meeting-info"><h4>{m.title}</h4><p><Calendar size={14} style={{verticalAlign:'middle',marginRight:4}}/>{m.date?new Date(m.date).toLocaleDateString('en-IN'):''} · {m.startTime}–{m.endTime} · {m.type} · {m.platform}</p></div>
-            <div style={{display:'flex',gap:8,alignItems:'center'}}><span className={`badge ${statusCls(m.status)}`}>{m.status}</span>{m.meetingLink&&<a href={m.meetingLink} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Join</a>}<button className="btn-icon" onClick={()=>handleDelete(m._id)}><Trash2 size={14}/></button></div></div>)}
-        {list.length===0&&<div className="collab-empty"><Video size={40}/><p>No meetings scheduled</p></div>}
+
+        {/* Meeting Cards */}
+        {filtered.map(m => <div className="meeting-card" key={m._id} style={{borderLeft: m.status==='In Progress'?'3px solid var(--success)':m.status==='Cancelled'?'3px solid var(--danger)':m.status==='Rescheduled'?'3px solid var(--warning)':'3px solid var(--primary)'}}>
+            <div className="meeting-info">
+                <h4>{m.title}</h4>
+                <div className="notice-meta" style={{marginTop:4}}>
+                    <span><Calendar size={13} style={{verticalAlign:'middle',marginRight:4}}/>{m.date ? new Date(m.date).toLocaleDateString('en-IN', {weekday:'short', day:'2-digit', month:'short', year:'numeric'}) : '—'}</span>
+                    <span><Clock size={13} style={{verticalAlign:'middle',marginRight:4}}/>{m.startTime || '—'} – {m.endTime || '—'}</span>
+                    <span>{platformIcon(m.platform)} {m.type} · {m.platform}</span>
+                </div>
+                {m.agenda && <p style={{margin:'8px 0 4px',color:'var(--text-secondary)',fontSize:'0.9em'}}>{m.agenda}</p>}
+                {m.participants && <div style={{marginTop:6,display:'flex',flexWrap:'wrap',gap:4}}>
+                    {m.participants.split(',').map((p,i) => <span key={i} style={{padding:'2px 10px',background:'rgba(11,60,93,0.08)',borderRadius:12,fontSize:'0.8em',color:'var(--primary)',fontWeight:500}}>{p.trim()}</span>)}
+                </div>}
+                <div style={{marginTop:6,fontSize:'0.8em',color:'var(--text-light)'}}>Organized by {m.organizer} {m.organizerRole && <span>({m.organizerRole})</span>}</div>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end',minWidth:180}}>
+                <span className={`badge ${statusCls(m.status)}`}>{m.status}</span>
+                {m.meetingLink && m.status !== 'Cancelled' && <a href={m.meetingLink} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm" style={{whiteSpace:'nowrap'}}><Video size={13}/> Join</a>}
+                {isStaff && m.status === 'Scheduled' && <button className="btn btn-outline btn-sm" onClick={()=>handleEdit(m)}>Edit</button>}
+                {isStaff && m.status === 'Scheduled' && <button className="btn btn-outline btn-sm" style={{color:'var(--danger)'}} onClick={()=>handleStatusChange(m._id,'Cancelled')}>Cancel</button>}
+                {isStaff && m.status === 'In Progress' && <button className="btn btn-outline btn-sm" onClick={()=>handleStatusChange(m._id,'Completed')}>Mark Complete</button>}
+                {isAdmin && <button className="btn-icon" onClick={()=>handleDelete(m._id)}><Trash2 size={14}/></button>}
+            </div>
+        </div>)}
+        {filtered.length===0&&<div className="collab-empty"><Video size={40}/><p>{filterStatus !== 'All' ? `No ${filterStatus.toLowerCase()} meetings` : 'No meetings scheduled yet'}</p></div>}
     </div>);
 }
 
@@ -887,17 +1284,28 @@ function NoticesTab() {
 // ===== SETTINGS =====
 function SettingsTab() {
     const rbac = [
-        ['Create Announcement','Yes','Yes','Class scope','No','No'],['Create Discussion','Yes','Yes','Yes','Participate','No'],['Moderate Discussion','Yes','Yes','Own topics','No','No'],
-        ['Create Group','Yes','Yes','Yes','No','No'],['View Group','Yes','Yes','Member','Member','Member'],['Upload Files','Yes','Yes','Yes','In group','No'],
-        ['Download Files','Yes','Yes','Yes','If permitted','Announced'],['Send Direct Message','Yes','Yes','Yes','Peers/Teacher','Teacher only'],
-        ['Schedule Meeting','Yes','Yes','Yes','No','No'],['Create Task','Yes','Yes','Yes','No','No'],['Post Notice','Yes','Yes','Class scope','No','No'],['Module Settings','Yes','Yes','No','No','No']];
-    return (<div className="animate-fade-in collab-settings-grid">
-        <div className="collab-settings-panel"><h3><Settings size={18}/> Module Settings</h3>
-            <table className="data-table" style={{fontSize:'0.85rem'}}><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody>
-                {[['Max File Upload Size','25 MB'],['Allowed File Types','PDF, DOCX, JPG, PNG, MP4'],['Message Rate Limit','10 / minute'],['Moderation Mode','Post-publish'],['Notification Frequency','Real-time'],
-                  ['Parent Messaging','Enabled'],['Student Group Creation','Disabled'],['External Meeting Links','Enabled'],['Activity Feed Retention','90 days']].map(([k,v],i)=><tr key={i}><td className="fw-600">{k}</td><td>{v}</td></tr>)}
+        ['Create Announcement','Yes','Yes','Class scope','No','No'],
+        ['Create Discussion','Yes','Yes','Yes','Participate','No'],
+        ['Moderate Discussion','Yes','Yes','Own topics','No','No'],
+        ['Create Group','Yes','Yes','Yes','No','No'],
+        ['View Group','Yes','Yes','Member only','Member only','Member only'],
+        ['Upload Files','Yes','Yes','Yes','In group only','No'],
+        ['Download Files','Yes','Yes','Yes','If permitted','Announced only'],
+        ['Send Direct Message','Yes','Yes','Yes','Peers / Teacher','Teacher only'],
+        ['Schedule Meeting','Yes','Yes','Yes','No','No'],
+        ['Create Task','Yes','Yes','Yes','No','No'],
+        ['Post Notice','Yes','Yes','Class scope','No','No'],
+        ['Module Settings','Yes','Yes','No','No','No']
+    ];
+    return (<div className="animate-fade-in collab-settings-grid" style={{ gridTemplateColumns: '1fr', gap: 30 }}>
+        <div className="collab-settings-panel"><h3><Settings size={18}/> Module Settings & Infrastructure (NFRs)</h3>
+            <table className="data-table" style={{fontSize:'0.85rem'}}><thead><tr><th>Setting / Feature</th><th>Status / Value</th></tr></thead><tbody>
+                {[['Performance & Delivery','Real-time WebSockets (< 500ms)'], ['Max File Upload Size','25 MB'],['Allowed File Types','PDF, DOCX, JPG, PNG, MP4'],['Message Rate Limit','10 / minute'],
+                  ['End-to-End Encryption','Active'], ['Global Full-Text Search','Active (< 2s latency)'], ['Activity Feed Retention','90 days'], ['Data Retention Policy','2 Years (Files indefinite)'],
+                  ['WhatsApp & SMS Integration','Configured (Awaiting Keys)'], ['AI Announcement Suggestions','Enabled'], ['Smart Notification Priority','Enabled'], ['Voice Messages','Disabled']
+                ].map(([k,v],i)=><tr key={i}><td className="fw-600">{k}</td><td>{v}</td></tr>)}
             </tbody></table></div>
-        <div className="collab-settings-panel"><h3><Users size={18}/> Role-Based Access Matrix</h3>
+        <div className="collab-settings-panel" style={{ overflowX: 'auto' }}><h3><Users size={18}/> 14.2 Role-Based Access Control Matrix</h3>
             <table className="collab-rbac-table"><thead><tr><th>Feature</th><th>Super Admin</th><th>Admin</th><th>Teacher</th><th>Student</th><th>Parent</th></tr></thead>
                 <tbody>{rbac.map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j} style={j>0?{color:c==='Yes'?'var(--success)':c==='No'?'var(--danger)':'var(--warning)',fontWeight:600}:undefined}>{c}</td>)}</tr>)}</tbody></table></div>
     </div>);
@@ -918,11 +1326,30 @@ const TABS = [
 ];
 
 export default function Collaborate() {
+    const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
+
+    // Compute allowed tabs based on role
+    const allowedTabs = useMemo(() => {
+        const roleStr = user?.role?.toLowerCase() || '';
+        const isAdmin = roleStr.includes('admin') || roleStr.includes('principal') || roleStr.includes('super admin');
+        const isTeacher = roleStr.includes('teacher') || roleStr.includes('staff');
+        const isStudent = roleStr.includes('student');
+        const isParent = roleStr.includes('parent');
+
+        if (isAdmin || isTeacher) return TABS;
+        if (isStudent) return TABS.filter(t => ['dashboard', 'announcements', 'discussions', 'groups', 'files', 'messages', 'notices'].includes(t.id));
+        if (isParent) return TABS.filter(t => ['dashboard', 'announcements', 'groups', 'messages', 'notices'].includes(t.id));
+        return TABS.filter(t => ['dashboard', 'announcements', 'messages', 'notices'].includes(t.id));
+    }, [user]);
+
+    const defaultTab = allowedTabs.length > 0 ? allowedTabs[0].id : 'dashboard';
+    const initialTab = tabFromUrl && allowedTabs.some(t => t.id === tabFromUrl) ? tabFromUrl : defaultTab;
+    
+    const [activeTab, setActiveTab] = useState(initialTab);
     const handleNavigate = tab => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if(tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    useEffect(() => { if(tabFromUrl && tabFromUrl !== activeTab && allowedTabs.some(t => t.id === tabFromUrl)) setActiveTab(tabFromUrl); }, [tabFromUrl, allowedTabs, activeTab]);
 
     return (
         <div className="collab-page animate-fade-in">
@@ -932,7 +1359,7 @@ export default function Collaborate() {
                 <h1>Collaborate</h1>
             </div></div>
             <div className="card collab-card">
-                <div className="tabs-header">{TABS.map(tab=>{const Icon=tab.icon;return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>;})}</div>
+                <div className="tabs-header">{allowedTabs.map(tab=>{const Icon=tab.icon;return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>;})}</div>
                 <div className="tabs-content">
                     {activeTab==='dashboard'&&<DashboardTab onNavigate={handleNavigate}/>}{activeTab==='announcements'&&<AnnouncementsTab/>}{activeTab==='discussions'&&<DiscussionsTab/>}
                     {activeTab==='groups'&&<GroupsTab/>}{activeTab==='files'&&<FilesTab/>}{activeTab==='messages'&&<MessagesTab/>}

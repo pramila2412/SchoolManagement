@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Printer, FileText, Award, Plus, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
@@ -18,6 +19,7 @@ export default function Certificates() {
     const [localCertificates, setLocalCertificates] = useLocalStorage('mzs_certificates', []);
     const [apiCertificates, setApiCertificates] = useState([]);
     const [generating, setGenerating] = useState(false);
+    const [previewCert, setPreviewCert] = useState(null);
 
     // Merge API and Local certificates
     const certificates = [...apiCertificates, ...localCertificates].sort((a, b) => 
@@ -237,18 +239,40 @@ export default function Certificates() {
                                                     <td>
                                                         <div className="action-buttons-center">
                                                             <button 
-                                                            className="btn btn-primary btn-sm" 
-                                                            onClick={() => {
-                                                                if (!certType) {
-                                                                    customAlert('Please select a Certificate Type from the dropdown above before generating.');
-                                                                    return;
-                                                                }
-                                                                handleGenerate(s);
-                                                            }} 
-                                                            disabled={generating}
-                                                        >
-                                                            {generating ? '...' : 'Generate'}
-                                                        </button>
+                                                                className="btn btn-outline btn-sm" 
+                                                                title="Preview Certificate"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    if (!certType) {
+                                                                        customAlert('Please select a Certificate Type from the dropdown above to preview.');
+                                                                        return;
+                                                                    }
+                                                                    setPreviewCert({
+                                                                        type: certType,
+                                                                        studentName: `${s.firstName} ${s.lastName}`,
+                                                                        class: s.class,
+                                                                        section: s.section,
+                                                                        purpose: purpose || 'general reference',
+                                                                        issueDate: new Date().toISOString(),
+                                                                        certificateNo: `PREVIEW-000`
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <Eye size={16} style={{marginRight: 4}}/> Preview
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-primary btn-sm" 
+                                                                onClick={() => {
+                                                                    if (!certType) {
+                                                                        customAlert('Please select a Certificate Type from the dropdown above before generating.');
+                                                                        return;
+                                                                    }
+                                                                    handleGenerate(s);
+                                                                }} 
+                                                                disabled={generating}
+                                                            >
+                                                                {generating ? '...' : 'Generate'}
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -280,6 +304,7 @@ export default function Certificates() {
                                             <td>{new Date(c.issueDate).toLocaleDateString('en-IN')}</td>
                                             <td>{c.purpose || '—'}</td>
                                             <td>
+                                                <button className="btn-icon text-primary" title="View Certificate" onClick={()=>setPreviewCert(c)}><Eye size={16}/></button>
                                                 <button className="btn-icon text-danger" title="Delete" onClick={()=>handleDelete(c._id || c.certificateNo)}><Trash2 size={16}/></button>
                                             </td>
                                         </tr>
@@ -291,6 +316,85 @@ export default function Certificates() {
                         <div className="empty-state" style={{padding:40}}><Award size={48}/><h3>No Certificates Issued Yet</h3><p>Generate certificates from the Generate tab.</p></div>
                     )}
                 </div>
+            )}
+            
+            {previewCert && ReactDOM.createPortal(
+                <div className="cert-modal-overlay">
+                    <div className="cert-modal-container">
+                        <div className="cert-modal-header">
+                            <h2>Certificate Preview</h2>
+                            <div className="cert-modal-actions">
+                                <select 
+                                    className="form-select" 
+                                    style={{ width: 'auto', padding: '6px 12px', fontSize: '14px', height: 'auto' }}
+                                    value={previewCert.orientation || 'landscape'}
+                                    onChange={(e) => setPreviewCert({...previewCert, orientation: e.target.value})}
+                                >
+                                    <option value="landscape">Landscape</option>
+                                    <option value="portrait">Portrait</option>
+                                </select>
+                                <button className="btn btn-outline" onClick={() => setPreviewCert(null)}>Close</button>
+                                <button className="btn btn-primary" onClick={() => window.print()}><Printer size={16}/> Print</button>
+                            </div>
+                        </div>
+                        <div className="cert-modal-body">
+                            <div className="canva-certificate" id="printable-certificate" data-orientation={previewCert.orientation || 'landscape'}>
+                                <div className="cert-border-outer">
+                                    <div className="cert-border-inner">
+                                        <div className="cert-header">
+                                            <div className="cert-logo-placeholder">
+                                                <Award size={48} className="cert-logo-icon" />
+                                            </div>
+                                            <h1 className="cert-school-name">MZS International School</h1>
+                                            <p className="cert-school-sub">EXCELLENCE IN EDUCATION</p>
+                                        </div>
+                                        
+                                        <div className="cert-title-container">
+                                            <h2 className="cert-title">{previewCert.type} Certificate</h2>
+                                        </div>
+                                        
+                                        <div className="cert-content">
+                                            <p className="cert-presented">This is to proudly certify that</p>
+                                            <h3 className="cert-student-name">{previewCert.studentName}</h3>
+                                            <div className="cert-student-underline"></div>
+                                            
+                                            <p className="cert-body-text">
+                                                has been a bonafide student of <strong>Class {previewCert.class} - {previewCert.section}</strong>. 
+                                                This certificate is officially issued for the purpose of <strong>{previewCert.purpose || 'general reference'}</strong>.
+                                                We commend their dedication and wish them great success in all future endeavors.
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="cert-footer">
+                                            <div className="cert-signature-block">
+                                                <div className="sig-line">{new Date(previewCert.issueDate).toLocaleDateString('en-IN')}</div>
+                                                <p>Date of Issue</p>
+                                            </div>
+                                            
+                                            <div className="cert-badge">
+                                                <div className="seal">
+                                                    <div className="seal-inner">
+                                                        <span className="seal-text">OFFICIAL</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="cert-signature-block">
+                                                <div className="sig-line" style={{ color: 'transparent' }}>Signature</div>
+                                                <p>Principal Signature</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="cert-footer-meta">
+                                            Ref No: {previewCert.certificateNo}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
         </div>
     );

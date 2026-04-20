@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { AlertTriangle, Info, X } from 'lucide-react';
 import './GlobalDialog.css';
 
@@ -23,7 +24,7 @@ export default function GlobalDialog() {
         setDialog(null);
     };
 
-    return (
+    return ReactDOM.createPortal(
         <div className="global-dialog-overlay animate-fade-in">
             <div className="global-dialog-modal animate-slide-up">
                 <button className="global-dialog-close" onClick={() => handleClose(false)}>
@@ -55,6 +56,7 @@ export default function GlobalDialog() {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

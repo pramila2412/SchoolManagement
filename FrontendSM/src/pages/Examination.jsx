@@ -10,6 +10,9 @@ import './Examination.css';
 
 const API = '/api/exam';
 
+export const STANDARD_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+export const STANDARD_SUBJECTS = ['Mathematics', 'Science', 'English', 'Hindi', 'Social Science', 'Computer', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Accountancy', 'Business Studies', 'Economics'];
+
 function useApi(endpoint) {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -82,7 +85,12 @@ function ExamSetupTab() {
                         </div>
                         <div className="exam-section-divider"><Users size={16}/> Add Class</div>
                         <div className="form-row">
-                            <div className="form-group"><label className="form-label">Class</label><input type="text" className="form-input" placeholder="e.g. X" value={classInput.className} onChange={e=>setClassInput({...classInput,className:e.target.value})} /></div>
+                            <div className="form-group"><label className="form-label">Class</label>
+                                <select className="form-select" value={classInput.className} onChange={e=>setClassInput({...classInput,className:e.target.value})}>
+                                    <option value="">Select Class</option>
+                                    {STANDARD_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
                             <div className="form-group"><label className="form-label">Sections</label><input type="text" className="form-input" placeholder="A,B,C" value={classInput.sections} onChange={e=>setClassInput({...classInput,sections:e.target.value})} /></div>
                         </div>
                         <button type="button" className="btn btn-outline" style={{marginBottom:12}} onClick={addClass}><PlusCircle size={14}/> Add Class</button>
@@ -137,7 +145,7 @@ function TimetableTab() {
                 <h3>Create Exam Timetable</h3>
                 <div className="exam-form"><div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr'}}>
                     <div className="form-group"><label className="form-label">Exam *</label><select className="form-select" value={form.exam} onChange={e=>setForm({...form,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                    <div className="form-group"><label className="form-label">Class *</label><select className="form-select" value={form.className} onChange={e=>setForm({...form,className:e.target.value})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                    <div className="form-group"><label className="form-label">Class *</label><select className="form-select" value={form.className} onChange={e=>setForm({...form,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                     <div className="form-group"><label className="form-label">Section *</label><input type="text" className="form-input" value={form.section} onChange={e=>setForm({...form,section:e.target.value})} placeholder="A" /></div>
                 </div>
                 <div className="exam-section-divider"><Calendar size={16}/> Add Schedule Entry</div>
@@ -175,8 +183,8 @@ function HallTicketsTab() {
             <div className="exam-form-panel" style={{maxWidth:500,marginBottom:24}}>
                 <h3>Generate Hall Tickets</h3>
                 <div className="exam-form">
-                    <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.filter(e=>e.status!=='Draft').map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                    <div className="form-row"><div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                    <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
+                    <div className="form-row"><div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div></div>
                     <div className="form-actions"><button className="btn btn-primary" onClick={()=>setPreview(true)}><Eye size={16}/> Preview Hall Ticket</button></div>
                 </div>
@@ -201,13 +209,14 @@ function MarksEntryTab() {
     const selExam = exams.find(e=>e._id===sel.exam);
     const selClass = selExam?.classes?.find(c=>c.className===sel.className);
     const selSubject = selClass?.subjects?.find(s=>s.name===sel.subject);
+    const activeSubject = selSubject || { name: sel.subject, theoryMarks: 100, practicalMarks: 0, totalMarks: 100, passingMarks: 33 };
 
     const addRow = () => setStudents(s=>[...s,{studentName:'',rollNo:'',theoryMarks:0,practicalMarks:0}]);
     const updateRow = (i,field,val) => setStudents(s=>s.map((r,j)=>j===i?{...r,[field]:val}:r));
     const handleSave = async () => {
         if(!sel.exam||!sel.className||!sel.subject) return await customAlert('Select all filters');
         const entries = students.filter(s=>s.studentName).map(s=>({...s, theoryMarks:+s.theoryMarks, practicalMarks:+s.practicalMarks, totalMarks:(+s.theoryMarks)+(+s.practicalMarks)}));
-        const res = await fetch(`${API}/marks`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exam:sel.exam,className:sel.className,section:sel.section,subject:sel.subject,subjectCode:selSubject?.code,maxTheoryMarks:selSubject?.theoryMarks||selSubject?.totalMarks,maxPracticalMarks:selSubject?.practicalMarks||0,maxTotalMarks:selSubject?.totalMarks,entries})});
+        const res = await fetch(`${API}/marks`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exam:sel.exam,className:sel.className,section:sel.section,subject:sel.subject,subjectCode:activeSubject.code||'',maxTheoryMarks:activeSubject.theoryMarks||activeSubject.totalMarks,maxPracticalMarks:activeSubject.practicalMarks||0,maxTotalMarks:activeSubject.totalMarks,entries})});
         if(res.ok) await customAlert('Marks saved!'); else { const err = await res.json(); await customAlert(err.error); }
     };
 
@@ -215,16 +224,16 @@ function MarksEntryTab() {
         <div className="animate-fade-in">
             <div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,marginBottom:24,display:'grid'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value,className:'',subject:''})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
-                <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{selClass?.subjects?.map((s,i)=><option key={i} value={s.name}>{s.name}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{(selClass?.subjects?.length>0?selClass.subjects.map(s=>s.name):STANDARD_SUBJECTS).map((s,i)=><option key={i} value={s}>{s}</option>)}</select></div>
             </div>
-            {selSubject && <div className="result-summary-cards"><div className="result-summary-card"><label>Max Theory</label><p>{selSubject.theoryMarks||selSubject.totalMarks}</p></div><div className="result-summary-card"><label>Max Practical</label><p>{selSubject.practicalMarks||0}</p></div><div className="result-summary-card"><label>Total</label><p>{selSubject.totalMarks}</p></div><div className="result-summary-card"><label>Pass</label><p>{selSubject.passingMarks}</p></div></div>}
+            {sel.subject && <div className="result-summary-cards"><div className="result-summary-card"><label>Max Theory</label><p>{activeSubject.theoryMarks||activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Max Practical</label><p>{activeSubject.practicalMarks||0}</p></div><div className="result-summary-card"><label>Total</label><p>{activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Pass</label><p>{activeSubject.passingMarks}</p></div></div>}
             <div className="marks-grid-wrapper table-responsive"><table className="data-table"><thead><tr><th>#</th><th>Student Name</th><th>Roll No</th><th>Theory</th><th>Practical</th><th>Total</th></tr></thead>
                 <tbody>{students.map((s,i)=><tr key={i}><td>{i+1}</td><td><input className="form-input" style={{width:180}} value={s.studentName} onChange={e=>updateRow(i,'studentName',e.target.value)} /></td>
                     <td><input className="form-input" style={{width:80}} value={s.rollNo} onChange={e=>updateRow(i,'rollNo',e.target.value)} /></td>
-                    <td><input type="number" className={`form-input ${selSubject&&+s.theoryMarks>(selSubject.theoryMarks||selSubject.totalMarks)?'marks-invalid':''}`} value={s.theoryMarks} onChange={e=>updateRow(i,'theoryMarks',e.target.value)} /></td>
-                    <td><input type="number" className={`form-input ${selSubject&&+s.practicalMarks>(selSubject.practicalMarks||0)?'marks-invalid':''}`} value={s.practicalMarks} onChange={e=>updateRow(i,'practicalMarks',e.target.value)} /></td>
+                    <td><input type="number" className={`form-input ${sel.subject&&+s.theoryMarks>(activeSubject.theoryMarks||activeSubject.totalMarks)?'marks-invalid':''}`} value={s.theoryMarks} onChange={e=>updateRow(i,'theoryMarks',e.target.value)} /></td>
+                    <td><input type="number" className={`form-input ${sel.subject&&+s.practicalMarks>(activeSubject.practicalMarks||0)?'marks-invalid':''}`} value={s.practicalMarks} onChange={e=>updateRow(i,'practicalMarks',e.target.value)} /></td>
                     <td className="fw-600">{(+s.theoryMarks)+(+s.practicalMarks)}</td></tr>)}</tbody></table></div>
             <div style={{marginTop:16,display:'flex',gap:10}}><button className="btn btn-outline" onClick={addRow}><PlusCircle size={14}/> Add Student</button><button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Marks</button></div>
         </div>);
@@ -256,7 +265,7 @@ function ResultsTab() {
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
                 <button className="btn btn-primary" onClick={handleProcess} disabled={processing}><ClipboardCheck size={16}/> {processing?'Processing...':'Process Results'}</button>
                 <button className="btn btn-outline" onClick={fetchResults}><Eye size={16}/> View</button>
@@ -283,8 +292,8 @@ function ReportCardsTab() {
     return (
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
-                <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.filter(e=>e.status==='Completed').map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
                 <button className="btn btn-primary" onClick={fetchResults}><FileText size={16}/> Load Results</button>
             </div>
@@ -316,7 +325,7 @@ function AnalyticsTab() {
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{selExam?.classes?.map((c,i)=><option key={i} value={c.className}>{c.className}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
                 <button className="btn btn-primary" onClick={fetchAnalytics}><BarChart3 size={16}/> Generate</button>
             </div>

@@ -17,14 +17,64 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
+    const [unreadCount, setUnreadCount] = useState(0);
+
     // Fetch notifications
     useEffect(() => {
         if (!user) return;
         fetch(`/api/collaborate/activity?user=${encodeURIComponent(user.name||'')}`)
             .then(r => r.json())
-            .then(data => { if(Array.isArray(data)) setActivities(data.slice(0, 5)); })
+            .then(data => {
+                if(Array.isArray(data)) {
+                    // Filter based on user role (Announcements mostly)
+                    const role = user?.role || '';
+                    const isStaff = ['Teacher', 'Admin', 'Super Admin', 'Staff'].includes(role);
+                    
+                    const filtered = data.filter(act => {
+                        if (act.type === 'Announcement') {
+                            if (role === 'Super Admin' || act.desc.includes('to All')) return true;
+                            if (isStaff && act.desc.includes('to Staff')) return true;
+                            if (role === 'Student' && act.desc.includes('to Students')) return true;
+                            if (role === 'Parent' && act.desc.includes('to Parents')) return true;
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    const topActivities = filtered.slice(0, 8);
+                    setActivities(topActivities);
+
+                    const lastViewed = localStorage.getItem(`lastNotifView_${user._id || user.name}`);
+                    const lastViewedDate = lastViewed ? new Date(parseInt(lastViewed)) : new Date(0);
+                    
+                    const processedActivities = topActivities.map(a => ({
+                        ...a,
+                        isNew: new Date(a.time) > lastViewedDate
+                    }));
+                    
+                    setActivities(processedActivities);
+
+                    if (lastViewed) {
+                        const unread = processedActivities.filter(a => a.isNew).length;
+                        setUnreadCount(unread);
+                    } else {
+                        setUnreadCount(Math.min(processedActivities.length, 5));
+                    }
+                }
+            })
             .catch(console.error);
     }, [user]);
+
+    const handleToggleNotifications = () => {
+        setShowNotifications(prev => {
+            if (!prev) {
+                // Opening notifications marks them as read
+                localStorage.setItem(`lastNotifView_${user._id || user.name}`, Date.now().toString());
+                setUnreadCount(0);
+            }
+            return !prev;
+        });
+    };
 
     // Perform module search
     const searchableItems = SIDEBAR_MODULES.filter(module => {
@@ -153,7 +203,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
                 <div style={{ position: 'relative' }}>
                     <button 
                         className="header-icon-btn" 
-                        onClick={() => setShowNotifications(!showNotifications)}
+                        onClick={handleToggleNotifications}
                         onBlur={(e) => {
                             if (!e.currentTarget.parentElement.contains(e.relatedTarget)) {
                                 setShowNotifications(false);
@@ -161,7 +211,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
                         }}
                     >
                         <Bell size={20} />
-                        {activities.length > 0 && <span style={{ position: 'absolute', top: 5, right: 5, background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '2px 5px', borderRadius: 10, fontWeight: 700, pointerEvents: 'none' }}>{activities.length}</span>}
+                        {unreadCount > 0 && <span style={{ position: 'absolute', top: 5, right: 5, background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '2px 5px', borderRadius: 10, fontWeight: 700, pointerEvents: 'none' }}>{unreadCount}</span>}
                     </button>
                     {showNotifications && (
                         <div className="search-results-dropdown animate-slide-up" style={{ right: -60, left: 'auto', width: 320, padding: 0, zIndex: 1000, boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }} tabIndex="-1">
@@ -172,7 +222,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
                             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                                 {activities.length === 0 ? <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-light)', fontSize: '0.85rem' }}><Bell size={24} style={{opacity: 0.3, marginBottom: 8}}/><br/>No new notifications</div> : null}
                                 {activities.map((act, i) => (
-                                    <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => { setShowNotifications(false); navigate('/collaborate'); }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-light)', cursor: 'pointer', transition: 'background 0.2s', background: act.isNew ? 'rgba(28, 167, 166, 0.05)' : 'transparent' }} onClick={() => { setShowNotifications(false); navigate('/collaborate'); }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'} onMouseLeave={e => e.currentTarget.style.background = act.isNew ? 'rgba(28, 167, 166, 0.05)' : 'transparent'}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: act.color }}>{act.type}</span>
                                             <span style={{ fontSize: '0.65rem', color: 'var(--text-light)' }}>{new Date(act.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>

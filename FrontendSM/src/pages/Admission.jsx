@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Users, UserPlus, FileText, ClipboardCheck, Save, PlusCircle,
     Trash2, Edit3, Eye, Send, Phone, Mail, Calendar, Search,
@@ -352,19 +352,29 @@ function ConfirmationTab() {
             // Sync with Student Portal Directory (mzs_students)
             const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
             
-            // Generate Parent ID in PAR-YYYY-XXXXX format
-            const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
-            let seq = existingParIds.length + 1;
-            let parentId;
-            do {
-                parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
-                seq++;
-            } while (existingParIds.includes(parentId));
+            // Sibling check: If a student with same parent email exists, reuse parentId
+            const existingSibling = globalStudents.find(s => s.parentEmail && s.parentEmail.toLowerCase() === (student.parentEmail || '').toLowerCase());
+            
+            let parentId, parentPassword;
+            
+            if (existingSibling) {
+                parentId = existingSibling.parentId;
+                parentPassword = existingSibling.parentPassword;
+            } else {
+                // Generate Parent ID in PAR-YYYY-XXXXX format
+                const year = new Date().getFullYear();
+                const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
+                let seq = existingParIds.length + 1;
+                do {
+                    parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
+                    seq++;
+                } while (existingParIds.includes(parentId));
 
-            // Generate random 8-char password
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-            let parentPassword = '';
-            for (let i = 0; i < 8; i++) parentPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                // Generate random 8-char password
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                parentPassword = '';
+                for (let i = 0; i < 8; i++) parentPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
 
             const portalStudent = {
                 id: admNo,
@@ -376,7 +386,7 @@ function ConfirmationTab() {
                 parentPassword: parentPassword,
                 parentName: student.parentName || 'Parent / Guardian',
                 status: 'Active',
-                firstLogin: true
+                firstLogin: !existingSibling // Only force password change if it's the first child
             };
             localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
 
@@ -423,6 +433,7 @@ function ConfirmationTab() {
 
 // ======================== ID CARD ========================
 function IDCardTab() {
+    const navigate = useNavigate();
     const [classFilter, setClassFilter] = useState('All Classes');
     const [sectionFilter, setSectionFilter] = useState('All Sections');
     const [students, setStudents] = useState([]);
@@ -446,19 +457,126 @@ function IDCardTab() {
         }
     };
 
+    const getPrintableCard = (student) => {
+        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.name || 'Student';
+        const photoUrl = student.photoUrl || '';
+        const studentClass = student.class || '';
+        const section = student.section || '';
+        const fatherName = student.parentName || student.fatherName || 'N/A';
+        const motherName = student.motherName || 'N/A';
+        const address = student.address || 'N/A';
+        const contact = student.contactNo || student.guardianPhone || student.phone || 'N/A';
+
+        const card = document.createElement('div');
+        card.style.cssText = 'width:420px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;position:absolute;left:-9999px;top:-9999px;';
+
+        const logoSVG = `<svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="50,2 96,78 4,78" fill="none" stroke="#0B3C5D" stroke-width="2.5" />
+            <polygon points="50,98 4,22 96,22" fill="none" stroke="#0B3C5D" stroke-width="2.5" />
+            <circle cx="50" cy="50" r="16" fill="#ffffff" stroke="#0B3C5D" stroke-width="1" />
+            <path d="M50,42 L50,58 M42,50 L58,50" stroke="#E31E24" stroke-width="2.5" />
+            <text x="50" y="18" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial">MOUNT ZION SCHOOL</text>
+            <text x="24" y="38" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(-60 24,38)">MOUNT ZION SCHOOL</text>
+            <text x="76" y="38" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(60 76,38)">MOUNT ZION SCHOOL</text>
+            <text x="50" y="82" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial">MOUNT ZION SCHOOL</text>
+            <text x="24" y="62" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(60 24,62)">MOUNT ZION SCHOOL</text>
+            <text x="76" y="62" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(-60 76,62)">MOUNT ZION SCHOOL</text>
+        </svg>`;
+
+        const signatureSVG = `<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" 
+                stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            <text x="75" y="38" font-family="Brush Script MT, cursive" font-size="28" fill="#1a3d5c" style="font-style: italic;">Anand Albert</text>
+        </svg>`;
+
+        card.innerHTML = `
+            <div style="background:#57C4E5;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
+                <div style="width:80px;height:80px;flex-shrink:0;margin-right:12px;">
+                    ${logoSVG}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:24px;font-weight:900;color:#E31E24;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
+                    <div style="font-size:12px;color:#111;font-weight:700;margin-top:3px;">(Affiliated to CBSE up to 10+2 Level)</div>
+                    <div style="font-size:12px;color:#ffffff;font-weight:700;">Sion Nagar, Purnea - 854301</div>
+                    <div style="font-size:11px;color:#111;font-weight:600;margin-top:3px;">Affiliation No. 330241 &nbsp;&nbsp;&nbsp; School No. 65235</div>
+                </div>
+            </div>
+
+            <div style="text-align:center;padding:25px 0 12px 0;">
+                ${photoUrl
+                    ? `<img src="${photoUrl}" style="width:145px;height:175px;object-fit:cover;border:2px solid #E31E24;display:inline-block;" crossorigin="anonymous" />`
+                    : `<div style="width:145px;height:175px;border:2px solid #E31E24;display:inline-flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:50px;font-weight:bold;color:#aaa;margin:0 auto;">${(student.firstName||'S')[0]}${(student.lastName||'')[0] || ''}</div>`
+                }
+            </div>
+
+            <div style="text-align:center;font-size:24px;font-weight:900;color:#E31E24;padding:8px 10px 18px 10px;text-transform:uppercase;letter-spacing:0.5px;">
+                ${fullName}
+            </div>
+
+            <div style="padding:0 30px 15px 30px;">
+                <table style="width:100%;border-collapse:collapse;font-size:16px;">
+                    <tr>
+                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;width:150px;">Class :</td>
+                        <td style="padding:5px 0;font-weight:bold;color:#111;">${studentClass}${section ? ' - ' + section : ''}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Father Name :</td>
+                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${fatherName}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Mother Name :</td>
+                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${motherName}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Address :</td>
+                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${address}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Contact :</td>
+                        <td style="padding:5px 0;font-weight:bold;color:#111;">${contact}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="padding:10px 30px 25px 30px;text-align:right;">
+                <div style="display:inline-block;text-align:center;">
+                    ${signatureSVG}
+                    <div style="font-size:18px;color:#E31E24;margin-top:2px;font-weight:bold;">Principal</div>
+                </div>
+            </div>
+        `;
+
+        return card;
+    };
+
+    const handleEditStudent = (student) => {
+        navigate(`/students/edit/${student.id}`);
+    };
+
+    const handleDeleteStudent = async (student) => {
+        if (await customConfirm(`Are you sure you want to delete the record for ${student.firstName} ${student.lastName}?`)) {
+            try {
+                try { await api.deleteStudent(student.id); } catch(e) {}
+                setStudents(prev => prev.filter(s => s.id !== student.id));
+                const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const updated = globalStudents.filter(s => s.id !== student.id);
+                localStorage.setItem('mzs_students', JSON.stringify(updated));
+                await customAlert("Student record deleted successfully.", "Success", "success");
+            } catch (err) {
+                await customAlert("Failed to delete student record.", "Error", "error");
+            }
+        }
+    };
+
     const downloadIndividualCard = async (student) => {
         setDownloadingId(student.id);
         try {
-            const cardElement = document.getElementById(`idcard-${student.id}`);
-            if (!cardElement) return;
-
-            // Temporarily hide actions for screenshot
-            const actionsEl = cardElement.querySelector('.idcard-actions');
-            if (actionsEl) actionsEl.style.display = 'none';
-
-            const canvas = await html2canvas(cardElement, { scale: 2, useCORS: true });
+            const clone = getPrintableCard(student);
+            if (!clone) return;
+            document.body.appendChild(clone);
             
-            if (actionsEl) actionsEl.style.display = 'flex'; // Restore
+            const canvas = await html2canvas(clone, { scale: 2, useCORS: true });
+            document.body.removeChild(clone);
 
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF({
@@ -491,21 +609,17 @@ function IDCardTab() {
             const zip = new JSZip();
 
             for (const student of students) {
-                const cardElement = document.getElementById(`idcard-${student.id}`);
-                if (!cardElement) continue;
-
-                const actionsEl = cardElement.querySelector('.idcard-actions');
-                if (actionsEl) actionsEl.style.display = 'none';
-
-                const canvas = await html2canvas(cardElement, { scale: 2, useCORS: true });
+                const clone = getPrintableCard(student);
+                if (!clone) continue;
+                document.body.appendChild(clone);
                 
-                if (actionsEl) actionsEl.style.display = 'flex';
+                const canvas = await html2canvas(clone, { scale: 2, useCORS: true });
+                document.body.removeChild(clone);
 
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
                 pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                 
-                // Get PDF as ArrayBuffer to add to ZIP
                 const pdfBlob = pdf.output('blob');
                 zip.file(`${student.firstName}_${student.lastName}_${student.admissionNo}.pdf`, pdfBlob);
             }
@@ -517,11 +631,6 @@ function IDCardTab() {
             link.download = `IDCards_Class_${classFilter}_Sec_${sectionFilter}.zip`;
             link.click();
             window.URL.revokeObjectURL(url);
-            
-            // To match reference site behavior, show a toast or alert
-            // Here we use a standard alert for simplicity, but a toast would be better if one exists in the project
-            // alert(`ZIP downloaded for Class ${classFilter} - Section ${sectionFilter}`);
-            
         } catch (error) {
             console.error("Error generating ZIP", error);
             await customAlert("Failed to generate bulk ZIP.");
@@ -588,7 +697,19 @@ function IDCardTab() {
                             <div className="idcard-info">
                                 <div><span className="idcard-label">Admn No:</span> <span className="idcard-value">{student.admissionNo}</span></div>
                                 <div><span className="idcard-label">D.O.B:</span> <span className="idcard-value">{formatDate(student.dateOfBirth)}</span></div>
-                                <div><span className="idcard-label">Contact:</span> <span className="idcard-value">{student.contactNo}</span></div>
+                                <div style={{ alignItems: 'flex-start' }}>
+                                    <span className="idcard-label" style={{ marginTop: '2px' }}>Parent:</span> 
+                                    <span className="idcard-value" style={{ textAlign: 'right' }}>
+                                        {student.parentName || student.fatherName || 'Guardian'}<br/>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: 500 }}>☎ {student.contactNo || student.guardianPhone || student.phone || 'N/A'}</span>
+                                    </span>
+                                </div>
+                                <div style={{ alignItems: 'flex-start' }}>
+                                    <span className="idcard-label" style={{ marginTop: '2px' }}>Address:</span> 
+                                    <span className="idcard-value" style={{ textAlign: 'right', maxWidth: '150px', lineHeight: '1.3', fontSize: '0.75rem', fontWeight: 500 }}>
+                                        {student.address || 'Address not provided'}
+                                    </span>
+                                </div>
                             </div>
                             
                             <div className="idcard-badges">
@@ -597,7 +718,7 @@ function IDCardTab() {
                             </div>
                             
                             <div className="idcard-actions" data-html2canvas-ignore="true">
-                                <button className="idcard-action-btn edit-btn" title="Edit Student">
+                                <button className="idcard-action-btn edit-btn" title="Edit Student" onClick={() => handleEditStudent(student)}>
                                     <Edit3 size={16} />
                                 </button>
                                 <button 
@@ -606,9 +727,9 @@ function IDCardTab() {
                                     onClick={() => downloadIndividualCard(student)}
                                     disabled={downloadingId === student.id}
                                 >
-                                    {downloadingId === student.id ? <Clock size={16}/> : <Download size={16} />}
+                                    {downloadingId === student.id ? <Clock size={16}/> : <Download size={16} />} 
                                 </button>
-                                <button className="idcard-action-btn delete-btn" title="Delete record">
+                                <button className="idcard-action-btn delete-btn" title="Delete record" onClick={() => handleDeleteStudent(student)}>
                                     <Trash2 size={16} />
                                 </button>
                             </div>

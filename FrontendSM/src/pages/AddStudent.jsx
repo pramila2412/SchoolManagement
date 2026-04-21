@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
 import { classes, sections, getBatches, categories } from '../data/mockData';
@@ -42,6 +42,42 @@ export default function AddStudent() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // For Sibling Feature
+    const [isSibling, setIsSibling] = useState(false);
+    const [selectedParentId, setSelectedParentId] = useState('');
+
+    const uniqueParents = useMemo(() => {
+        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+        return Array.from(new Map(globalStudents.filter(s => s.parentId).map(s => [s.parentId, s])).values());
+    }, []);
+
+    const handleParentSelect = (e) => {
+        const pId = e.target.value;
+        setSelectedParentId(pId);
+        if (pId) {
+            const parent = uniqueParents.find(p => p.parentId === pId);
+            if (parent) {
+                setFormData(prev => ({
+                    ...prev,
+                    fatherName: parent.parentName || parent.fatherName || prev.fatherName,
+                    motherName: parent.motherName || prev.motherName,
+                    guardianPhone: parent.guardianPhone || prev.guardianPhone,
+                    contactNo: parent.phone || parent.contactNo || prev.contactNo,
+                    email: parent.parentEmail || parent.email || prev.email,
+                    address: parent.address || prev.address
+                }));
+                // clear pertinent errors
+                setErrors(prev => ({
+                    ...prev,
+                    fatherName: null,
+                    contactNo: null,
+                    email: null,
+                    address: null
+                }));
+            }
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -199,9 +235,16 @@ export default function AddStudent() {
             delete newStudent.birthCertificate;
             delete newStudent.previousTC;
 
-            // Auto-generate Parent ID and password
-            const parentId = generateParentId();
-            const parentPassword = generatePassword();
+            // Handle Parent ID and password
+            let parentId, parentPassword;
+            if (isSibling && selectedParentId) {
+                const parent = uniqueParents.find(p => p.parentId === selectedParentId);
+                parentId = parent.parentId;
+                parentPassword = parent.parentPassword;
+            } else {
+                parentId = generateParentId();
+                parentPassword = generatePassword();
+            }
 
             // Save to mzs_students localStorage for Parent Portal login
             const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
@@ -333,7 +376,37 @@ export default function AddStudent() {
 
                     {/* PARENT & CONTACT DETAILS */}
                     <div className="form-section">
-                        <h3 className="form-section-title">PARENT & CONTACT DETAILS</h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 className="form-section-title" style={{ marginBottom: 0 }}>PARENT & CONTACT DETAILS</h3>
+                            
+                            <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input 
+                                    type="checkbox" 
+                                    checked={isSibling} 
+                                    onChange={(e) => {
+                                        setIsSibling(e.target.checked);
+                                        if (!e.target.checked) setSelectedParentId('');
+                                    }} 
+                                />
+                                <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Existing Parent / Sibling?</span>
+                            </label>
+                        </div>
+
+                        {isSibling && (
+                            <div className="form-group" style={{ background: 'var(--bg)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border)', marginBottom: '16px' }}>
+                                <label className="form-label">Select Existing Parent</label>
+                                <select className="form-select" value={selectedParentId} onChange={handleParentSelect}>
+                                    <option value="">-- Choose Parent from existing students --</option>
+                                    {uniqueParents.map(p => (
+                                        <option key={p.parentId} value={p.parentId}>
+                                            {p.parentName || p.fatherName} (Parent ID: {p.parentId}) - Phone: {p.phone || p.contactNo || 'N/A'}
+                                        </option>
+                                    ))}
+                                </select>
+                                {selectedParentId && <p style={{ fontSize: '0.8rem', color: 'var(--success)', marginTop: '8px', marginBottom: 0 }}>Parent details auto-filled successfully. This student will share the same Parent ID.</p>}
+                            </div>
+                        )}
+
                         <div className="form-row two-cols">
                             <div className="form-group">
                                 <label className="form-label">Father's Name <span className="required">*</span></label>

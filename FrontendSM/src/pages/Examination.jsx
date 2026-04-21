@@ -91,7 +91,7 @@ function ExamSetupTab() {
                                     {STANDARD_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
-                            <div className="form-group"><label className="form-label">Sections</label><input type="text" className="form-input" placeholder="A,B,C" value={classInput.sections} onChange={e=>setClassInput({...classInput,sections:e.target.value})} /></div>
+                            <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={classInput.sections} onChange={e=>setClassInput({...classInput,sections:e.target.value})}><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                         </div>
                         <button type="button" className="btn btn-outline" style={{marginBottom:12}} onClick={addClass}><PlusCircle size={14}/> Add Class</button>
                         {form.classes.length>0 && <div style={{marginBottom:12,fontSize:'0.85rem'}}>{form.classes.map((c,i)=><span key={i} className="badge badge-info" style={{marginRight:6}}>{c.className} ({c.sections.join(',')})</span>)}</div>}
@@ -146,7 +146,7 @@ function TimetableTab() {
                 <div className="exam-form"><div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr'}}>
                     <div className="form-group"><label className="form-label">Exam *</label><select className="form-select" value={form.exam} onChange={e=>setForm({...form,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                     <div className="form-group"><label className="form-label">Class *</label><select className="form-select" value={form.className} onChange={e=>setForm({...form,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                    <div className="form-group"><label className="form-label">Section *</label><input type="text" className="form-input" value={form.section} onChange={e=>setForm({...form,section:e.target.value})} placeholder="A" /></div>
+                    <div className="form-group"><label className="form-label">Section *</label><select className="form-select" value={form.section} onChange={e=>setForm({...form,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 </div>
                 <div className="exam-section-divider"><Calendar size={16}/> Add Schedule Entry</div>
                 <div className="timetable-entry-row">
@@ -185,7 +185,7 @@ function HallTicketsTab() {
                 <div className="exam-form">
                     <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                     <div className="form-row"><div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                        <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div></div>
+                        <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div></div>
                     <div className="form-actions"><button className="btn btn-primary" onClick={()=>setPreview(true)}><Eye size={16}/> Preview Hall Ticket</button></div>
                 </div>
             </div>
@@ -225,7 +225,7 @@ function MarksEntryTab() {
             <div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,marginBottom:24,display:'grid'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value,className:'',subject:''})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{(selClass?.subjects?.length>0?selClass.subjects.map(s=>s.name):STANDARD_SUBJECTS).map((s,i)=><option key={i} value={s}>{s}</option>)}</select></div>
             </div>
             {sel.subject && <div className="result-summary-cards"><div className="result-summary-card"><label>Max Theory</label><p>{activeSubject.theoryMarks||activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Max Practical</label><p>{activeSubject.practicalMarks||0}</p></div><div className="result-summary-card"><label>Total</label><p>{activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Pass</label><p>{activeSubject.passingMarks}</p></div></div>}
@@ -266,7 +266,7 @@ function ResultsTab() {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={handleProcess} disabled={processing}><ClipboardCheck size={16}/> {processing?'Processing...':'Process Results'}</button>
                 <button className="btn btn-outline" onClick={fetchResults}><Eye size={16}/> View</button>
             </div>
@@ -294,7 +294,7 @@ function ReportCardsTab() {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={fetchResults}><FileText size={16}/> Load Results</button>
             </div>
             {results.length>0 && !previewStudent && <div className="table-responsive"><table className="data-table"><thead><tr><th>Student</th><th>Total</th><th>%</th><th>Grade</th><th>Rank</th><th>Status</th><th>Report</th></tr></thead>
@@ -326,7 +326,7 @@ function AnalyticsTab() {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Section</label><input type="text" className="form-input" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})} /></div>
+                <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={fetchAnalytics}><BarChart3 size={16}/> Generate</button>
             </div>
             {analytics && (<>

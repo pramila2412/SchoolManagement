@@ -10,7 +10,7 @@ import {
     CheckSquare, Clipboard, Phone, HelpCircle, AlertTriangle, Package, CalendarClock,
     Layers, BookMarked, ArrowUpRight, FolderOpen, Upload,
     Image, Gift, Download, ClipboardList, PieChart, FileSymlink, Globe, TrendingDown, RotateCcw, Monitor,
-    Briefcase, Star, Timer, Filter, ShieldCheck, X
+    Briefcase, Star, Timer, Filter, ShieldCheck, X, Activity
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -142,6 +142,9 @@ const subIconMap = {
     'Complaints': AlertTriangle,
     'Postal': Package,
     'Appointments': CalendarClock,
+    // Admin Parent Portal
+    'Parents List': Users,
+    'Parent Activities': Activity,
 };
 
 import { useAuth } from '../context/AuthContext';
@@ -242,6 +245,13 @@ export const SIDEBAR_MODULES = [
             { name: 'HR Reports', path: '/hr?tab=reports' },
             { name: 'HR Settings', path: '/hr?tab=settings' },
             { name: 'Login Access', path: '/hr?tab=login-management', superAdminOnly: true },
+        ]
+    },
+    {
+        id: 'admin-parent-portal', name: 'Parent Portal (Admin)', icon: 'Users', path: '/admin-parent-portal',
+        subModules: [
+            { name: 'Parents List', path: '/admin-parent-portal?tab=list' },
+            { name: 'Parent Activities', path: '/admin-parent-portal?tab=activities' },
         ]
     },
     {

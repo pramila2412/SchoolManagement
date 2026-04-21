@@ -470,19 +470,6 @@ function IDCardTab() {
         const card = document.createElement('div');
         card.style.cssText = 'width:420px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;position:absolute;left:-9999px;top:-9999px;';
 
-        const logoSVG = `<svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="50,2 96,78 4,78" fill="none" stroke="#0B3C5D" stroke-width="2.5" />
-            <polygon points="50,98 4,22 96,22" fill="none" stroke="#0B3C5D" stroke-width="2.5" />
-            <circle cx="50" cy="50" r="16" fill="#ffffff" stroke="#0B3C5D" stroke-width="1" />
-            <path d="M50,42 L50,58 M42,50 L58,50" stroke="#E31E24" stroke-width="2.5" />
-            <text x="50" y="18" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial">MOUNT ZION SCHOOL</text>
-            <text x="24" y="38" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(-60 24,38)">MOUNT ZION SCHOOL</text>
-            <text x="76" y="38" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(60 76,38)">MOUNT ZION SCHOOL</text>
-            <text x="50" y="82" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial">MOUNT ZION SCHOOL</text>
-            <text x="24" y="62" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(60 24,62)">MOUNT ZION SCHOOL</text>
-            <text x="76" y="62" text-anchor="middle" font-size="4" font-weight="bold" fill="#0B3C5D" font-family="Arial" transform="rotate(-60 76,62)">MOUNT ZION SCHOOL</text>
-        </svg>`;
-
         const signatureSVG = `<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg">
             <path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" 
                 stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" />
@@ -492,7 +479,7 @@ function IDCardTab() {
         card.innerHTML = `
             <div style="background:#57C4E5;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
                 <div style="width:80px;height:80px;flex-shrink:0;margin-right:12px;">
-                    ${logoSVG}
+                    <img src="/logo.png" style="width:80px;height:80px;object-fit:contain;" crossorigin="anonymous" />
                 </div>
                 <div style="flex:1;min-width:0;">
                     <div style="font-size:24px;font-weight:900;color:#E31E24;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
@@ -575,7 +562,14 @@ function IDCardTab() {
             if (!clone) return;
             document.body.appendChild(clone);
             
-            const canvas = await html2canvas(clone, { scale: 2, useCORS: true });
+            // Wait for images to load
+            const imgs = Array.from(clone.getElementsByTagName('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => { img.onload = img.onerror = resolve; });
+            }));
+            
+            const canvas = await html2canvas(clone, { scale: 3, useCORS: true, logging: false });
             document.body.removeChild(clone);
 
             const imgData = canvas.toDataURL('image/png');
@@ -613,7 +607,14 @@ function IDCardTab() {
                 if (!clone) continue;
                 document.body.appendChild(clone);
                 
-                const canvas = await html2canvas(clone, { scale: 2, useCORS: true });
+                // Wait for images to load
+                const imgs = Array.from(clone.getElementsByTagName('img'));
+                await Promise.all(imgs.map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => { img.onload = img.onerror = resolve; });
+                }));
+                
+                const canvas = await html2canvas(clone, { scale: 3, useCORS: true, logging: false });
                 document.body.removeChild(clone);
 
                 const imgData = canvas.toDataURL('image/png');

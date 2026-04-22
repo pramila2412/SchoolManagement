@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import {
     Users, IndianRupee, CalendarCheck, BookOpen, Bus,
     TrendingUp, TrendingDown, UserPlus, AlertCircle,
-    ArrowRight, Clock,
+    ArrowRight, Clock, Layout
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { getGreeting, formatCurrency } from '../utils/helpers';
+import { useAuth } from '../context/AuthContext';
+import SiteSettings from '../components/SiteSettings';
 import './Dashboard.css';
 
 export default function Dashboard() {
     const greeting = getGreeting();
+    const { user } = useAuth();
+    const [activeDashboardTab, setActiveDashboardTab] = useState('overview');
 
     const [dashboardStats, setDashboardStats] = useState({
         totalStudents: 0,
@@ -90,7 +94,35 @@ export default function Dashboard() {
 
     return (
         <div className="dashboard animate-fade-in">
-            {/* Welcome Banner */}
+            {/* Super Admin Dashboard Tabs */}
+            {user?.role === 'Super Admin' && (
+                <div className="dashboard-tabs">
+                    <button 
+                        className={`d-tab-btn ${activeDashboardTab === 'overview' ? 'active' : ''}`}
+                        onClick={() => setActiveDashboardTab('overview')}
+                    >
+                        <TrendingUp size={18} /> Dashboard Overview
+                    </button>
+                    <button 
+                        className={`d-tab-btn ${activeDashboardTab === 'site-configs' ? 'active' : ''}`}
+                        onClick={() => setActiveDashboardTab('site-configs')}
+                    >
+                        <Layout size={18} /> Home Page Settings (CMS)
+                    </button>
+                </div>
+            )}
+
+            {activeDashboardTab === 'site-configs' ? (
+                <div className="cms-wrapper">
+                    <div className="section-header">
+                        <h2>Landing Page Content Management</h2>
+                        <p className="section-subtitle">Update your school website content live</p>
+                    </div>
+                    <SiteSettings />
+                </div>
+            ) : (
+                <>
+                    {/* Welcome Banner */}
             <div className="welcome-banner">
                 <div className="welcome-content">
                     <h1>{greeting}, <span className="welcome-school">MOUNT ZION SCHOOL</span></h1>
@@ -191,6 +223,8 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
+    )}
+</div>
     );
 }

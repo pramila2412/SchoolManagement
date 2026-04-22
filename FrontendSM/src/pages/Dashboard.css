@@ -262,3 +262,9 @@
         font-size: 0.78rem;
     }
 }
+/* CMS TABS */
+.dashboard-tabs { display: flex; gap: 10px; margin-bottom: 24px; background: #fff; padding: 6px; border-radius: 12px; border: 1px solid #eef2f6; width: fit-content; }
+.d-tab-btn { display: flex; align-items: center; gap: 10px; padding: 10px 20px; border: none; background: transparent; color: #64748b; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+.d-tab-btn.active { background: #051A29; color: #fff !important; }
+.cms-wrapper { animation: slideUp 0.4s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

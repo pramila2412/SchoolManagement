@@ -1,143 +1,57 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ===== New Login Page Styles (Figma Inspired) ===== */
 
-@layer utilities {
-  .animate-blob {
-    animation: blob 15s infinite;
-  }
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-  .animation-delay-4000 {
-    animation-delay: 4s;
-  }
+.login-new-wrapper {
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    position: relative;
+    overflow: hidden;
 }
 
+.login-new-wrapper .form-input {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    transition: all 0.2s ease;
+}
+
+.login-new-wrapper .form-input:focus {
+    border-color: #0B3C5D;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(11, 60, 93, 0.05);
+}
+
+/* Animations */
 @keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
 }
 
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+.animate-blob {
+    animation: blob 7s infinite;
 }
 
-/* ===== Mobile Branding Header (visible only on small screens) ===== */
-.login-mobile-brand {
-  display: none;
-  text-align: center;
-  margin-bottom: 24px;
-}
-.login-mobile-brand h1 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-.login-mobile-brand p {
-  font-size: 0.85rem;
-  opacity: 0.5;
+.animation-delay-2000 {
+    animation-delay: 2s;
 }
 
-/* ===== Mobile Responsive ===== */
-@media (max-width: 1023px) {
-  /* Show mobile branding when hero is hidden */
-  .login-mobile-brand {
-    display: block;
-  }
+.animation-delay-4000 {
+    animation-delay: 4s;
 }
 
+/* Custom Checkbox / Radio accent */
+input[type="checkbox"], input[type="radio"] {
+    accent-color: #0B3C5D;
+}
+
+/* Responsive adjustments */
 @media (max-width: 640px) {
-  /* Shrink blobs on mobile to reduce GPU strain */
-  .login-wrapper .animate-blob {
-    width: 250px !important;
-    height: 250px !important;
-  }
-
-  /* Tighten outer padding */
-  .login-wrapper > div.relative {
-    padding: 20px 16px !important;
-    align-items: flex-start !important;
-    padding-top: 40px !important;
-  }
-
-  /* Form card takes full width */
-  .login-wrapper .max-w-\[440px\] {
-    max-width: 100% !important;
-  }
-
-  /* Role toggle buttons */
-  .login-wrapper .rounded-2xl button {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    font-size: 0.85rem;
-  }
-
-  /* Card content inner padding */
-  .login-wrapper [class*="CardContent"],
-  .login-wrapper [class*="p-8"] {
-    padding: 20px 16px 24px !important;
-  }
-
-  /* Heading and subtext */
-  .login-wrapper h2 {
-    font-size: 1.3rem !important;
-  }
-  .login-wrapper h2 + p {
-    font-size: 0.8rem !important;
-  }
-
-  /* Input fields – larger touch targets */
-  .login-wrapper input {
-    height: 48px !important;
-    font-size: 16px !important; /* Prevent iOS zoom */
-  }
-
-  /* Submit button */
-  .login-wrapper button[type="submit"] {
-    height: 50px !important;
-    font-size: 1rem !important;
-    border-radius: 12px !important;
-  }
-
-  /* Demo hint at bottom */
-  .login-wrapper .font-mono {
-    font-size: 0.75rem !important;
-    word-break: break-all;
-    padding: 8px 12px !important;
-  }
-
-  /* Mobile brand header adjustments */
-  .login-mobile-brand h1 {
-    font-size: 1.5rem;
-  }
-}
-
-/* Extra small phones (iPhone SE, etc.) */
-@media (max-width: 380px) {
-  .login-wrapper > div.relative {
-    padding: 16px 12px !important;
-    padding-top: 28px !important;
-  }
-
-  .login-mobile-brand h1 {
-    font-size: 1.3rem;
-  }
-
-  .login-wrapper h2 {
-    font-size: 1.15rem !important;
-  }
+    .login-new-wrapper {
+        padding: 20px;
+        align-items: flex-start;
+    }
+    
+    .login-new-wrapper .absolute.top-0 {
+        height: 250px;
+    }
 }

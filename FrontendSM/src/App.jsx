@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import GlobalDialog from './components/GlobalDialog';
 import LoginPage from './pages/Login';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
@@ -61,7 +62,7 @@ function AppLayout() {
         <div className="page-content">
           <Routes>
             <Route path="/" element={
-              user?.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
+              user.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
             } />
             <Route path="/students" element={<StudentsPage />} />
             <Route path="/students/add" element={<AddStudent />} />
@@ -93,21 +94,29 @@ function AppLayout() {
   );
 }
 
+function AppContent() {
+  const { user } = useAuth();
+  return (
+    <Routes>
+      <Route path="/" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/parent-selector" element={
+        <ProtectedRoute children={<ChildSelectorPage />} />
+      } />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/parent-selector" element={
-            <ProtectedRoute children={<ChildSelectorPage />} />
-          } />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          } />
-        </Routes>
+        <AppContent />
       </AuthProvider>
     </BrowserRouter>
   );

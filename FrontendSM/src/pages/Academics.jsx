@@ -734,6 +734,7 @@ function StudyMaterialsTab() {
         { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', uploadedBy: 'Ms. Gupta', date: '2026-03-20' },
     ]);
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
     const [form, setForm] = useState({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
 
     const typeBadge = (t) => t === 'PDF' ? 'badge-danger' : t === 'Video Link' ? 'badge-info' : 'badge-warning';
@@ -747,10 +748,12 @@ function StudyMaterialsTab() {
             subject: form.subject,
             type: form.type,
             uploadedBy: form.uploadedBy,
+            fileName: selectedFile ? selectedFile.name : '—',
             date: new Date().toISOString().split('T')[0]
         };
         setMaterials(prev => [...prev, newMaterial]);
         setForm({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
+        setSelectedFile(null);
         setIsUploading(false);
         await customAlert('Study Material uploaded successfully!', 'Success', 'success');
     };
@@ -792,6 +795,36 @@ function StudyMaterialsTab() {
                         <div className="form-group"><label className="form-label">Uploaded By <span className="required">*</span></label>
                             <input type="text" className="form-input" required value={form.uploadedBy} onChange={e => setForm({...form, uploadedBy: e.target.value})} /></div>
                         
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                            <label className="form-label">Upload File <span className="required">*</span></label>
+                            <div 
+                                className="upload-box" 
+                                onClick={() => document.getElementById('material-file-input').click()}
+                                style={{ 
+                                    border: '2px dashed var(--border-light)', 
+                                    padding: '20px', 
+                                    textAlign: 'center', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    background: 'var(--bg-light)',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <Upload size={24} style={{ color: 'var(--text-light)', marginBottom: 8 }} />
+                                {selectedFile ? (
+                                    <p style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedFile.name}</p>
+                                ) : (
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Click to select or drop material file here</p>
+                                )}
+                                <input 
+                                    id="material-file-input"
+                                    type="file" 
+                                    style={{ display: 'none' }} 
+                                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                                />
+                            </div>
+                        </div>
+                        
                         <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
                             <button type="button" className="btn btn-outline" onClick={() => setIsUploading(false)}>Cancel</button>
                             <button type="submit" className="btn btn-primary"><Save size={16}/> Save Material</button>
@@ -802,9 +835,10 @@ function StudyMaterialsTab() {
 
             {!isUploading && (
                 <div className="table-responsive">
-                    <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
+                    <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>File</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
                         <tbody>{materials.length > 0 ? materials.map(m => (
                             <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.class}</td><td>{m.subject}</td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>{m.fileName || '—'}</td>
                                 <td><span className={`badge ${typeBadge(m.type)}`}>{m.type}</span></td>
                                 <td>{m.uploadedBy}</td><td>{m.date}</td>
                                 <td>
@@ -857,17 +891,49 @@ function PromotionTab() {
 
 // ======================== REPORTS ========================
 function ReportsTab() {
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const reports = [
-        { name: 'Class Performance Report', desc: 'Average marks, pass/fail rates per class', formats: 'PDF, Excel' },
-        { name: 'Subject Analysis', desc: 'Marks distribution per subject', formats: 'PDF, Excel' },
-        { name: 'Teacher Performance', desc: 'Classes taught, lesson completion rate', formats: 'PDF, Excel' },
-        { name: 'Class Timetable', desc: 'Weekly schedule per class-section', formats: 'PDF, Print' },
-        { name: 'Teacher Timetable', desc: 'Weekly schedule per teacher', formats: 'PDF, Print' },
-        { name: 'Syllabus Coverage', desc: '% of syllabus completed per subject', formats: 'PDF, Excel' },
-        { name: 'Lesson Plan Report', desc: 'Completed vs planned lessons', formats: 'PDF, Excel' },
-        { name: 'Assignment Report', desc: 'Submission rates and grade distribution', formats: 'PDF, Excel' },
-        { name: 'Promotion Summary', desc: 'Students promoted, retained per class', formats: 'PDF, Excel' },
+        { id: 'class-perf', name: 'Class Performance Report', desc: 'Average marks, pass/fail rates per class', formats: 'PDF, Excel' },
+        { id: 'subj-analysis', name: 'Subject Analysis', desc: 'Marks distribution per subject', formats: 'PDF, Excel' },
+        { id: 'teacher-perf', name: 'Teacher Performance', desc: 'Classes taught, lesson completion rate', formats: 'PDF, Excel' },
+        { id: 'class-tt', name: 'Class Timetable', desc: 'Weekly schedule per class-section', formats: 'PDF, Print' },
+        { id: 'teacher-tt', name: 'Teacher Timetable', desc: 'Weekly schedule per teacher', formats: 'PDF, Print' },
+        { id: 'syllabus-cov', name: 'Syllabus Coverage', desc: '% of syllabus completed per subject', formats: 'PDF, Excel' },
+        { id: 'lesson-plan', name: 'Lesson Plan Report', desc: 'Completed vs planned lessons', formats: 'PDF, Excel' },
+        { id: 'assignment-rep', name: 'Assignment Report', desc: 'Submission rates and grade distribution', formats: 'PDF, Excel' },
+        { id: 'promotion-sum', name: 'Promotion Summary', desc: 'Students promoted, retained per class', formats: 'PDF, Excel' },
     ];
+
+    const [modal, setModal] = useState({ open: false, config: null });
+    const [params, setParams] = useState({ class: 'I', section: 'A', format: 'PDF' });
+    const [genProgress, setGenProgress] = useState(0);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleStartGenerate = (r) => {
+        setModal({ open: true, config: r });
+        setGenProgress(0);
+        setIsGenerating(false);
+    };
+
+    const executeGeneration = () => {
+        setIsGenerating(true);
+        let p = 0;
+        const interval = setInterval(() => {
+            p += Math.random() * 30;
+            if (p >= 100) {
+                p = 100;
+                setGenProgress(100);
+                clearInterval(interval);
+                setTimeout(async () => {
+                    await customAlert(`${modal.config.name} for Class ${params.class}-${params.section} generated successfully!`, 'Report Ready');
+                    setModal({ open: false, config: null });
+                    setIsGenerating(false);
+                }, 500);
+            } else {
+                setGenProgress(p);
+            }
+        }, 400);
+    };
 
     return (
         <div className="animate-fade-in">
@@ -879,11 +945,66 @@ function ReportsTab() {
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-light)', marginBottom: 12 }}>{r.desc}</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.formats}</span>
-                            <button className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><FileText size={14}/> Generate</button>
+                            <button className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleStartGenerate(r)}><FileText size={14}/> Generate</button>
                         </div>
                     </div>
                 ))}
             </div>
+
+            {modal.open && (
+                <div className="acad-modal-overlay animate-fade-in">
+                    <div className="acad-modal card animate-slide-up" style={{ maxWidth: 450, width: '90%' }}>
+                        <div className="modal-header" style={{ marginBottom: 20, borderBottom: '1px solid var(--border-light)', paddingBottom: 15 }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Generate {modal.config?.name}</h3>
+                        </div>
+
+                        {!isGenerating ? (
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Select Class</label>
+                                    <select className="form-select" value={params.class} onChange={e => setParams({...params, class: e.target.value})}>
+                                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginTop: 15 }}>
+                                    <label className="form-label">Select Section</label>
+                                    <select className="form-select" value={params.section} onChange={e => setParams({...params, section: e.target.value})}>
+                                        <option>A</option><option>B</option><option>C</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginTop: 15 }}>
+                                    <label className="form-label">Download Format</label>
+                                    <div style={{ display: 'flex', gap: 15, marginTop: 8 }}>
+                                        {['PDF', 'Excel'].map(f => (
+                                            <label key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                                <input type="radio" checked={params.format === f} onChange={() => setParams({...params, format: f})} style={{ accentColor: 'var(--accent)' }} />
+                                                <span style={{ fontSize: '0.85rem' }}>{f}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: 12, marginTop: 30, justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-outline" onClick={() => setModal({ open: false, config: null })}>Cancel</button>
+                                    <button className="btn btn-primary" onClick={executeGeneration}>Generate Report</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="modal-body" style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div style={{ marginBottom: 20 }}>
+                                    <div className="spinner" style={{ margin: '0 auto 15px' }}></div>
+                                    <p style={{ fontWeight: 600, color: 'var(--primary)' }}>Generating your report...</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>Please wait while we gather the latest academic data.</p>
+                                </div>
+                                <div className="progress-bar" style={{ height: 10, background: 'var(--bg)', borderRadius: 5, overflow: 'hidden' }}>
+                                    <div className="progress-bar-fill" style={{ width: `${genProgress}%`, background: 'var(--accent)', height: '100%', transition: 'width 0.3s ease' }}></div>
+                                </div>
+                                <p style={{ marginTop: 10, fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)' }}>{Math.round(genProgress)}% Complete</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

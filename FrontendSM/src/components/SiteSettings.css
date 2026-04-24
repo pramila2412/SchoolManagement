@@ -173,6 +173,31 @@
     font-size: 1rem;
 }
 
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.list-item-card {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.list-item-card input {
+    flex: 1;
+}
+
+.list-item-card textarea {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }

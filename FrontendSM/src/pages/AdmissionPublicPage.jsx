@@ -42,8 +42,8 @@ const DEFAULTS = {
     ],
     feeNote: 'For detailed fee structure, please visit the school office or contact us directly. Fee concessions may be available for meritorious students and siblings.',
     admissionContact: {
-        phone: '+91 89434 94547',
-        email: 'mountzion@gmail.com',
+        phone: '6296490943',
+        email: 'mountzionschool2021@gmail.com',
         officeHours: 'Monday to Saturday, 9:00 AM - 3:00 PM'
     },
     classesOffered: ['Nursery', 'LKG', 'UKG', 'Class I', 'Class II', 'Class III', 'Class IV', 'Class V', 'Class VI', 'Class VII', 'Class VIII', 'Class IX', 'Class X', 'Class XI', 'Class XII'],
@@ -57,14 +57,14 @@ export default function AdmissionPublicPage() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [siteConfig, setSiteConfig] = useState({
         header: {
-            phone1: '+91 89434 94547',
-            phone2: '+91 89434 94548',
-            email: 'mountzion@gmail.com',
+            phone1: '6296490943',
+            phone2: '6296490943',
+            email: 'mountzionschool2021@gmail.com',
             socials: { facebook: '#', youtube: '#', instagram: '#', whatsapp: '#' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
-            address: 'Emily Hattson 940 Goldendale Dr, Wasilla, Alaska 99654, USA',
+            address: 'MOUNT ZION SCHOOL, SION NAGAR, PURNEA - 854301, BIHAR, Office Timing : 7.00 am to 1:30 pm (Summer), 8.30 am to 2.30 pm (winter), Sunday Holiday',
             copyright: 'Copyright © 2025 Mount Zion School, Inc. All rights reserved.'
         }
     });
@@ -91,9 +91,9 @@ export default function AdmissionPublicPage() {
     }, []);
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-    const phone1 = siteConfig?.header?.phone1 || '+91 89434 94547';
-    const phone2 = siteConfig?.header?.phone2 || '+91 89434 94548';
-    const email = siteConfig?.header?.email || 'mountzion@gmail.com';
+    const phone1 = siteConfig?.header?.phone1 || '6296490943';
+    const phone2 = siteConfig?.header?.phone2 || '6296490943';
+    const email = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
     const socials = siteConfig?.header?.socials || {};
 
     const fadeInUp = {

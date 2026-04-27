@@ -55,19 +55,19 @@ export default function AboutPage() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [siteConfig, setSiteConfig] = useState({
         header: {
-            phone1: '+91 89434 94547',
-            phone2: '+91 89434 94548',
-            email: 'mountzion@gmail.com',
+            phone1: '6296490943',
+            phone2: '6296490943',
+            email: 'mountzionschool2021@gmail.com',
             socials: {
                 facebook: 'https://facebook.com',
                 youtube: 'https://youtube.com',
                 instagram: 'https://instagram.com',
-                whatsapp: 'https://wa.me/918943494547'
+                whatsapp: 'https://wa.me/916296490943'
             }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
-            address: 'Emily Hattson 940 Goldendale Dr, Wasilla, Alaska 99654, USA',
+            address: 'MOUNT ZION SCHOOL, SION NAGAR, PURNEA - 854301, BIHAR, Office Timing : 7.00 am to 1:30 pm (Summer), 8.30 am to 2.30 pm (winter), Sunday Holiday',
             copyright: 'Copyright © 2025 Mount Zion School, Inc. All rights reserved.'
         }
     });
@@ -104,9 +104,9 @@ export default function AboutPage() {
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
-    const phone1 = siteConfig?.header?.phone1 || '+91 89434 94547';
-    const phone2 = siteConfig?.header?.phone2 || '+91 89434 94548';
-    const email = siteConfig?.header?.email || 'mountzion@gmail.com';
+    const phone1 = siteConfig?.header?.phone1 || '6296490943';
+    const phone2 = siteConfig?.header?.phone2 || '6296490943';
+    const email = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
     const socials = siteConfig?.header?.socials || {};
 
     const fadeInUp = {

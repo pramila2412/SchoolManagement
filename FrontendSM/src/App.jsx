@@ -6,6 +6,11 @@ import Sidebar from './components/Sidebar';
 import GlobalDialog from './components/GlobalDialog';
 import LoginPage from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
+import AdmissionPublicPage from './pages/AdmissionPublicPage';
+import CurriculumPage from './pages/CurriculumPage';
+import GalleryPublicPage from './pages/GalleryPublicPage';
+import ContactPublicPage from './pages/ContactPublicPage';
 import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
@@ -99,6 +104,11 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <LandingPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/admission" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <AdmissionPublicPage />} />
+      <Route path="/curriculum" element={<CurriculumPage />} />
+      <Route path="/gallery" element={<GalleryPublicPage />} />
+      <Route path="/contact" element={<ContactPublicPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/parent-selector" element={
         <ProtectedRoute children={<ChildSelectorPage />} />

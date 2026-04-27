@@ -248,17 +248,17 @@ export default function LandingPage() {
                         <div className="nav-divider"></div>
                         <Link to="/" className="nav-link active">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">About</span>
+                        <Link to="/about" className="nav-link">About</Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">Admission</span>
+                        <Link to="/admission" className="nav-link">Admission</Link>
                         <div className="nav-divider"></div>
                         <Link to="/academics" className="nav-link">Academics</Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">Career</span>
+                        <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">Gallery</span>
+                        <Link to="/gallery" className="nav-link">Gallery</Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">Contact Us</span>
+                        <Link to="/contact" className="nav-link">Contact Us</Link>
                     </div>
 
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
@@ -644,7 +644,7 @@ export default function LandingPage() {
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
                             <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
                             <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <span>About Us</span>
+                            <Link to="/about" onClick={toggleMobileMenu}>About Us</Link>
                             <span>Contact</span>
                         </div>
                     </motion.div>
@@ -693,7 +693,7 @@ export default function LandingPage() {
                             <div className="footer-col">
                                 <h4>Support</h4>
                                 <ul className="footer-links">
-                                    <li><Link to="/career">Career</Link></li>
+                                    <li><Link to="/curriculum">Curriculum</Link></li>
                                     <li><Link to="/gallery">Gallery</Link></li>
                                     <li><Link to="/notices">Notices</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>

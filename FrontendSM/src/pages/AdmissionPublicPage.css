@@ -1,0 +1,694 @@
+/* ===== Admission Public Page Styles ===== */
+
+/* ----- Hero ----- */
+.adm-hero {
+    height: 420px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    color: white;
+}
+
+.adm-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(5, 26, 41, 0.5) 0%,
+        rgba(5, 26, 41, 0.85) 100%
+    );
+}
+
+.adm-hero-content {
+    position: relative;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 50px 60px;
+    width: 100%;
+}
+
+.adm-hero-content h1 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    max-width: 700px;
+}
+
+.adm-hero-content > p {
+    font-size: 1.15rem;
+    opacity: 0.85;
+    max-width: 550px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.adm-open-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(28, 167, 166, 0.2);
+    border: 1px solid rgba(28, 167, 166, 0.5);
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #5DFDCB;
+    letter-spacing: 0.5px;
+}
+
+.adm-pulse {
+    width: 10px;
+    height: 10px;
+    background: #1CA7A6;
+    border-radius: 50%;
+    animation: admPulse 2s infinite;
+}
+
+@keyframes admPulse {
+    0% { box-shadow: 0 0 0 0 rgba(28, 167, 166, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(28, 167, 166, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(28, 167, 166, 0); }
+}
+
+/* ----- Steps Section ----- */
+.adm-steps-section {
+    padding: 0;
+    position: relative;
+    z-index: 2;
+    margin-top: -50px;
+}
+
+.adm-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+}
+
+.adm-step-card {
+    background: white;
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.adm-step-card:first-child {
+    border-radius: 12px 0 0 12px;
+}
+
+.adm-step-card:last-child {
+    border-radius: 0 12px 12px 0;
+}
+
+.adm-step-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    z-index: 3;
+}
+
+.adm-step-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: rgba(11, 60, 93, 0.06);
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    line-height: 1;
+}
+
+.adm-step-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(28, 167, 166, 0.1);
+    color: #1CA7A6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    transition: all 0.3s;
+}
+
+.adm-step-card:hover .adm-step-icon {
+    background: #1CA7A6;
+    color: white;
+}
+
+.adm-step-card h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #051A29;
+    margin-bottom: 8px;
+}
+
+.adm-step-card p {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* ----- Section Tag ----- */
+.adm-section-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    color: #1CA7A6;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding: 6px 14px;
+    background: rgba(28, 167, 166, 0.08);
+    border-radius: 4px;
+}
+
+/* ----- Procedure Section ----- */
+.adm-procedure-section {
+    padding: 100px 0;
+    background: #fff;
+}
+
+.adm-procedure-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.adm-procedure-left h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #051A29;
+    margin-bottom: 30px;
+    line-height: 1.2;
+}
+
+.adm-procedure-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.adm-procedure-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.adm-bullet {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    background: #0B3C5D;
+    border-radius: 50%;
+    margin-top: 5px;
+}
+
+.adm-procedure-item p {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.7;
+}
+
+.adm-procedure-image-wrap {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+    position: relative;
+}
+
+.adm-procedure-image-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 3px solid rgba(28, 167, 166, 0.3);
+    border-radius: 12px;
+    pointer-events: none;
+}
+
+.adm-procedure-image-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ----- Criteria Section ----- */
+.adm-criteria-section {
+    padding: 100px 0;
+    background: #f8fafc;
+}
+
+.adm-criteria-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.adm-criteria-header h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #051A29;
+}
+
+.adm-criteria-list {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.adm-criteria-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: white;
+    padding: 22px 28px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+.adm-criteria-item:hover {
+    border-color: #1CA7A6;
+    box-shadow: 0 4px 15px rgba(28, 167, 166, 0.08);
+    transform: translateX(5px);
+}
+
+.adm-criteria-num {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #1CA7A6;
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(28, 167, 166, 0.08);
+    border-radius: 8px;
+}
+
+.adm-criteria-item p {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.7;
+    flex: 1;
+}
+
+/* ----- Classes Section ----- */
+.adm-classes-section {
+    padding: 80px 0;
+    background: #fff;
+}
+
+.adm-classes-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.adm-classes-header h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #051A29;
+}
+
+.adm-classes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.adm-class-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0B3C5D;
+    transition: all 0.3s;
+    cursor: default;
+}
+
+.adm-class-chip:hover {
+    background: #051A29;
+    color: white;
+    border-color: #051A29;
+}
+
+.adm-class-chip:hover svg {
+    color: #ffb800;
+}
+
+.adm-class-chip svg {
+    color: #1CA7A6;
+    transition: color 0.3s;
+}
+
+/* ----- Documents Section ----- */
+.adm-docs-section {
+    padding: 100px 0;
+    background: #f8fafc;
+}
+
+.adm-docs-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 50px;
+    align-items: flex-start;
+}
+
+.adm-docs-left h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #051A29;
+    margin-bottom: 12px;
+}
+
+.adm-docs-intro {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.adm-docs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.adm-doc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+.adm-doc-item:hover {
+    border-color: #1CA7A6;
+    transform: translateX(5px);
+}
+
+.adm-doc-icon {
+    color: #1CA7A6;
+    flex-shrink: 0;
+}
+
+.adm-doc-item span {
+    font-size: 0.92rem;
+    color: #334155;
+    font-weight: 500;
+}
+
+/* Fee Card */
+.adm-fee-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 40px 35px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 120px;
+}
+
+.adm-fee-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 184, 0, 0.1);
+    color: #ffb800;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.adm-fee-card h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #051A29;
+    margin-bottom: 12px;
+}
+
+.adm-fee-card > p {
+    font-size: 0.92rem;
+    color: #64748b;
+    line-height: 1.7;
+}
+
+.adm-fee-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 24px 0;
+}
+
+.adm-important-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+    background: #fef3c7;
+    border-radius: 8px;
+    border: 1px solid #fde68a;
+}
+
+.adm-important-note svg {
+    color: #d97706;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.adm-important-note span {
+    font-size: 0.82rem;
+    color: #92400e;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+/* ----- Contact Section ----- */
+.adm-contact-section {
+    padding: 100px 0;
+    background: #fff;
+}
+
+.adm-contact-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+.adm-contact-info h2 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #051A29;
+    margin-bottom: 12px;
+}
+
+.adm-contact-info > p {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 35px;
+    line-height: 1.6;
+}
+
+.adm-contact-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.adm-contact-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+.adm-contact-card:hover {
+    border-color: #1CA7A6;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.adm-contact-card svg {
+    color: #1CA7A6;
+    flex-shrink: 0;
+}
+
+.adm-contact-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.adm-contact-card a,
+.adm-contact-card span:not(.adm-contact-label) {
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.adm-contact-card a:hover {
+    color: #1CA7A6;
+}
+
+/* CTA Box */
+.adm-cta-box {
+    background: linear-gradient(135deg, #051A29 0%, #0B3C5D 100%);
+    border-radius: 16px;
+    padding: 10px;
+}
+
+.adm-cta-inner {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 50px 40px;
+    text-align: center;
+}
+
+.adm-cta-inner h3 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.adm-cta-inner > p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.adm-cta-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.adm-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.adm-cta-btn.primary {
+    background: #1CA7A6;
+    color: white;
+}
+
+.adm-cta-btn.primary:hover {
+    background: #178f8e;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(28, 167, 166, 0.3);
+}
+
+.adm-cta-btn.secondary {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.adm-cta-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1200px) {
+    .adm-hero-content h1 { font-size: 2.5rem; }
+    .adm-procedure-grid,
+    .adm-docs-grid,
+    .adm-contact-grid { gap: 50px; }
+}
+
+@media (max-width: 1024px) {
+    .adm-hero { height: 350px; }
+    .adm-hero-content { padding: 0 30px 50px; }
+    .adm-hero-content h1 { font-size: 2.2rem; }
+
+    .adm-steps-grid { grid-template-columns: repeat(2, 1fr); }
+    .adm-step-card:first-child { border-radius: 12px 0 0 0; }
+    .adm-step-card:nth-child(2) { border-radius: 0 12px 0 0; }
+    .adm-step-card:nth-child(3) { border-radius: 0 0 0 12px; }
+    .adm-step-card:last-child { border-radius: 0 0 12px 0; }
+
+    .adm-procedure-grid,
+    .adm-docs-grid,
+    .adm-contact-grid { grid-template-columns: 1fr; }
+    
+    .adm-procedure-right { max-width: 500px; margin: 0 auto; }
+    .adm-fee-card { position: static; }
+}
+
+@media (max-width: 768px) {
+    .adm-hero { height: 320px; }
+    .adm-hero-content h1 { font-size: 1.8rem; }
+    .adm-hero-content > p { font-size: 1rem; }
+
+    .adm-procedure-left h2,
+    .adm-criteria-header h2,
+    .adm-classes-header h2,
+    .adm-docs-left h2,
+    .adm-contact-info h2 { font-size: 1.8rem; }
+
+    .adm-procedure-section,
+    .adm-criteria-section,
+    .adm-docs-section,
+    .adm-contact-section { padding: 70px 0; }
+}
+
+@media (max-width: 640px) {
+    .adm-hero { height: 300px; }
+    .adm-hero-content { padding: 0 20px 40px; }
+    .adm-hero-content h1 { font-size: 1.6rem; }
+
+    .adm-steps-grid { grid-template-columns: 1fr; margin-top: 0; }
+    .adm-steps-section { margin-top: -30px; }
+    .adm-step-card { border-radius: 0 !important; }
+    .adm-step-card:first-child { border-radius: 12px 12px 0 0 !important; }
+    .adm-step-card:last-child { border-radius: 0 0 12px 12px !important; }
+
+    .adm-criteria-item { padding: 16px 20px; }
+    .adm-cta-inner { padding: 35px 25px; }
+    .adm-cta-inner h3 { font-size: 1.4rem; }
+
+    .adm-classes-section { padding: 60px 0; }
+}

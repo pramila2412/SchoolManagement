@@ -52,7 +52,7 @@ const DEFAULTS = {
 };
 
 export default function AdmissionPublicPage() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [data, setData] = useState(DEFAULTS);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [siteConfig, setSiteConfig] = useState({
@@ -144,16 +144,15 @@ export default function AdmissionPublicPage() {
 
             {/* ===== HEADER ===== */}
             <header className="landing-header">
-                <div className="header-inner">
+                <div className="header-inner" style={{ justifyContent: 'space-between' }}>
+                    <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
+                        <img src="/logo.png" alt="MZ Logo" />
+                        <div className="school-logo-text">
+                            <h2>MOUNT ZION</h2>
+                            <h2>SCHOOL</h2>
+                        </div>
+                    </Link>
                     <div className="landing-nav">
-                        <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
-                            <img src="/logo.png" alt="MZ Logo" />
-                            <div className="school-logo-text">
-                                <h2>MOUNT ZION</h2>
-                                <h2>SCHOOL</h2>
-                            </div>
-                        </Link>
-                        <div className="nav-divider"></div>
                         <Link to="/" className="nav-link">Home</Link>
                         <div className="nav-divider"></div>
                         <Link to="/about" className="nav-link">About</Link>
@@ -395,11 +394,20 @@ export default function AdmissionPublicPage() {
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About Us</Link>
+                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
                             <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
-                            <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
                             <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <span>Contact</span>
+                            <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                            <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
+                            <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
+                            {user ? (
+                                <>
+                                    <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
+                                    <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
+                                </>
+                            ) : (
+                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                            )}
                         </div>
                     </motion.div>
                 )}

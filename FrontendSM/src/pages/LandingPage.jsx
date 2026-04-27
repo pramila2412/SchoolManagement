@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import './LandingPage.css';
 
 export default function LandingPage() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [siteConfig, setSiteConfig] = useState({
@@ -31,7 +31,7 @@ export default function LandingPage() {
             title: 'A Global Campus for Global Students',
             subtitle: 'With a faculty from over 100 countries, we foster a vibrant, inclusive community that is globally connected.',
             cta: "Apply / Admitted? Let's make it official!",
-            image: '/school.png'
+            image: '/mount school.jpeg'
         },
         announcements: {
             ticker: [
@@ -197,6 +197,7 @@ export default function LandingPage() {
     ];
     const heroTitle = siteConfig?.hero?.title || 'A Global Campus for Global Students';
     const heroSubtitle = siteConfig?.hero?.subtitle || 'With a faculty from over 100 countries, we foster a vibrant, inclusive community that is globally connected.';
+    const heroImage = siteConfig?.hero?.image === '/school.png' ? '/mount school.jpeg' : (siteConfig?.hero?.image || '/mount school.jpeg');
     const heroStrip = siteConfig?.announcements?.heroStrip || {
         text: 'Admission Inquiry for 2025-26 academic year is now open',
         link: '/admission',
@@ -236,16 +237,15 @@ export default function LandingPage() {
             </div>
 
             <header className="landing-header">
-                <div className="header-inner">
-                    <div className="landing-nav">
-                        <div className="school-logo">
-                            <img src="/logo.png" alt="MZ Logo" />
-                            <div className="school-logo-text">
-                                <h2>MOUNT ZION</h2>
-                                <h2>SCHOOL</h2>
-                            </div>
+                <div className="header-inner" style={{ justifyContent: 'space-between' }}>
+                    <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
+                        <img src="/logo.png" alt="MZ Logo" />
+                        <div className="school-logo-text">
+                            <h2>MOUNT ZION</h2>
+                            <h2>SCHOOL</h2>
                         </div>
-                        <div className="nav-divider"></div>
+                    </Link>
+                    <div className="landing-nav">
                         <Link to="/" className="nav-link active">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
                         <Link to="/about" className="nav-link">About</Link>
@@ -280,7 +280,7 @@ export default function LandingPage() {
                 </div>
             </div>
 
-            <section className="landing-hero" style={{ backgroundImage: `url("/school.png")` }}>
+            <section className="landing-hero" style={{ backgroundImage: `url("${heroImage}")` }}>
                 <div className="hero-overlay"></div>
                 <div className="hero-content">
                     <motion.div
@@ -642,10 +642,20 @@ export default function LandingPage() {
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
+                            <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
                             <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About Us</Link>
-                            <span>Contact</span>
+                            <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                            <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
+                            <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
+                            {user ? (
+                                <>
+                                    <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
+                                    <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
+                                </>
+                            ) : (
+                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                            )}
                         </div>
                     </motion.div>
                 )}

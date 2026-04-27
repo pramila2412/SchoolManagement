@@ -29,7 +29,7 @@ const DEFAULTS = {
 };
 
 export default function ContactPublicPage() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const [data, setData] = useState(DEFAULTS);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
@@ -158,7 +158,7 @@ export default function ContactPublicPage() {
 
             {/* ===== HEADER ===== */}
             <header className="landing-header">
-                <div className="header-inner">
+                <div className="header-inner" style={{ justifyContent: 'space-between' }}>
                     <div className="landing-nav">
                         <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
                             <img src="/logo.png" alt="MZ Logo" />
@@ -376,13 +376,20 @@ export default function ContactPublicPage() {
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About Us</Link>
+                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
                             <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
                             <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
                             <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
                             <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
                             <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
-                            <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                            {user ? (
+                                <>
+                                    <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
+                                    <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
+                                </>
+                            ) : (
+                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                            )}
                         </div>
                     </motion.div>
                 )}

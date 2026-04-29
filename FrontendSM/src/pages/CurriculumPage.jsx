@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, BookOpen, Layers
+    Phone, Mail, Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, ChevronRight, ChevronDown, BookOpen, Clock, FileCheck, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -83,7 +83,7 @@ export default function CurriculumPage() {
             phone1: '6296490943',
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
-            socials: { facebook: '#', youtube: '#', instagram: '#', whatsapp: '#' }
+            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: '#', instagram: '#', whatsapp: '#' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
@@ -169,13 +169,29 @@ export default function CurriculumPage() {
                         </div>
                     </Link>
                     <div className="landing-nav">
-                        <Link to="/" className="nav-link">Home</Link>
                         <div className="nav-divider"></div>
-                        <Link to="/about" className="nav-link">About</Link>
+                        <Link to="/" className="nav-link">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
-                        <Link to="/admission" className="nav-link">Admission</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/about" className="dropdown-item">About Mount Zion</Link>
+                                <a href="/about#team" className="dropdown-item">The Team</a>
+                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
+                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
+                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
+                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                            </div>
+                        </div>
+                        <div className="nav-divider"></div>
+                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link active">Curriculum</Link>
                         <div className="nav-divider"></div>
@@ -316,7 +332,7 @@ export default function CurriculumPage() {
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href="#" className="social-circle"><Facebook size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
                                     <a href="#" className="social-circle"><Instagram size={16}/></a>
                                     <a href="#" className="social-circle"><Linkedin size={16}/></a>
                                     <a href="#" className="social-circle"><Twitter size={16}/></a>
@@ -346,7 +362,7 @@ export default function CurriculumPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="#" className="map-link">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

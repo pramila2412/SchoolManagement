@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
     Phone, Mail, Facebook, Twitter, Instagram, Youtube,
     ArrowRight, BookOpen, Users, Shield, Search,
-    Menu, X, MapPin, ChevronRight, ChevronLeft, GraduationCap,
+    Menu, X, MapPin, ChevronRight, ChevronLeft, ChevronDown, GraduationCap,
     MessageCircle, ExternalLink, ArrowUpRight, Linkedin, Check,
     Wallet, FileText, LogIn
 } from 'lucide-react';
@@ -21,7 +21,7 @@ export default function LandingPage() {
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
             socials: {
-                facebook: 'https://facebook.com',
+                facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
                 youtube: 'https://youtube.com',
                 instagram: 'https://instagram.com',
                 whatsapp: 'https://wa.me/916296490943'
@@ -61,16 +61,16 @@ export default function LandingPage() {
             { title: 'Meetings', category: 'Meetings', image: '/Gallery4.png' }
         ],
         about: {
-            title: 'Knowing Dr.Jacob Samuel',
-            subtitle: 'OUR PRINCIPAL',
+            title: 'About Us',
+            subtitle: 'Knowing Dr.Jacob Samuel',
             message: `
                 <p>It is with immense pride and gratitude that I welcome you to Mount Zion School, an institution that has been a beacon of educational excellence since 1995.</p>
-                <p><strong>Our Journey: From Humble Beginnings to Remarkable Growth</strong><br/>
-                Twenty-nine years ago, Mount Zion School began with a vision and unwavering faith. What started as a modest initiative with just 5 students has blossomed into a thriving educational community of over 600 students today. This extraordinary growth is not merely a testament to increasing numbers, but a reflection of the trust that generations of parents have placed in us, and the dedication of our exceptional faculty.</p>
+                <p>Our Journey: From Humble Beginnings to Remarkable Growth</p>
+                <p>Twenty-nine years ago, Mount Zion School began with a vision and unwavering faith. What started as a modest initiative with just 5 students has blossomed into a thriving educational community of over 600 students today. This extraordinary growth is not merely a testament to increasing numbers, but a reflection of the trust that generations of parents have placed in us, and the dedication of our exceptional faculty.</p>
                 <p><strong>The Mount Zion Legacy :</strong><br/>
                 When we opened our doors in 1995, we dreamed of creating more than just a school—we envisioned a nurturing environment where young minds could flourish, where character is built alongside academic achievement, and where every child discovers their unique potential. Today, that dream stands realized in the laughter of our students, the pride of our parents, and the achievements of our alumni.</p>
                 <p><strong>Our Core Values</strong><br/>
-                <strong>Excellence in Education</strong><br/>
+                Excellence in Education<br/>
                 From our humble beginning with 5 students to our current strength of 600, our commitment to academic excellence has remained unwavering. We combine traditional values with modern teaching methodologies, ensuring our students are prepared for the challenges of tomorrow.</p>
                 <p><strong>Holistic Development</strong><br/>
                 We believe education extends far beyond textbooks. Our comprehensive approach encompasses academics, sports, arts, life skills, and moral values—nurturing well-rounded individuals ready to contribute meaningfully to society.</p>
@@ -126,7 +126,15 @@ export default function LandingPage() {
     const newsLooped = siteConfig?.news ? Array(CLONE_COUNT).fill(siteConfig.news).flat() : [];
     const achievementsLooped = siteConfig?.achievements ? Array(CLONE_COUNT).fill(siteConfig.achievements).flat() : [];
 
-    // Initialize to the middle on mount so user can scroll left or right endlessly
+    // Initialize to the middle on mount so user can scroll left or right endlessly For Notice Board 
+
+// School events, Holidays, Admission Related Information , Vacancy, etc.
+
+//  Academic 
+
+// Salient Features of our School
+// Important Notice 
+// School Uniform
     useEffect(() => {
         if (siteConfig?.facilities) setFacilityIndex(Math.floor(CLONE_COUNT / 2) * siteConfig.facilities.length);
         if (siteConfig?.news) setNewsIndex(Math.floor(CLONE_COUNT / 2) * siteConfig.news.length);
@@ -246,19 +254,40 @@ export default function LandingPage() {
                         </div>
                     </Link>
                     <div className="landing-nav">
+                        <div className="nav-divider"></div>
                         <Link to="/" className="nav-link active">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
-                        <Link to="/about" className="nav-link">About</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/about" className="dropdown-item">About Mount Zion</Link>
+                                <a href="/about#team" className="dropdown-item">The Team</a>
+                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
+                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/admission" className="nav-link">Admission</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
+                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
+                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics</Link>
+                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
-                        <div className="nav-divider"></div>
-                        <Link to="/contact" className="nav-link">Contact Us</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/contact" className="nav-link">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/contact#get-in-touch" className="dropdown-item">Get in touch</a>
+                                <a href="/contact#map" className="dropdown-item">See on map</a>
+                            </div>
+                        </div>
                     </div>
 
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
@@ -363,13 +392,10 @@ export default function LandingPage() {
 
             <section className="landing-gallery">
                 <div className="section-container">
-                    <div className="gallery-header">
-                        <h2 className="section-title">Gallery</h2>
-                        <Link to="/gallery" className="view-more-btn">
-                            <span>View More</span>
-                            <div className="arrow-circle">
-                                <ArrowUpRight size={20} />
-                            </div>
+                    <div className="gallery-header" style={{ display: 'flex', justifyContent: 'flex-start', gap: '80px', alignItems: 'center', marginBottom: '40px' }}>
+                        <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>Gallery</h2>
+                        <Link to="/gallery" style={{ display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.9rem', textDecoration: 'none', fontWeight: 600 }}>
+                            View More <div style={{ marginLeft: '8px', border: '1.5px solid #1e293b', borderRadius: '50%', padding: '3px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowUpRight size={14} strokeWidth={2}/></div>
                         </Link>
                     </div>
 
@@ -386,37 +412,34 @@ export default function LandingPage() {
             
             <section className="landing-about">
                 <div className="section-container">
-                    <div className="about-content-wrapper">
-                        <div className="about-text-side">
-                            <div className="about-header-row">
-                                <h2 className="section-title">About Us</h2>
-                                <Link to="/about" className="view-more-btn">
-                                    <span>View More</span>
-                                    <div className="arrow-circle">
-                                        <ArrowUpRight size={20} />
-                                    </div>
+                    <div className="about-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
+                        <div className="about-text-side" style={{ flex: 1.2 }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '180px', marginBottom: '10px' }}>
+                                <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>{siteConfig.about.title}</h2>
+                                <Link to="/about" style={{ display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.9rem', textDecoration: 'none', fontWeight: 600 }}>
+                                    View More <div style={{ marginLeft: '8px', border: '1.5px solid #1e293b', borderRadius: '50%', padding: '3px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowUpRight size={14} strokeWidth={2}/></div>
                                 </Link>
                             </div>
                             
-                            <h3 className="about-subheading">{siteConfig.about.title}</h3>
-                            <p className="about-label">{siteConfig.about.subtitle}</p>
+                            <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '700', marginBottom: '10px' }}>{siteConfig.about.subtitle}</h3>
+                            <p style={{ fontSize: '0.75rem', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.5px' }}>OUR PRINCIPAL</p>
 
-                            <div className="about-description" dangerouslySetInnerHTML={{ __html: siteConfig.about.message }} />
+                            <div className="about-description" dangerouslySetInnerHTML={{ __html: siteConfig.about.message }} style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6' }} />
 
-                            <div className="about-social-row">
-                                <span className="visit-text">Visit &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; :</span>
-                                <div className="social-pill-container">
-                                    <a href="#" className="social-pill fb"><Facebook size={18}/></a>
-                                    <a href="#" className="social-pill ig"><Instagram size={18}/></a>
-                                    <a href="#" className="social-pill tw"><Twitter size={18}/></a>
-                                    <a href="#" className="social-pill li"><Linkedin size={18}/></a>
+                            <div className="about-social-row" style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '40px' }}>
+                                <span className="visit-text" style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visit &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
+                                <div className="social-pill-container" style={{ display: 'flex', gap: '10px' }}>
+                                    <a href={socials.facebook || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Facebook size={16} fill="#431407" strokeWidth={0}/></a>
+                                    <a href={socials.instagram || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Instagram size={16} strokeWidth={2}/></a>
+                                    <a href={socials.twitter || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Twitter size={16} fill="#431407" strokeWidth={0}/></a>
+                                    <a href={socials.linkedin || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Linkedin size={16} fill="#431407" strokeWidth={0}/></a>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="about-image-side">
-                            <div className="principal-image-box">
-                                <img src={siteConfig.about.image} alt="Principal" />
+                        <div className="about-image-side" style={{ flex: 1 }}>
+                            <div className="principal-image-box" style={{ height: '100%' }}>
+                                <img src={siteConfig.about.image} alt="About Us" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0' }} />
                             </div>
                         </div>
                     </div>
@@ -530,7 +553,12 @@ export default function LandingPage() {
             {/* Testimonials Section */}
             <section className="landing-testimonials">
                 <div className="section-container">
-                    <h2 className="section-title text-center">Testimonials</h2>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginBottom: '40px' }}>
+                        <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>Testimonials</h2>
+                        <div style={{ border: '1.5px solid var(--mz-blue-dark)', borderRadius: '50%', padding: '4px', color: 'var(--mz-blue-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ArrowUpRight size={20} strokeWidth={2}/>
+                        </div>
+                    </div>
 
                     <div className="testimonials-grid">
                         <div className="testimonial-card-main">
@@ -683,7 +711,7 @@ export default function LandingPage() {
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href="#" className="social-circle"><Facebook size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
                                     <a href="#" className="social-circle"><Instagram size={16}/></a>
                                     <a href="#" className="social-circle"><Linkedin size={16}/></a>
                                     <a href="#" className="social-circle"><Twitter size={16}/></a>
@@ -716,7 +744,7 @@ export default function LandingPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="#" className="map-link">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

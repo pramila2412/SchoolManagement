@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import {
     Phone, Mail, Facebook, Instagram, Youtube, Twitter, Linkedin,
     MapPin, Search, Wallet, FileText, LogIn, Menu, X,
-    ArrowRight, ChevronRight, CheckCircle, ClipboardList,
+    ArrowRight, ChevronRight, ChevronDown, CheckCircle, ClipboardList,
     BookOpen, Calendar, Clock, FileCheck, Download, AlertCircle,
-    GraduationCap, Users, Star
+    GraduationCap, Users, Star, ChevronLeft, Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -60,7 +60,7 @@ export default function AdmissionPublicPage() {
             phone1: '6296490943',
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
-            socials: { facebook: '#', youtube: '#', instagram: '#', whatsapp: '#' }
+            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: '#', instagram: '#', whatsapp: '#' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
@@ -110,6 +110,12 @@ export default function AdmissionPublicPage() {
         { icon: CheckCircle, title: 'Result & Admission', desc: 'Check the result. If eligible, complete the admission formalities.' }
     ];
 
+    const tickerItems = siteConfig?.announcements?.ticker || [
+        'Admission Open for Session 2025-26',
+        'Mount Zion School Ranked #1 in Purnea',
+        'New Sports Complex Inaugurated'
+    ];
+
     return (
         <div className="landing-page admission-public-page">
             {/* ===== TOP BAR ===== */}
@@ -153,13 +159,29 @@ export default function AdmissionPublicPage() {
                         </div>
                     </Link>
                     <div className="landing-nav">
-                        <Link to="/" className="nav-link">Home</Link>
                         <div className="nav-divider"></div>
-                        <Link to="/about" className="nav-link">About</Link>
+                        <Link to="/" className="nav-link">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
-                        <Link to="/admission" className="nav-link active">Admission</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/about" className="dropdown-item">About Mount Zion</Link>
+                                <a href="/about#team" className="dropdown-item">The Team</a>
+                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
+                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/admission" className="nav-link active">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="#procedure" className="dropdown-item">Admission Procedure</a>
+                                <a href="#fee" className="dropdown-item">Fee & Payment</a>
+                                <a href="#result" className="dropdown-item">Admission Result-2026</a>
+                            </div>
+                        </div>
+                        <div className="nav-divider"></div>
+                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
@@ -173,212 +195,167 @@ export default function AdmissionPublicPage() {
                 </div>
             </header>
 
-            {/* ===== HERO BANNER ===== */}
-            <section className="adm-hero" style={{ backgroundImage: `url("${data.heroImage}")` }}>
-                <div className="adm-hero-overlay"></div>
-                <motion.div className="adm-hero-content" {...fadeInUp}>
-                    <div className="about-breadcrumb">
-                        <Link to="/">Home</Link>
-                        <ChevronRight size={14} />
-                        <span>Admissions</span>
-                    </div>
-                    <h1>{data.pageTitle}</h1>
-                    <p>{data.pageSubtitle}</p>
-                    {data.admissionOpen && (
-                        <div className="adm-open-badge">
-                            <span className="adm-pulse"></span>
-                            Admissions Open for {data.academicYear}
-                        </div>
-                    )}
-                </motion.div>
-            </section>
-
-            {/* ===== QUICK STEPS ===== */}
-            <section className="adm-steps-section">
-                <div className="section-container">
-                    <div className="adm-steps-grid">
-                        {stepsData.map((step, idx) => {
-                            const IconComp = step.icon;
-                            return (
-                                <motion.div
-                                    className="adm-step-card"
-                                    key={idx}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.5, delay: idx * 0.12 }}
-                                >
-                                    <div className="adm-step-number">{String(idx + 1).padStart(2, '0')}</div>
-                                    <div className="adm-step-icon">
-                                        <IconComp size={28} />
-                                    </div>
-                                    <h4>{step.title}</h4>
-                                    <p>{step.desc}</p>
-                                </motion.div>
-                            );
-                        })}
+            {/* ===== NEWS TICKER ===== */}
+            <div className="news-ticker-bar">
+                <div className="ticker-scroll-content">
+                    <div className="ticker-track">
+                        {tickerItems.map((item, i) => (
+                            <span key={i} className="ticker-item">{item} &nbsp; • &nbsp;</span>
+                        ))}
+                        {tickerItems.map((item, i) => (
+                            <span key={i + 'copy'} className="ticker-item">{item} &nbsp; • &nbsp;</span>
+                        ))}
                     </div>
                 </div>
-            </section>
+            </div>
 
             {/* ===== ADMISSION PROCEDURE ===== */}
-            <section className="adm-procedure-section">
+            <section className="about-us-section" id="procedure" style={{ padding: '80px 0', background: '#fff' }}>
                 <div className="section-container">
-                    <motion.div className="adm-procedure-grid" {...fadeInUp}>
-                        <div className="adm-procedure-left">
-                            <span className="adm-section-tag">HOW IT WORKS</span>
-                            <h2>Admission Procedure</h2>
-                            <div className="adm-procedure-list">
-                                {data.admissionProcedure.map((item, idx) => (
-                                    <div className="adm-procedure-item" key={idx}>
-                                        <div className="adm-bullet"></div>
-                                        <p>{item.text}</p>
-                                    </div>
+                    <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
+                        <div className="rules-image-side" style={{ flex: '1' }}>
+                            <div className="rules-image-box" style={{ height: '100%' }}>
+                                <img src="/Admission Procedure.png" alt="Admission Procedure" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0', display: 'block' }} />
+                            </div>
+                        </div>
+
+                        <div className="rules-text-side" style={{ flex: '1.2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div>
+                                <h2 className="section-title" style={{ marginBottom: '15px', paddingLeft: 0, borderLeft: 'none', fontWeight: '900', color: '#000' }}>Admission Procedure</h2>
+                                <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '25px' }}>Mount Zion School</h3>
+
+                                <div className="about-description" style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.8' }}>
+                                    <p>Admission to Nursery class can be secured on the basis of communication with the parents.</p>
+                                    <p style={{ marginTop: '10px' }}>LKG upwards admission based on clearing up the Entrance Test.</p>
+                                    
+                                    <p style={{ marginTop: '10px', fontWeight: '700', color: '#0f172a' }}>ADMISSION CRITERIA</p>
+                                    <ol style={{ marginTop: '10px', paddingLeft: '20px', listStyleType: 'decimal' }}>
+                                        <li style={{ marginBottom: '8px' }}>Submit the properly filled Registration Form and collect the date of the Entrance Test.</li>
+                                        <li style={{ marginBottom: '8px' }}>Appear for the Entrance Exam at the Scheduled time.</li>
+                                        <li style={{ marginBottom: '8px' }}>Go through the Result.</li>
+                                        <li style={{ marginBottom: '8px' }}>If the student is eligible for the admission, submit the duly filled admission form, along with required documents and passport size photographs.</li>
+                                        <li style={{ marginBottom: '8px' }}>Now collect final confirmation regarding admission and deposit fee.</li>
+                                        <li style={{ marginBottom: '8px' }}>Try to submit original documents at the time of admission.</li>
+                                        <li style={{ marginBottom: '0' }}>Basic informations like DOB, address, parent's name etc. once entered in the school admission register at the time of admission should not be changed under any circumstances.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div className="about-social-row" style={{ marginTop: '15px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <span className="visit-text" style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: '500' }}>Visit &nbsp;&nbsp;&nbsp;:</span>
+                                <a href={socials.facebook} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', background: '#000', borderRadius: '50%', color: '#fff', textDecoration: 'none' }}>
+                                    <Facebook fill="#fff" strokeWidth={0} size={16} style={{ marginLeft: '1px', marginTop: '1px' }}/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== FEE & PAYMENT ===== */}
+            <section className="about-us-section" id="fee" style={{ padding: '80px 0', background: '#f8fafc' }}>
+                <div className="section-container">
+                    <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
+                        <div className="rules-text-side" style={{ flex: '1.2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div>
+                                <h2 className="section-title" style={{ marginBottom: '15px', paddingLeft: 0, borderLeft: 'none', fontWeight: '900', color: '#000' }}>Fee & Payment</h2>
+                                <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '25px' }}>Mount Zion School</h3>
+
+                                <div className="about-description" style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.8' }}>
+                                    <p>Mount Zion School, Sion Nagar, Purnea has released its fee structure for the academic session 2026-27, covering classes from Nursery to Standard 11. The fees are divided into components such as admission fee, annual (incidental) fee, examination fee, and monthly tuition fee. For lower classes (Nursery to UKG), the total fee is quite affordable at ₹5,500, with admission offered free. As students progress to higher classes, the fees gradually increase, reaching ₹24,700 for Class 9 and ₹21,200 for Classes 5 to 7. For senior classes like Standard 11, the total fee is ₹15,850.</p>
+                                    
+                                    <p style={{ marginTop: '15px', fontWeight: '700', color: '#0f172a' }}>Special Offer/Highlight:</p>
+                                    <p style={{ marginTop: '5px' }}>The school provides free admission for early classes (up to Standard 4), making it budget-friendly for families starting their child's education. The structured and transparent fee system ensures clarity and affordability across all grade levels.</p>
+                                </div>
+                            </div>
+
+                            <div className="about-social-row" style={{ marginTop: '15px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <span className="visit-text" style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: '500' }}>Visit &nbsp;&nbsp;&nbsp;:</span>
+                                <a href={socials.facebook} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', background: '#000', borderRadius: '50%', color: '#fff', textDecoration: 'none' }}>
+                                    <Facebook fill="#fff" strokeWidth={0} size={16} style={{ marginLeft: '1px', marginTop: '1px' }}/>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div className="rules-image-side" style={{ flex: '1' }}>
+                            <div className="rules-image-box" style={{ background: '#fff', padding: '10px', borderRadius: '0', border: '1px solid #e2e8f0', height: '100%' }}>
+                                <img src="/Fee.png" alt="Fee Structure" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0', display: 'block' }} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== ADMISSION RESULT ===== */}
+            <section className="about-us-section" id="result" style={{ padding: '80px 0', background: '#fff' }}>
+                <div className="section-container" style={{ maxWidth: '1000px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                        <h2 className="section-title" style={{ fontWeight: '900', color: '#000' }}>Admission Result -2026</h2>
+                    </div>
+
+                    <div className="about-description" style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '40px' }}>
+                        <p style={{ fontWeight: '700', color: '#000', marginBottom: '5px' }}>Admission Result & Confirmation</p>
+                        <p>After appearing for the entrance examination, parents/guardians are required to check the admission result as per the schedule provided by the school. Students who successfully clear the entrance test (applicable from LKG onwards) or meet the interaction criteria (for Nursery) will be considered eligible for admission.</p>
+                        <p style={{ marginTop: '10px' }}>Selected candidates must complete the admission process by submitting the duly filled admission form along with all required documents and passport-size photographs. Final confirmation of admission will be granted only after document verification and payment of the prescribed fees.</p>
+                        <p style={{ marginTop: '10px' }}>Parents are advised to submit original documents at the time of admission for verification. It is important to note that basic details such as Date of Birth, address, and parents' names, once recorded in the school admission register, will not be changed under any circumstances.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '10px 15px', borderRadius: '6px', flex: '1', maxWidth: '400px', border: '1px solid #e2e8f0' }}>
+                            <Search size={16} color="#94a3b8" style={{ marginRight: '10px' }} />
+                            <input type="text" placeholder="Search by Student name, Class..." style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.9rem', color: '#334155' }} />
+                        </div>
+                        <button style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '10px 20px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer' }}>
+                            <Filter size={16} style={{ marginRight: '8px' }} /> Filter
+                        </button>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', color: '#334155' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Exam Roll Number</th>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600', display: 'flex', alignItems: 'center' }}>Class <ChevronDown size={14} style={{ marginLeft: '5px' }}/></th>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Name of the Student</th>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Date</th>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Time</th>
+                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Panel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[
+                                    { roll: '514', cls: '4', name: 'Jane Cooper', date: '22/Jan/2026', time: '12:30 pm', panel: '4' },
+                                    { roll: '546', cls: '5', name: 'Wade Warren', date: '22/Jan/2026', time: '3:00 pm', panel: '5' },
+                                    { roll: '134', cls: '5', name: 'Esther Howard', date: '22/Jan/2026', time: '3:30 pm', panel: '4' },
+                                    { roll: '544', cls: '5', name: 'Cameron Williamson', date: '22/Jan/2026', time: '4:30 pm', panel: '5' },
+                                    { roll: '124', cls: '6', name: 'Brooklyn Simmons', date: '22/Jan/2026', time: '11:33 am', panel: '6' },
+                                    { roll: '845', cls: '6', name: 'Leslie Alexander', date: '22/Jan/2026', time: '10:00 am', panel: '6' },
+                                    { roll: '213', cls: '7', name: 'Jenny Wilson', date: '22/Jan/2026', time: '11:30 am', panel: '7' },
+                                    { roll: '043', cls: '8', name: 'Guy Hawkins', date: '22/Jan/2026', time: '12:00 am', panel: '7-' }
+                                ].map((row, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '15px 10px' }}>{row.roll}</td>
+                                        <td style={{ padding: '15px 10px' }}>{row.cls}</td>
+                                        <td style={{ padding: '15px 10px', color: '#0f172a', fontWeight: '500' }}>{row.name}</td>
+                                        <td style={{ padding: '15px 10px' }}>
+                                            <span style={{ color: '#059669', background: '#d1fae5', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>{row.date}</span>
+                                        </td>
+                                        <td style={{ padding: '15px 10px', fontWeight: '500' }}>{row.time}</td>
+                                        <td style={{ padding: '15px 10px' }}>{row.panel}</td>
+                                    </tr>
                                 ))}
-                            </div>
-                        </div>
-                        <div className="adm-procedure-right">
-                            <div className="adm-procedure-image-wrap">
-                                <img src="/school.jpeg" alt="Mount Zion School" />
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
+                            </tbody>
+                        </table>
+                    </div>
 
-            {/* ===== ADMISSION CRITERIA ===== */}
-            <section className="adm-criteria-section">
-                <div className="section-container">
-                    <motion.div {...fadeInUp}>
-                        <div className="adm-criteria-header">
-                            <span className="adm-section-tag">REQUIREMENTS</span>
-                            <h2>Admission Criteria</h2>
-                        </div>
-                        <div className="adm-criteria-list">
-                            {data.admissionCriteria.map((item, idx) => (
-                                <motion.div
-                                    className="adm-criteria-item"
-                                    key={idx}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    whileInView={{ opacity: 1, x: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.4, delay: idx * 0.08 }}
-                                >
-                                    <div className="adm-criteria-num">{String(idx + 1).padStart(2, '0')}</div>
-                                    <p>{item.text}</p>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ===== CLASSES OFFERED ===== */}
-            <section className="adm-classes-section">
-                <div className="section-container">
-                    <motion.div {...fadeInUp}>
-                        <div className="adm-classes-header">
-                            <span className="adm-section-tag">ACADEMIC PROGRAMS</span>
-                            <h2>Classes We Offer</h2>
-                        </div>
-                        <div className="adm-classes-grid">
-                            {data.classesOffered.map((cls, idx) => (
-                                <motion.div
-                                    className="adm-class-chip"
-                                    key={idx}
-                                    initial={{ opacity: 0, scale: 0.85 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.3, delay: idx * 0.04 }}
-                                >
-                                    <GraduationCap size={16} />
-                                    <span>{cls}</span>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ===== REQUIRED DOCUMENTS ===== */}
-            <section className="adm-docs-section">
-                <div className="section-container">
-                    <motion.div className="adm-docs-grid" {...fadeInUp}>
-                        <div className="adm-docs-left">
-                            <span className="adm-section-tag">CHECKLIST</span>
-                            <h2>Required Documents</h2>
-                            <p className="adm-docs-intro">Please ensure you have the following documents ready at the time of admission:</p>
-                            <div className="adm-docs-list">
-                                {data.requiredDocuments.map((doc, idx) => (
-                                    <div className="adm-doc-item" key={idx}>
-                                        <FileCheck size={18} className="adm-doc-icon" />
-                                        <span>{doc}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="adm-docs-right">
-                            <div className="adm-fee-card">
-                                <div className="adm-fee-icon"><Wallet size={28} /></div>
-                                <h3>Fee Information</h3>
-                                <p>{data.feeNote}</p>
-                                <div className="adm-fee-divider"></div>
-                                <div className="adm-important-note">
-                                    <AlertCircle size={18} />
-                                    <span>Basic information like DOB, address, parent's name etc. once entered in the admission register should not be changed under any circumstances.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ===== CONTACT / CTA ===== */}
-            <section className="adm-contact-section">
-                <div className="section-container">
-                    <motion.div className="adm-contact-grid" {...fadeInUp}>
-                        <div className="adm-contact-info">
-                            <h2>Get in Touch for Admissions</h2>
-                            <p>Have questions about the admission process? Our team is here to help.</p>
-                            <div className="adm-contact-cards">
-                                <div className="adm-contact-card">
-                                    <Phone size={22} />
-                                    <div>
-                                        <span className="adm-contact-label">Call Us</span>
-                                        <a href={`tel:${data.admissionContact.phone}`}>{data.admissionContact.phone}</a>
-                                    </div>
-                                </div>
-                                <div className="adm-contact-card">
-                                    <Mail size={22} />
-                                    <div>
-                                        <span className="adm-contact-label">Email Us</span>
-                                        <a href={`mailto:${data.admissionContact.email}`}>{data.admissionContact.email}</a>
-                                    </div>
-                                </div>
-                                <div className="adm-contact-card">
-                                    <Clock size={22} />
-                                    <div>
-                                        <span className="adm-contact-label">Office Hours</span>
-                                        <span>{data.admissionContact.officeHours}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="adm-cta-box">
-                            <div className="adm-cta-inner">
-                                <h3>Ready to Apply?</h3>
-                                <p>Take the first step towards your child's bright future at Mount Zion School.</p>
-                                <div className="adm-cta-buttons">
-                                    <a href={`tel:${data.admissionContact.phone}`} className="adm-cta-btn primary">
-                                        <Phone size={18} /> Call Now
-                                    </a>
-                                    <a href={`mailto:${data.admissionContact.email}`} className="adm-cta-btn secondary">
-                                        <Mail size={18} /> Email Us
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '30px', gap: '10px' }}>
+                        <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94a3b8' }}>
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#f59e0b', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -435,7 +412,7 @@ export default function AdmissionPublicPage() {
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href="#" className="social-circle"><Facebook size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
                                     <a href="#" className="social-circle"><Instagram size={16}/></a>
                                     <a href="#" className="social-circle"><Linkedin size={16}/></a>
                                     <a href="#" className="social-circle"><Twitter size={16}/></a>
@@ -465,7 +442,7 @@ export default function AdmissionPublicPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="#" className="map-link">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, Image as ImageIcon
+    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, ChevronDown, ArrowRight, Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -27,7 +27,7 @@ export default function GalleryPublicPage() {
             phone1: '6296490943',
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
-            socials: { facebook: '#', youtube: '#', instagram: '#', whatsapp: '#' }
+            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: '#', instagram: '#', whatsapp: '#' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
@@ -121,13 +121,29 @@ export default function GalleryPublicPage() {
                         </div>
                     </Link>
                     <div className="landing-nav">
-                        <Link to="/" className="nav-link">Home</Link>
                         <div className="nav-divider"></div>
-                        <Link to="/about" className="nav-link">About</Link>
+                        <Link to="/" className="nav-link">Home <span className="nav-badge">FREE</span></Link>
                         <div className="nav-divider"></div>
-                        <Link to="/admission" className="nav-link">Admission</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/about" className="dropdown-item">About Mount Zion</Link>
+                                <a href="/about#team" className="dropdown-item">The Team</a>
+                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
+                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
+                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
+                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                            </div>
+                        </div>
+                        <div className="nav-divider"></div>
+                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
@@ -141,108 +157,149 @@ export default function GalleryPublicPage() {
                 </div>
             </header>
 
-            {/* ===== HERO BANNER ===== */}
-            <section className="gal-hero" style={{ backgroundImage: `url("/school.jpeg")` }}>
-                <div className="gal-hero-overlay"></div>
-                <motion.div className="gal-hero-content" {...fadeInUp}>
-                    <div className="about-breadcrumb">
-                        <Link to="/">Home</Link>
-                        <ChevronRight size={14} />
-                        <span>Gallery</span>
+            {/* ===== DARK NAVIGATION CATEGORIES ===== */}
+            <section style={{ backgroundColor: '#002147', color: 'white', padding: '40px 0' }}>
+                <div className="section-container" style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '-10px', right: '0', display: 'flex', alignItems: 'center', fontSize: '0.85rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                        Browse All <ChevronDown size={14} style={{ marginLeft: '5px' }} />
                     </div>
-                    <h1>Photo Gallery</h1>
-                    <p>Capturing the vibrant moments, achievements, and everyday life at Mount Zion School.</p>
-                </motion.div>
-            </section>
-
-            {/* ===== GALLERY SECTION ===== */}
-            <section className="gal-main-section">
-                <div className="section-container">
-                    
-                    {/* Category Filter */}
-                    <motion.div className="gal-filter-wrap" {...fadeInUp}>
-                        <div className="gal-filters">
-                            {CATEGORIES.map(cat => (
-                                <button 
-                                    key={cat} 
-                                    className={`gal-filter-btn ${activeCategory === cat ? 'active' : ''}`}
-                                    onClick={() => setActiveCategory(cat)}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', marginTop: '20px' }}>
+                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase' }}>Sports</h4>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <li>Basket Ball</li>
+                                <li>Cricket</li>
+                                <li>Kabadi</li>
+                            </ul>
                         </div>
-                    </motion.div>
-
-                    {/* Image Grid */}
-                    {loading ? (
-                        <div className="gal-loading">Loading gallery...</div>
-                    ) : filteredImages.length === 0 ? (
-                        <div className="gal-empty">
-                            <ImageIcon size={48} className="gal-empty-icon" />
-                            <h3>No images found</h3>
-                            <p>There are currently no images in the "{activeCategory}" category.</p>
+                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase' }}>School Tours</h4>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <li>Ooty</li>
+                                <li>Kodaikanal</li>
+                                <li>Hyderabad Film City</li>
+                            </ul>
                         </div>
-                    ) : (
-                        <motion.div className="gal-grid" layout>
-                            <AnimatePresence>
-                                {filteredImages.map((img) => (
-                                    <motion.div 
-                                        key={img._id} 
-                                        className="gal-item"
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ duration: 0.3 }}
-                                        onClick={() => setSelectedImage(img)}
-                                    >
-                                        <div className="gal-item-inner">
-                                            <img src={img.url} alt={img.title || img.category} loading="lazy" />
-                                            <div className="gal-item-overlay">
-                                                <div className="gal-item-info">
-                                                    <span className="gal-item-cat">{img.category}</span>
-                                                    {img.title && <h4>{img.title}</h4>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </motion.div>
-                    )}
+                        <div style={{ flex: '1', minWidth: '200px', marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase' }}>Programs & Events</h4>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <li>Independence Day</li>
+                                <li>Teachers Day</li>
+                                <li>Environment Day</li>
+                                <li>Childrens Day</li>
+                            </ul>
+                        </div>
+                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase' }}>Annual Day</h4>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <li>Group Dance</li>
+                                <li>Group Song</li>
+                                <li>Fancy Dress</li>
+                                <li>Mono Act</li>
+                                <li>Preach</li>
+                            </ul>
+                        </div>
+                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase' }}>Meetings</h4>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                <li>PTA</li>
+                                <li>Teachers & Staffs</li>
+                                <li>Seminars</li>
+                                <li>Science Club</li>
+                                <li>Arts Club</li>
+                                <li>Groups</li>
+                                <li>Alumnis</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            {/* Lightbox */}
-            <AnimatePresence>
-                {selectedImage && (
-                    <motion.div 
-                        className="gal-lightbox"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setSelectedImage(null)}
-                    >
-                        <button className="gal-lightbox-close" onClick={() => setSelectedImage(null)}>
-                            <X size={32} />
-                        </button>
-                        <motion.div 
-                            className="gal-lightbox-content"
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.9 }}
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <img src={selectedImage.url} alt={selectedImage.title || selectedImage.category} />
-                            <div className="gal-lightbox-caption">
-                                <h3>{selectedImage.title || 'Gallery Image'}</h3>
-                                <span>{selectedImage.category}</span>
+            {/* ===== IMAGE GALLERY SECTION ===== */}
+            <section style={{ padding: '60px 0', background: '#fff' }}>
+                <div className="section-container">
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', fontStyle: 'italic', marginBottom: '30px', color: '#334155' }}>Basket Ball Winners</h2>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', background: '#fff', padding: '15px' }}>
+                                <img src={`/Gallery${i % 4 + 1}.png`} alt="Basket Ball" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
                             </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        ))}
+                    </div>
+                    
+                    {/* Pagination */}
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '50px', gap: '15px' }}>
+                        <button style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#d8b4e2', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>1</button>
+                        <button style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#d8b4e2', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>2</button>
+                        <button style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#d8b4e2', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>3</button>
+                        <button style={{ background: 'transparent', border: 'none', color: '#334155', fontWeight: 'bold', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            Next <ChevronRight size={16} style={{ marginLeft: '5px' }} />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== VIDEO GALLERY SECTION ===== */}
+            <section style={{ padding: '80px 0', background: '#fff', borderTop: '1px solid #f1f5f9' }}>
+                <div className="section-container" style={{ maxWidth: '1000px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+                        <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#334155', textTransform: 'uppercase', marginBottom: '15px' }}>Video Gallery</h2>
+                        <p style={{ fontSize: '1.1rem', color: '#475569' }}>Moments that reflect our journey of learning, growth, and excellence.</p>
+                    </div>
+
+                    <div style={{ background: '#faf8f5', borderRadius: '16px', display: 'flex', overflow: 'hidden', minHeight: '400px', position: 'relative', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1', minWidth: '300px', padding: '60px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <h3 style={{ fontSize: '2.2rem', fontWeight: 'bold', color: '#334155', lineHeight: '1.2', marginBottom: '15px' }}>What Parents are saying</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '30px', maxWidth: '300px' }}>We already made a lot of beautiful journey of amazing stories that inspire you</p>
+                            <button style={{ background: '#002147', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.5px', cursor: 'pointer', width: 'max-content', display: 'flex', alignItems: 'center' }}>
+                                <Youtube size={16} style={{ marginRight: '8px' }} /> VISIT NOW
+                            </button>
+                        </div>
+                        
+                        <div style={{ flex: '1', minWidth: '300px', position: 'relative' }}>
+                            <img src="/principal.jpeg" alt="Video thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{ position: 'absolute', top: '0', left: '0', right: '0', bottom: '0', background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: '50px', height: '50px', background: 'rgba(255,255,255,0.8)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <div style={{ width: '0', height: '0', borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderLeft: '12px solid #002147', marginLeft: '4px' }}></div>
+                                </div>
+                            </div>
+                            <div style={{ position: 'absolute', bottom: '20px', right: '20px', background: '#d97706', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
+                                <ArrowRight size={20} />
+                            </div>
+                        </div>
+
+                        {/* Testimonial Overlay Card */}
+                        <div style={{ position: 'absolute', top: '50%', right: '40px', transform: 'translateY(-50%)', background: '#fff', padding: '30px', borderRadius: '12px', width: '280px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }} className="testimonial-card">
+                            <div style={{ position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%)', width: '50px', height: '50px', borderRadius: '50%', border: '3px solid #fff', overflow: 'hidden' }}>
+                                <img src="/principal.jpeg" alt="Parent" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                            
+                            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                                <h4 style={{ color: '#0369a1', fontWeight: 'bold', fontSize: '1rem', marginBottom: '2px' }}>Sandra Henry</h4>
+                                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Alumni - University Assistant</span>
+                                
+                                <div style={{ color: '#f59e0b', margin: '10px 0', fontSize: '0.9rem' }}>★★★★★</div>
+                                
+                                <div style={{ fontSize: '2rem', color: '#0369a1', lineHeight: '0.5', textAlign: 'left', marginTop: '10px' }}>"</div>
+                                <p style={{ fontSize: '0.85rem', color: '#475569', fontStyle: 'italic', lineHeight: '1.6' }}>
+                                    "Mount Zion School has shaped my child's character and confidence. The care and values they instill are truly exceptional."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Testimonial Pagination */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '30px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '2px solid #d97706', padding: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '6px', height: '6px', background: '#d97706', borderRadius: '50%' }}></div>
+                        </div>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#cbd5e1', alignSelf: 'center' }}></div>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#cbd5e1', alignSelf: 'center' }}></div>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#cbd5e1', alignSelf: 'center' }}></div>
+                    </div>
+                </div>
+            </section>
 
             {/* ===== Mobile Nav ===== */}
             <AnimatePresence>
@@ -297,7 +354,7 @@ export default function GalleryPublicPage() {
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href="#" className="social-circle"><Facebook size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
                                     <a href="#" className="social-circle"><Instagram size={16}/></a>
                                     <a href="#" className="social-circle"><Linkedin size={16}/></a>
                                     <a href="#" className="social-circle"><Twitter size={16}/></a>
@@ -327,7 +384,7 @@ export default function GalleryPublicPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="#" className="map-link">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

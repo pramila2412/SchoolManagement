@@ -694,6 +694,42 @@
     .about-cta-inner h2 { font-size: 1.5rem; }
 }
 
+/* ===== RULES SECTION ===== */
+.about-rules-section {
+    padding: 100px 0;
+    background: #fff;
+}
+
+.rules-content-wrapper {
+    display: flex;
+    gap: 60px;
+    align-items: flex-start;
+}
+
+.rules-text-side {
+    flex: 1.2;
+}
+
+.rules-image-side {
+    flex: 1;
+}
+
+.rules-image-box img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+@media (max-width: 1024px) {
+    .rules-content-wrapper { flex-direction: column; }
+    .rules-image-side { 
+        width: 100%; 
+        max-width: 600px;
+        margin: 40px auto 0;
+    }
+}
+
 /* News viewport for the landing page (used by both) */
 .news-viewport {
     overflow: hidden;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, Clock, Send, CheckCircle
+    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, ChevronDown, Send, Clock, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -44,7 +44,7 @@ export default function ContactPublicPage() {
             phone1: '6296490943',
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
-            socials: { facebook: '#', youtube: '#', instagram: '#', whatsapp: '#' }
+            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: '#', instagram: '#', whatsapp: '#' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
@@ -159,28 +159,48 @@ export default function ContactPublicPage() {
             {/* ===== HEADER ===== */}
             <header className="landing-header">
                 <div className="header-inner" style={{ justifyContent: 'space-between' }}>
+                    <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
+                        <img src="/logo.png" alt="MZ Logo" />
+                        <div className="school-logo-text">
+                            <h2>MOUNT ZION</h2>
+                            <h2>SCHOOL</h2>
+                        </div>
+                    </Link>
                     <div className="landing-nav">
-                        <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
-                            <img src="/logo.png" alt="MZ Logo" />
-                            <div className="school-logo-text">
-                                <h2>MOUNT ZION</h2>
-                                <h2>SCHOOL</h2>
+                        <div className="nav-divider"></div>
+                        <Link to="/" className="nav-link">Home <span className="nav-badge">FREE</span></Link>
+                        <div className="nav-divider"></div>
+                        <div className="nav-item-dropdown">
+                            <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/about" className="dropdown-item">About Mount Zion</Link>
+                                <a href="/about#team" className="dropdown-item">The Team</a>
+                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
+                                <a href="/about#notices" className="dropdown-item">Notice</a>
                             </div>
-                        </Link>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/" className="nav-link">Home</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
+                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
+                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
-                        <Link to="/about" className="nav-link">About</Link>
-                        <div className="nav-divider"></div>
-                        <Link to="/admission" className="nav-link">Admission</Link>
-                        <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics</Link>
+                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
-                        <div className="nav-divider"></div>
-                        <Link to="/contact" className="nav-link active">Contact Us</Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/contact" className="nav-link active">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <a href="/contact#get-in-touch" className="dropdown-item">Get in touch</a>
+                                <a href="/contact#map" className="dropdown-item">See on map</a>
+                            </div>
+                        </div>
                     </div>
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
                         {mobileMenuOpen ? <X /> : <Menu />}
@@ -188,179 +208,81 @@ export default function ContactPublicPage() {
                 </div>
             </header>
 
-            {/* ===== HERO BANNER ===== */}
-            <section className="cont-hero" style={{ backgroundImage: `url("${data.heroImage}")` }}>
-                <div className="cont-hero-overlay"></div>
-                <motion.div className="cont-hero-content" {...fadeInUp}>
-                    <div className="about-breadcrumb">
-                        <Link to="/">Home</Link>
-                        <ChevronRight size={14} />
-                        <span>Contact Us</span>
-                    </div>
-                    <h1>{data.pageTitle}</h1>
-                    <p>{data.pageSubtitle}</p>
-                </motion.div>
-            </section>
+            {/* ===== NEW CONTACT SECTION ===== */}
+            <section id="get-in-touch" style={{ padding: '80px 0', background: '#fff' }}>
+                <div className="section-container" style={{ maxWidth: '1200px' }}>
+                    <div style={{ display: 'flex', borderRadius: '0', overflow: 'hidden', boxShadow: 'none', border: 'none' }}>
+                        <div style={{ flex: '1', padding: '60px 80px 60px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '15px', color: '#0f172a' }}>Get in touch</h2>
+                            <p style={{ color: '#64748b', marginBottom: '40px', fontSize: '1.05rem' }}>Our friendly team would love to hear from you.</p>
 
-            {/* ===== CONTACT MAIN SECTION ===== */}
-            <section className="cont-main-section">
-                <div className="section-container">
-                    <div className="cont-grid">
-                        
-                        {/* Contact Information (Left) */}
-                        <motion.div className="cont-info-panel" {...fadeInUp}>
-                            <div className="cont-info-header">
-                                <span className="cont-tag">GET IN TOUCH</span>
-                                <h2>Contact Information</h2>
-                                <p>We're here to answer any questions you may have. Feel free to reach out to our office.</p>
-                            </div>
-
-                            <div className="cont-info-blocks">
-                                <div className="cont-info-block">
-                                    <div className="cont-icon-circle"><MapPin size={24} /></div>
-                                    <div className="cont-block-text">
-                                        <h4>Our Address</h4>
-                                        <p>
-                                            <strong>{data.address.name}</strong><br />
-                                            {data.address.street}<br />
-                                            {data.address.cityState}
-                                        </p>
+                            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', gap: '20px' }}>
+                                    <div style={{ flex: '1' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>First name</label>
+                                        <input type="text" name="firstName" placeholder="First name" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
+                                    </div>
+                                    <div style={{ flex: '1' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Last name</label>
+                                        <input type="text" name="lastName" placeholder="Last name" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
                                     </div>
                                 </div>
 
-                                <div className="cont-info-block">
-                                    <div className="cont-icon-circle"><Phone size={24} /></div>
-                                    <div className="cont-block-text">
-                                        <h4>Phone Numbers</h4>
-                                        {data.contactNumbers.map((num, i) => (
-                                            <p key={i}><a href={`tel:${num}`}>{num}</a></p>
-                                        ))}
-                                    </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Email</label>
+                                    <input type="email" name="email" placeholder="you@company.com" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
                                 </div>
 
-                                <div className="cont-info-block">
-                                    <div className="cont-icon-circle"><Mail size={24} /></div>
-                                    <div className="cont-block-text">
-                                        <h4>Email Addresses</h4>
-                                        {data.emails.map((em, i) => (
-                                            <p key={i}><a href={`mailto:${em}`}>{em}</a></p>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="cont-info-block">
-                                    <div className="cont-icon-circle"><Clock size={24} /></div>
-                                    <div className="cont-block-text">
-                                        <h4>Office Timings</h4>
-                                        <p>{data.officeTiming.summer}</p>
-                                        <p>{data.officeTiming.winter}</p>
-                                        <p className="cont-holiday">{data.officeTiming.holidays}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Contact Form (Right) */}
-                        <motion.div className="cont-form-panel" initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-                            <div className="cont-form-inner">
-                                <h3>Send us a Message</h3>
-                                <p>Fill out the form below and our team will get back to you promptly.</p>
-
-                                {submitStatus === 'success' && (
-                                    <div className="cont-alert success">
-                                        <CheckCircle size={20} />
-                                        <span>{statusMessage}</span>
-                                    </div>
-                                )}
-
-                                {submitStatus === 'error' && (
-                                    <div className="cont-alert error">
-                                        <X size={20} />
-                                        <span>{statusMessage}</span>
-                                    </div>
-                                )}
-
-                                <form onSubmit={handleFormSubmit} className="cont-form">
-                                    <div className="cont-input-group">
-                                        <label htmlFor="name">Full Name *</label>
-                                        <input 
-                                            type="text" 
-                                            id="name" 
-                                            name="name" 
-                                            placeholder="John Doe" 
-                                            required 
-                                            value={formData.name}
-                                            onChange={handleFormChange}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-
-                                    <div className="cont-row">
-                                        <div className="cont-input-group">
-                                            <label htmlFor="email">Email Address *</label>
-                                            <input 
-                                                type="email" 
-                                                id="email" 
-                                                name="email" 
-                                                placeholder="john@example.com" 
-                                                required 
-                                                value={formData.email}
-                                                onChange={handleFormChange}
-                                                disabled={isSubmitting}
-                                            />
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Phone number</label>
+                                    <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+                                        <div style={{ background: '#fff', padding: '12px 15px', borderRight: '1px solid #cbd5e1', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.95rem', cursor: 'pointer' }}>
+                                            US <ChevronDown size={14} />
                                         </div>
-                                        <div className="cont-input-group">
-                                            <label htmlFor="phone">Phone Number</label>
-                                            <input 
-                                                type="tel" 
-                                                id="phone" 
-                                                name="phone" 
-                                                placeholder="Your contact number" 
-                                                value={formData.phone}
-                                                onChange={handleFormChange}
-                                                disabled={isSubmitting}
-                                            />
-                                        </div>
+                                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style={{ flex: '1', padding: '12px 15px', border: 'none', fontSize: '0.95rem', outline: 'none' }} />
                                     </div>
+                                </div>
 
-                                    <div className="cont-input-group">
-                                        <label htmlFor="message">Your Message *</label>
-                                        <textarea 
-                                            id="message" 
-                                            name="message" 
-                                            placeholder="How can we help you?" 
-                                            rows="5" 
-                                            required
-                                            value={formData.message}
-                                            onChange={handleFormChange}
-                                            disabled={isSubmitting}
-                                        ></textarea>
-                                    </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Message</label>
+                                    <textarea name="message" rows="4" style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', resize: 'vertical', outline: 'none' }}></textarea>
+                                </div>
 
-                                    <button type="submit" className="cont-submit-btn" disabled={isSubmitting}>
-                                        {isSubmitting ? 'Sending...' : <><Send size={18} /> Send Message</>}
-                                    </button>
-                                </form>
-                            </div>
-                        </motion.div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '5px' }}>
+                                    <input type="checkbox" id="privacy" required style={{ marginTop: '4px', cursor: 'pointer' }} />
+                                    <label htmlFor="privacy" style={{ fontSize: '0.9rem', color: '#64748b', cursor: 'pointer' }}>
+                                        You agree to our friendly <a href="#" style={{ color: '#64748b', textDecoration: 'underline' }}>privacy policy</a>.
+                                    </label>
+                                </div>
 
+                                <button type="submit" style={{ width: '100%', padding: '14px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', marginTop: '10px' }}>
+                                    Send message
+                                </button>
+                            </form>
+                        </div>
+                        <div style={{ flex: '1', display: 'flex' }}>
+                            <img src="/getintouch.png" alt="Contact" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0' }} />
+                        </div>
                     </div>
                 </div>
             </section>
 
             {/* ===== MAP SECTION ===== */}
-            <section className="cont-map-section">
-                <div className="cont-map-wrapper">
-                    <iframe 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3596.1105955030237!2d87.46497277484433!3d25.66762311248679!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eff96b010dc785%3A0xc6ed76974db37a85!2sMount%20Zion%20School!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
-                        width="100%" 
-                        height="450" 
-                        style={{ border: 0 }} 
-                        allowFullScreen="" 
-                        loading="lazy" 
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title="Mount Zion School Location Map"
-                    ></iframe>
+            <section id="map" style={{ padding: '0 0 80px 0', background: '#fff' }}>
+                <div className="section-container" style={{ maxWidth: '1200px' }}>
+                    <h2 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '800', marginBottom: '40px', color: '#1e293b' }}>SEE ON MAP</h2>
+                    <div style={{ width: '100%', maxWidth: '700px', height: '450px', borderRadius: '0', overflow: 'hidden', margin: '0 auto' }}>
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.3367401412197!2d87.4447969!3d25.7924625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eff99ea1e7f3bd%3A0x698a31e366250485!2sMount%20Zion%20School!5e0!3m2!1sen!2sin!4v1777440961542!5m2!1sen!2sin" 
+                            width="100%" 
+                            height="100%" 
+                            style={{ border: 0 }} 
+                            allowFullScreen="" 
+                            loading="lazy" 
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Mount Zion School Location Map"
+                        ></iframe>
+                    </div>
                 </div>
             </section>
 
@@ -417,7 +339,7 @@ export default function ContactPublicPage() {
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href="#" className="social-circle"><Facebook size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
                                     <a href="#" className="social-circle"><Instagram size={16}/></a>
                                     <a href="#" className="social-circle"><Linkedin size={16}/></a>
                                     <a href="#" className="social-circle"><Twitter size={16}/></a>
@@ -447,7 +369,7 @@ export default function ContactPublicPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="#" className="map-link">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

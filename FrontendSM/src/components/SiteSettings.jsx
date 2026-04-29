@@ -15,7 +15,7 @@ export default function SiteSettings() {
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
             socials: {
-                facebook: 'https://facebook.com',
+                facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
                 youtube: 'https://youtube.com',
                 instagram: 'https://instagram.com',
                 whatsapp: 'https://wa.me/916296490943'
@@ -55,21 +55,12 @@ export default function SiteSettings() {
             { title: 'Meetings', category: 'Meetings', image: '/Gallery4.png' }
         ],
         about: {
-            title: 'Knowing Dr.Jacob Samuel',
-            subtitle: 'OUR PRINCIPAL',
+            title: 'About Us',
+            subtitle: 'Mount Zion School',
             message: `
-                <p>It is with immense pride and gratitude that I welcome you to Mount Zion School, an institution that has been a beacon of educational excellence since 1995.</p>
-                <p><strong>Our Journey: From Humble Beginnings to Remarkable Growth</strong><br/>
-                Twenty-nine years ago, Mount Zion School began with a vision and unwavering faith. What started as a modest initiative with just 5 students has blossomed into a thriving educational community of over 600 students today. This extraordinary growth is not merely a testament to increasing numbers, but a reflection of the trust that generations of parents have placed in us, and the dedication of our exceptional faculty.</p>
-                <p><strong>The Mount Zion Legacy :</strong><br/>
-                When we opened our doors in 1995, we dreamed of creating more than just a school—we envisioned a nurturing environment where young minds could flourish, where character is built alongside academic achievement, and where every child discovers their unique potential. Today, that dream stands realized in the laughter of our students, the pride of our parents, and the achievements of our alumni.</p>
-                <p><strong>Our Core Values</strong><br/>
-                <strong>Excellence in Education</strong><br/>
-                From our humble beginning with 5 students to our current strength of 600, our commitment to academic excellence has remained unwavering. We combine traditional values with modern teaching methodologies, ensuring our students are prepared for the challenges of tomorrow.</p>
-                <p><strong>Holistic Development</strong><br/>
-                We believe education extends far beyond textbooks. Our comprehensive approach encompasses academics, sports, arts, life skills, and moral values—nurturing well-rounded individuals ready to contribute meaningfully to society.</p>
-                <p><strong>Individual Attention</strong><br/>
-                Despite our growth, we have never lost sight of the individual. Each student at Mount Zion receives personalized attention, ensuring no child is left behind and every talent is discovered and nurtured.</p>
+                <p>Mount Zion School is a co-educational non-denominational (Christian) institution which is run by missionaries whose H.Q at Kerala, Mount Zion Welfare Society.</p>
+                <p>It was established in 1994 and the purpose of starting this school was to give "Education to Everyone". From a humble beginning with the grace of God the school has now become a full-fledged institution. Mount Zion aims at educating different levels of students from different societies and communities and mould them in desired shapes. We give all the concerns for the scholastic and co-scholastic development of students by holding the core of the disciplinary steps.</p>
+                <p>Apart from this the students are not only to excel in academic interests but also to understand that we all are made in the image of God, who wants to be fulfilled in life and work, in relationship with God, with each other and with the world He made for us to enjoy.</p>
             `,
             image: '/About.png'
         },

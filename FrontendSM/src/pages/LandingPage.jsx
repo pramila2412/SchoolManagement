@@ -276,7 +276,14 @@ export default function LandingPage() {
                             </div>
                         </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/results" className="dropdown-item">Results</Link>
+                                <Link to="/co-curricular" className="dropdown-item">Co-curricular</Link>
+                                <Link to="/academic-calendar" className="dropdown-item">Calendar</Link>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
@@ -328,7 +335,7 @@ export default function LandingPage() {
                         <div className="strip-divider"></div>
                         <div className="pulse-dot"></div>
                         <span className="strip-text">
-                            Calls for admission for the academic year 2025-26 now online or <Link to="/admission" className="strip-inline-link">visit our school</Link>
+                            Calls for admission for the academic year 2025-26 now online or <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" target="_blank" rel="noopener noreferrer" className="strip-inline-link">visit our school</a>
                         </span>
                     </div>
                 </div>

@@ -11,6 +11,7 @@ import AdmissionPublicPage from './pages/AdmissionPublicPage';
 import CurriculumPage from './pages/CurriculumPage';
 import GalleryPublicPage from './pages/GalleryPublicPage';
 import ContactPublicPage from './pages/ContactPublicPage';
+import CoCurricularPage from './pages/CoCurricularPage';
 import Dashboard from './pages/Dashboard';
 import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
@@ -105,7 +106,11 @@ function AppContent() {
     <Routes>
       <Route path="/" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
-      <Route path="/admission" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <AdmissionPublicPage />} />
+      <Route path="/co-curricular" element={<CoCurricularPage />} />
+      
+      {/* If not logged in, show public admission page. If logged in, let it fall through to /* AppLayout */}
+      {!user && <Route path="/admission" element={<AdmissionPublicPage />} />}
+      
       <Route path="/curriculum" element={<CurriculumPage />} />
       <Route path="/gallery" element={<GalleryPublicPage />} />
       <Route path="/contact" element={<ContactPublicPage />} />

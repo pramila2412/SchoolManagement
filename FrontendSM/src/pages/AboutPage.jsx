@@ -198,7 +198,14 @@ export default function AboutPage() {
                             </div>
                         </div>
                         <div className="nav-divider"></div>
-                        <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
+                        <div className="nav-item-dropdown">
+                            <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <div className="dropdown-content">
+                                <Link to="/results" className="dropdown-item">Results</Link>
+                                <Link to="/co-curricular" className="dropdown-item">Co-curricular</Link>
+                                <Link to="/academic-calendar" className="dropdown-item">Calendar</Link>
+                            </div>
+                        </div>
                         <div className="nav-divider"></div>
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>

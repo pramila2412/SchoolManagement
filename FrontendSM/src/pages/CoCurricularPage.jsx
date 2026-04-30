@@ -1,44 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, ChevronDown, Send, Clock, CheckCircle
+    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, ChevronRight, ChevronDown, Phone, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import './ContactPublicPage.css';
+import './CoCurricularPage.css';
 import './LandingPage.css';
 
-const API = '/api';
-
 const DEFAULTS = {
-    pageTitle: 'Contact Us',
-    pageSubtitle: 'We would love to hear from you',
-    heroImage: '/contact.jpeg',
-    address: {
-        name: 'MOUNT ZION SCHOOL',
-        street: 'SION NAGAR',
-        cityState: 'PURNEA - 854301, BIHAR'
-    },
-    contactNumbers: ['6296490943'],
-    emails: ['mountzionschool@gmail.com', 'mountzionschool2021@gmail.com'],
-    officeTiming: {
-        summer: '7.00 am to 1:30 pm (Summer)',
-        winter: '8.30 am to 2.30 pm (Winter)',
-        holidays: 'Sunday Holiday'
-    }
+    levels: [
+        {
+            number: 1,
+            title: 'The Foundation Level:',
+            subtitle: '(Nursery to Upper Kindergarten)',
+            color: '#ef4444',
+            subjects: ['English', 'Hindi', 'Mathematics', 'Environmental Science', 'Physical Education', 'Art'],
+            streams: []
+        },
+        {
+            number: 2,
+            title: 'Primary Level',
+            subtitle: '',
+            color: '#ef4444',
+            subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Studies', 'Sanskrit (Std III onwards)', 'General Knowledge', 'Moral Values', 'Information Technology', 'Art'],
+            streams: []
+        },
+        {
+            number: 3,
+            title: 'Middle Level',
+            subtitle: '',
+            color: '#ef4444',
+            subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Studies', 'Sanskrit', 'General Knowledge', 'Moral Values', 'Information Technology', 'Art'],
+            streams: []
+        },
+        {
+            number: 4,
+            title: 'Secondary Level',
+            subtitle: '',
+            color: '#ef4444',
+            subjects: ['English', 'Hindi/Sanskrit', 'Mathematics', 'Science', 'Social Studies', 'Information Technology', 'Physical Education'],
+            streams: []
+        },
+        {
+            number: 5,
+            title: 'Senior Secondary Level',
+            subtitle: '',
+            color: '#ef4444',
+            subjects: [],
+            streams: [
+                {
+                    name: 'Science Stream',
+                    color: '#1e293b',
+                    subjects: ['English Core', 'Hindi/Sanskrit', 'Physics', 'Chemistry', 'Biology', 'Mathematics', 'Physical Education']
+                },
+                {
+                    name: 'Commerce Stream',
+                    color: '#1e293b',
+                    subjects: ['English Core', 'Business Studies', 'Accountancy', 'Economics', 'Hindi/Sanskrit', 'Physical Education']
+                },
+                {
+                    name: 'Humanities Stream',
+                    color: '#1e293b',
+                    subjects: ['English Core', 'Hindi/Sanskrit', 'History', 'Geography', 'Economics', 'Political Science', 'Physical Education']
+                }
+            ]
+        }
+    ]
 };
 
-export default function ContactPublicPage() {
+export default function CoCurricularPage() {
     const { user, logout } = useAuth();
-    const [data, setData] = useState(DEFAULTS);
+    const [data] = useState(DEFAULTS);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    
-    // Form state
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState(null); // null, 'success', 'error'
-    const [statusMessage, setStatusMessage] = useState('');
-
     const [siteConfig, setSiteConfig] = useState({
         header: {
             phone1: '6296490943',
@@ -58,20 +92,7 @@ export default function ContactPublicPage() {
         if (saved) {
             try { setSiteConfig(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
         }
-    }, []);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await fetch(`${API}/contact/page`);
-                if (res.ok) {
-                    const d = await res.json();
-                    setData({ ...DEFAULTS, ...d });
-                }
-            } catch (err) {
-                console.warn('Using default contact data:', err.message);
-            }
-        })();
+        window.scrollTo(0, 0);
     }, []);
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
@@ -79,61 +100,22 @@ export default function ContactPublicPage() {
     const phone2 = siteConfig?.header?.phone2 || '6296490943';
     const emailHeader = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
     const socials = siteConfig?.header?.socials || {};
-
-    const handleFormChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setSubmitStatus(null);
-        
-        try {
-            const res = await fetch(`${API}/contact/inquire`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            
-            const result = await res.json();
-            
-            if (res.ok) {
-                setSubmitStatus('success');
-                setStatusMessage(result.message);
-                setFormData({ name: '', email: '', phone: '', message: '' });
-                
-                // Hide success message after 5 seconds
-                setTimeout(() => setSubmitStatus(null), 5000);
-            } else {
-                setSubmitStatus('error');
-                setStatusMessage(result.message || 'Something went wrong. Please try again.');
-            }
-        } catch (error) {
-            setSubmitStatus('error');
-            setStatusMessage('Failed to send message. Please check your connection.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const fadeInUp = {
-        initial: { opacity: 0, y: 30 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.1 },
-        transition: { duration: 0.6 }
-    };
+    const tickerItems = siteConfig?.announcements?.ticker || [
+        'Admission Open for Session 2025-26',
+        'Mount Zion School Ranked #1 in Purnea',
+        'New Sports Complex Inaugurated'
+    ];
 
     return (
-        <div className="landing-page contact-public-page">
+        <div className="landing-page">
             {/* ===== TOP BAR ===== */}
             <div className="landing-top-bar">
                 <div className="top-bar-content">
                     <div className="top-left-socials">
-                        <a href={socials.facebook} className="social-icon"><Facebook size={14} fill="white" strokeWidth={0}/></a>
-                        <a href={socials.youtube} className="social-icon"><Youtube size={14} fill="white" strokeWidth={0}/></a>
-                        <a href={socials.instagram} className="social-icon"><Instagram size={14}/></a>
-                        <a href={socials.whatsapp} className="social-icon">
+                        <a href={socials.facebook} className="social-icon" target="_blank" rel="noopener noreferrer"><Facebook size={14} fill="white" strokeWidth={0}/></a>
+                        <a href={socials.youtube} className="social-icon" target="_blank" rel="noopener noreferrer"><Youtube size={14} fill="white" strokeWidth={0}/></a>
+                        <a href={socials.instagram} className="social-icon" target="_blank" rel="noopener noreferrer"><Instagram size={14}/></a>
+                        <a href={socials.whatsapp} className="social-icon" target="_blank" rel="noopener noreferrer">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                             </svg>
@@ -190,7 +172,7 @@ export default function ContactPublicPage() {
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
-                            <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <Link to="/academics" className="nav-link active">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
                                 <Link to="/results" className="dropdown-item">Results</Link>
                                 <Link to="/co-curricular" className="dropdown-item">Co-curricular</Link>
@@ -201,8 +183,9 @@ export default function ContactPublicPage() {
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
+                        <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
-                            <Link to="/contact" className="nav-link active">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
+                            <Link to="/contact" className="nav-link">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
                                 <a href="/contact#get-in-touch" className="dropdown-item">Get in touch</a>
                                 <a href="/contact#map" className="dropdown-item">See on map</a>
@@ -215,80 +198,89 @@ export default function ContactPublicPage() {
                 </div>
             </header>
 
-            {/* ===== NEW CONTACT SECTION ===== */}
-            <section id="get-in-touch" style={{ padding: '80px 0', background: '#fff' }}>
-                <div className="section-container" style={{ maxWidth: '1200px' }}>
-                    <div style={{ display: 'flex', borderRadius: '0', overflow: 'hidden', boxShadow: 'none', border: 'none' }}>
-                        <div style={{ flex: '1', padding: '60px 80px 60px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '15px', color: '#0f172a' }}>Get in touch</h2>
-                            <p style={{ color: '#64748b', marginBottom: '40px', fontSize: '1.05rem' }}>Our friendly team would love to hear from you.</p>
-
-                            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                    <div style={{ flex: '1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>First name</label>
-                                        <input type="text" name="firstName" placeholder="First name" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
-                                    </div>
-                                    <div style={{ flex: '1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Last name</label>
-                                        <input type="text" name="lastName" placeholder="Last name" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Email</label>
-                                    <input type="email" name="email" placeholder="you@company.com" required style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', outline: 'none' }} />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Phone number</label>
-                                    <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
-                                        <div style={{ background: '#fff', padding: '12px 15px', borderRight: '1px solid #cbd5e1', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.95rem', cursor: 'pointer' }}>
-                                            US <ChevronDown size={14} />
-                                        </div>
-                                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style={{ flex: '1', padding: '12px 15px', border: 'none', fontSize: '0.95rem', outline: 'none' }} />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Message</label>
-                                    <textarea name="message" rows="4" style={{ width: '100%', padding: '12px 15px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', resize: 'vertical', outline: 'none' }}></textarea>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '5px' }}>
-                                    <input type="checkbox" id="privacy" required style={{ marginTop: '4px', cursor: 'pointer' }} />
-                                    <label htmlFor="privacy" style={{ fontSize: '0.9rem', color: '#64748b', cursor: 'pointer' }}>
-                                        You agree to our friendly <a href="#" style={{ color: '#64748b', textDecoration: 'underline' }}>privacy policy</a>.
-                                    </label>
-                                </div>
-
-                                <button type="submit" style={{ width: '100%', padding: '14px', background: '#0B3C5D', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', marginTop: '10px' }}>
-                                    Send message
-                                </button>
-                            </form>
-                        </div>
-                        <div style={{ flex: '1', display: 'flex' }}>
-                            <img src="/getintouch.png" alt="Contact" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0' }} />
-                        </div>
+            <div className="news-ticker-bar">
+                <div className="ticker-scroll-content">
+                    <div className="ticker-track">
+                        {tickerItems.map((item, i) => (
+                            <span key={i} className="ticker-item">{item} &nbsp; • &nbsp;</span>
+                        ))}
+                        {tickerItems.map((item, i) => (
+                            <span key={i + 'copy'} className="ticker-item">{item} &nbsp; • &nbsp;</span>
+                        ))}
                     </div>
                 </div>
-            </section>
+            </div>
 
-            {/* ===== MAP SECTION ===== */}
-            <section id="map" style={{ padding: '0 0 80px 0', background: '#fff' }}>
+            {/* ===== THE CURRICULUM SECTION ===== */}
+            <section style={{ padding: '80px 0', background: '#fff' }}>
                 <div className="section-container" style={{ maxWidth: '1200px' }}>
-                    <h2 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '800', marginBottom: '40px', color: '#1e293b' }}>SEE ON MAP</h2>
-                    <div style={{ width: '100%', maxWidth: '700px', height: '450px', borderRadius: '0', overflow: 'hidden', margin: '0 auto' }}>
-                        <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.3367401412197!2d87.4447969!3d25.7924625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eff99ea1e7f3bd%3A0x698a31e366250485!2sMount%20Zion%20School!5e0!3m2!1sen!2sin!4v1777440961542!5m2!1sen!2sin" 
-                            width="100%" 
-                            height="100%" 
-                            style={{ border: 0 }} 
-                            allowFullScreen="" 
-                            loading="lazy" 
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Mount Zion School Location Map"
-                        ></iframe>
+                    <div style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
+                        {/* Text Side */}
+                        <div style={{ flex: '1' }}>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000', marginBottom: '10px' }}>The Curriculum</h2>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: '600', color: '#94a3b8', marginBottom: '30px' }}>Mount Zion School</h3>
+                            
+                            <p style={{ color: '#334155', fontSize: '0.95rem', marginBottom: '20px' }}>
+                                The following subjects are taught at different levels:
+                            </p>
+
+                            <div className="curriculum-list" style={{ color: '#1e293b', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                {data.levels.map((level, idx) => (
+                                    <div key={idx} style={{ marginBottom: '15px' }}>
+                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                            <span style={{ color: level.color }}>{level.number}.</span>
+                                            <div>
+                                                <span style={{ color: level.color }}>{level.title}</span>
+                                                {level.subtitle && <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>{level.subtitle}</span>}
+                                            </div>
+                                        </div>
+                                        
+                                        {level.subjects && level.subjects.length > 0 && (
+                                            <ul style={{ listStyleType: 'disc', paddingLeft: '25px', marginTop: '5px' }}>
+                                                {level.subjects.map((sub, sIdx) => (
+                                                    <li key={sIdx}>{sub}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        {level.streams && level.streams.length > 0 && (
+                                            <ul style={{ listStyleType: 'disc', paddingLeft: '25px', marginTop: '5px' }}>
+                                                {level.streams.map((stream, stIdx) => (
+                                                    <React.Fragment key={stIdx}>
+                                                        <li style={{ color: '#1e293b' }}>{stream.name}</li>
+                                                        {stream.subjects.map((sub, sIdx) => (
+                                                            <li key={`sub-${sIdx}`} style={{ color: '#1e293b' }}>{sub}</li>
+                                                        ))}
+                                                    </React.Fragment>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Image Side */}
+                        <div style={{ flex: '1.5' }}>
+                            <div className="acad-img-grid" style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '1.4fr 1fr', 
+                                gap: '15px'
+                            }}>
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                    <img src="/curriculum1.jpg" alt="Curriculum 1" style={{ width: '100%', maxWidth: '800px', height: '300px', objectFit: 'cover', display: 'block' }} />
+                                </div>
+                                <div style={{ gridColumn: '1 / 2' }}>
+                                    <img src="/curriculum2.jpg" alt="Curriculum 2" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
+                                </div>
+                                <div style={{ gridColumn: '2 / 3', gridRow: '2 / 4', height: '100%' }}>
+                                    <img src="/curriculum3.jpg" alt="Curriculum 3" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                </div>
+                                <div style={{ gridColumn: '1 / 2' }}>
+                                    <img src="/curriculum4.jpg" alt="Curriculum 4" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -376,7 +368,7 @@ export default function ContactPublicPage() {
                                     {siteConfig.footer.address.split(',').map((line, i) => (
                                         <p key={i}>{line.trim()}</p>
                                     ))}
-                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" className="map-link" target="_blank" rel="noopener noreferrer">
+                                    <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" target="_blank" rel="noopener noreferrer" className="map-link">
                                         <MapPin size={16} />
                                         <span>See on Map</span>
                                     </a>

@@ -11,7 +11,7 @@
 }
 
 .landing-page {
-    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     color: var(--mz-text);
     background: var(--mz-white);
     overflow-x: hidden;
@@ -316,7 +316,7 @@
 }
 
 .hero-heading {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 4rem;
     font-weight: 900;
     max-width: 800px;
@@ -1532,3 +1532,19 @@
     .footer-grid { grid-template-columns: 1fr; }
     .bottom-inner { flex-direction: column; gap: 20px; text-align: center; }
 }
+
+/* Header, Navbar, and Running News exceptions */
+.landing-top-bar, .landing-topbar, .landing-header, .news-ticker-bar {
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif !important;
+}
+.landing-nav .nav-link, .landing-nav .dropdown-item {
+    font-family: 'Roboto', system-ui, -apple-system, sans-serif !important;
+}
+
+
+/* Fix Contact Us dropdown going off screen */
+.landing-nav > .nav-item-dropdown:last-child .dropdown-content {
+    left: auto;
+    right: 0;
+}
+

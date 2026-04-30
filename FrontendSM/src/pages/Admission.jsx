@@ -319,6 +319,7 @@ function FeesTab() {
 
 // ======================== CONFIRMATION ========================
 function ConfirmationTab() {
+    const [, setSearchParams] = useSearchParams();
     const [confirmed, setConfirmed] = useLocalStorage('admission_confirmed', [
         { id: 1, admNo: 'ADM-2026-0001', name: 'Arjun Patel', class: 'Grade 2-A', rollNo: 1, date: '2026-03-16', feePaid: true },
         { id: 2, admNo: 'ADM-2026-0002', name: 'Meera Joshi', class: 'Grade 1-B', rollNo: 5, date: '2026-03-11', feePaid: true },
@@ -424,7 +425,7 @@ function ConfirmationTab() {
                 <table className="data-table"><thead><tr><th>Admission No</th><th>Student</th><th>Class</th><th>Roll No</th><th>Confirmed Date</th><th>Actions</th></tr></thead>
                     <tbody>{confirmed.map(c => (
                         <tr key={c.id}><td className="fw-600" style={{ color: 'var(--accent)' }}>{c.admNo}</td><td className="fw-600">{c.name}</td><td>{c.class}</td><td>{c.rollNo}</td><td>{c.date}</td>
-                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Admission: ${c.admNo}\nStudent: ${c.name}\nClass: ${c.class}\nRoll No: ${c.rollNo}\nConfirmed: ${c.date}`)}><Eye size={16}/></button><button className="btn-icon" title="ID Card"><IdCard size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Admission: ${c.admNo}\nStudent: ${c.name}\nClass: ${c.class}\nRoll No: ${c.rollNo}\nConfirmed: ${c.date}`)}><Eye size={16}/></button><button className="btn-icon" title="ID Card" onClick={() => setSearchParams({ tab: 'id-card' })}><IdCard size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>

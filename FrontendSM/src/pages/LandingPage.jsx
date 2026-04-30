@@ -288,6 +288,7 @@ export default function LandingPage() {
                         <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
+                        <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/contact" className="nav-link">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">

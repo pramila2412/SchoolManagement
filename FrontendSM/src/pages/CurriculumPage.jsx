@@ -286,6 +286,58 @@ export default function CurriculumPage() {
                 </div>
             </section>
 
+            {/* ===== SCHOOL UNIFORM SECTION ===== */}
+            <section className="school-uniform-section">
+                <div className="section-container">
+                    <div className="uniform-content-wrapper">
+                        <div className="uniform-image-col">
+                            <img src="/uniform.png" alt="School Uniform Students" />
+                        </div>
+                        <div className="uniform-text-col">
+                            <h2>School Uniform</h2>
+                            <h3 className="uniform-subtitle">Mount Zion School</h3>
+                            
+                            <div className="uniform-details">
+                                <div className="uniform-group">
+                                    <h4>For Boys:-</h4>
+                                    <p>Khaki grey Trousers and Blue stripped Shirts with school emblem<br/>
+                                    Tie, Belt, khaki grey socks and Black Shoes</p>
+                                </div>
+                                
+                                <div className="uniform-group">
+                                    <h4>For Senior Girls:-</h4>
+                                    <p>Khaki grey Salwar and Blue stripped three fourth sleeved Kurti with khaki grey waistcoat with school emblem.<br/>
+                                    Khaki grey socks and Black Shoes.</p>
+                                </div>
+                                
+                                <div className="uniform-group">
+                                    <h4>Junior Girls:-</h4>
+                                    <p>Khaki grey tunic with school emblem and Blue stripped Shirts<br/>
+                                    Tie, belt, Khaki grey socks and Black Shoes.</p>
+                                </div>
+                                
+                                <div className="uniform-group">
+                                    <h4>Monday and Saturday</h4>
+                                    <p>P.T. uniform for Std. 1 to 10</p>
+                                </div>
+                                
+                                <div className="uniform-group">
+                                    <h4>Black trousers and House T- shirts</h4>
+                                    <p>White socks and respective House colour shoes.</p>
+                                </div>
+                            </div>
+                            
+                            <div className="uniform-visit">
+                                <span>Visit : </span>
+                                <a href={socials.facebook || '#'} target="_blank" rel="noopener noreferrer">
+                                    <Facebook size={20} fill="#000" strokeWidth={0} />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* ===== Mobile Nav ===== */}
             <AnimatePresence>
                 {mobileMenuOpen && (

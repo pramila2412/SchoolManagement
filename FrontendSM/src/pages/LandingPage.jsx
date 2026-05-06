@@ -15,6 +15,7 @@ export default function LandingPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [utilityMenuOpen, setUtilityMenuOpen] = useState(false);
     const [siteConfig, setSiteConfig] = useState({
         header: {
             phone1: '6296490943',
@@ -260,11 +261,12 @@ export default function LandingPage() {
 
             <header className="landing-header">
                 <div className="header-inner" style={{ justifyContent: 'space-between' }}>
-                    <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
-                        <img src="/logo.png" alt="MZ Logo" />
-                        <div className="school-logo-text">
-                            <h2>MOUNT ZION</h2>
-                            <h2>SCHOOL</h2>
+                    <Link to="/" className="school-logo footer-logo" style={{ textDecoration: 'none', margin: 0, padding: '10px 15px', gap: '12px' }}>
+                        <img src="/logo.png" alt="MZ Logo" style={{ height: '50px' }} />
+                        <div className="footer-logo-text" style={{ textAlign: 'center' }}>
+                            <h3 style={{ fontSize: '1.5rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
+                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'nowrap' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
+                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'nowrap' }}>Period of Affiliation :2027</p>
                         </div>
                     </Link>
                     <div className="landing-nav">
@@ -275,40 +277,32 @@ export default function LandingPage() {
                             <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
                                 <Link to="/about" className="dropdown-item">About Mount Zion</Link>
-                                <a href="/about#team" className="dropdown-item">The Team</a>
-                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
-                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                                <Link to="/about#team" className="dropdown-item">The Team</Link>
+                                <Link to="/about#rules" className="dropdown-item">Rules & Regulations</Link>
+                                <Link to="/about#notices" className="dropdown-item">Notice</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
-                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
-                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                                <Link to="/admission#procedure" className="dropdown-item">Admission Procedure</Link>
+                                <Link to="/admission#fee" className="dropdown-item">Fee & Payment</Link>
+                                <Link to="/admission#result" className="dropdown-item">Admission Result-2026</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <Link to="/curriculum" className="dropdown-item">Curriculum</Link>
-                                <Link to="/curriculum#uniform" className="dropdown-item">School Uniform</Link>
+                                <Link to="/academics#curriculum" className="dropdown-item">Curriculum</Link>
+                                <Link to="/academics#uniform" className="dropdown-item">School Uniform</Link>
                             </div>
                         </div>
-                        <div className="nav-divider"></div>
-                        <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
                         <div className="nav-divider"></div>
-                        <div className="nav-item-dropdown">
-                            <Link to="/contact" className="nav-link">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
-                            <div className="dropdown-content">
-                                <a href="/contact#get-in-touch" className="dropdown-item">Get in touch</a>
-                                <a href="/contact#map" className="dropdown-item">See on map</a>
-                            </div>
-                        </div>
+                        <Link to="/contact" className="nav-link">Contact Us</Link>
                     </div>
 
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
@@ -447,13 +441,23 @@ export default function LandingPage() {
 
                             <div className="about-description" dangerouslySetInnerHTML={{ __html: siteConfig.about.message }} style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6' }} />
 
-                            <div className="about-social-row" style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '40px' }}>
-                                <span className="visit-text" style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visit &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span>
-                                <div className="social-pill-container" style={{ display: 'flex', gap: '10px' }}>
-                                    <a href={socials.facebook || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Facebook size={16} fill="#431407" strokeWidth={0}/></a>
-                                    <a href={socials.youtube || '#'} className="social-circle" target="_blank" rel="noopener noreferrer" style={{ background: '#fed7aa', color: '#431407', padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Youtube size={16} fill="#431407" strokeWidth={0}/></a>
+                            <div className="uniform-visit-container">
+                                <div className="uniform-visit">
+                                    <span className="visit-text">Visit : </span>
+                                    <a href={socials.youtube || '#'} target="_blank" rel="noopener noreferrer" className="visit-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#022a4d" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z"/>
+                                        </svg>
+                                    </a>
+                                    <a href={socials.facebook || '#'} target="_blank" rel="noopener noreferrer" className="visit-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#022a4d" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+                                        </svg>
+                                    </a>
                                 </div>
+                                <hr className="visit-divider" />
                             </div>
+
                         </div>
 
                         <div className="about-image-side" style={{ flex: 1 }}>
@@ -686,25 +690,104 @@ export default function LandingPage() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: '100%' }}
                     >
+                        
+                        
+                        
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
-                            <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
-                            <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
-                            <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
-                            <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
-                            <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
-                            {user ? (
-                                <>
-                                    <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
-                                    <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
-                                </>
-                            ) : (
-                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
-                            )}
+                            
+                            <div className="mobile-nav-item">
+                                <Link to="/" onClick={toggleMobileMenu}>Home</Link>
+                            </div>
+                            
+                            <div className="mobile-nav-item">
+                                <Link to="/about" onClick={toggleMobileMenu} style={{ color: '#ffb800' }}>About Us</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/about" onClick={toggleMobileMenu}>About Mount Zion</Link>
+                                    <Link to="/about#team" onClick={toggleMobileMenu}>The Team</Link>
+                                    <Link to="/about#rules" onClick={toggleMobileMenu}>Rules & Regulations</Link>
+                                    <Link to="/about#notices" onClick={toggleMobileMenu}>Notice</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/admission" onClick={toggleMobileMenu} style={{ color: '#ffb800' }}>Admission</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/admission#procedure" onClick={toggleMobileMenu}>Admission Procedure</Link>
+                                    <Link to="/admission#fee" onClick={toggleMobileMenu}>Fee & Payment</Link>
+                                    <Link to="/admission#result" onClick={toggleMobileMenu}>Admission Result-2026</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/academics" onClick={toggleMobileMenu} style={{ color: '#ffb800' }}>Academics</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/academics#curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                                    <Link to="/academics#uniform" onClick={toggleMobileMenu}>School Uniform</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
+                            </div>
+                            
+                            <div className="mobile-nav-item">
+                                <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
+                            </div>
+
+                            {/* Utility Section: Pay Now, TC, Search */}
+                            <div style={{ marginTop: '20px', padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px' }}>
+                                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                        <Wallet size={24} color="#1CA7A6" />
+                                        <span style={{ fontSize: '0.8rem', color: 'white' }}>Pay Now</span>
+                                    </div>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                        <FileText size={24} color="#1CA7A6" />
+                                        <span style={{ fontSize: '0.8rem', color: 'white' }}>TC</span>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '10px 15px', borderRadius: '30px' }}>
+                                    <Search size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: '10px' }} />
+                                    <input type="text" placeholder="Search..." style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%' }} />
+                                </div>
+                            </div>
+                            
+                            {/* Contact & Social Section */}
+                            <div className="mobile-contact-section">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <a href={`tel:${siteConfig.header.phone1}`} style={{ color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem' }}>
+                                        <Phone size={18} color="#ffb800" /> {siteConfig.header.phone1}
+                                    </a>
+                                    <a href={`mailto:${siteConfig.header.email}`} style={{ color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem' }}>
+                                        <Mail size={18} color="#ffb800" /> {siteConfig.header.email}
+                                    </a>
+                                </div>
+                                
+                                <div className="mobile-social-row">
+                                    <a href={siteConfig.header.socials.facebook} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '50%', color: 'white' }}>
+                                        <Facebook size={20} />
+                                    </a>
+                                    <a href={siteConfig.header.socials.youtube} target="_blank" rel="noopener noreferrer" style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '50%', color: 'white' }}>
+                                        <Youtube size={20} />
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                {user ? (
+                                    <>
+                                        <Link to="/" onClick={toggleMobileMenu} style={{ color: '#1CA7A6' }}>Dashboard</Link>
+                                        <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
+                                    </>
+                                ) : (
+                                    <Link to="/login" onClick={toggleMobileMenu} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1CA7A6' }}>
+                                        <LogIn size={20} /> Login
+                                    </Link>
+                                )}
+                            </div>
                         </div>
-                    </motion.div>
+</motion.div>
                 )}
             </AnimatePresence>
 
@@ -749,7 +832,6 @@ export default function LandingPage() {
                             <div className="footer-col">
                                 <h4>Support</h4>
                                 <ul className="footer-links">
-                                    <li><Link to="/curriculum">Curriculum</Link></li>
                                     <li><Link to="/gallery">Gallery</Link></li>
                                     <li><Link to="/notices">Notices</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Facebook, Youtube, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, ChevronDown, ArrowRight, Image as ImageIcon
-} from 'lucide-react';
+, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import './GalleryPublicPage.css';
@@ -56,6 +56,7 @@ export default function GalleryPublicPage() {
     const [activeCategory, setActiveCategory] = useState('All');
     const [loading, setLoading] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [utilityMenuOpen, setUtilityMenuOpen] = useState(false);
     const [activeVideoIndex, setActiveVideoIndex] = useState(0);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
     
@@ -152,10 +153,10 @@ export default function GalleryPublicPage() {
                 <div className="header-inner" style={{ justifyContent: 'space-between' }}>
                     <Link to="/" className="school-logo footer-logo" style={{ textDecoration: 'none', margin: 0, padding: '10px 15px', gap: '12px' }}>
                         <img src="/logo.png" alt="MZ Logo" style={{ height: '50px' }} />
-                        <div className="footer-logo-text" style={{ textAlign: 'center', maxWidth: '200px' }}>
-                            <h3 style={{ fontSize: '1.2rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
-                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'normal', lineHeight: '1.2' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
-                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'normal' }}>Period of Affiliation :2027</p>
+                        <div className="footer-logo-text" style={{ textAlign: 'center' }}>
+                            <h3 style={{ fontSize: '1.5rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
+                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'nowrap' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
+                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'nowrap' }}>Period of Affiliation :2027</p>
                         </div>
                     </Link>
                     <div className="landing-nav">
@@ -166,34 +167,32 @@ export default function GalleryPublicPage() {
                             <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
                                 <Link to="/about" className="dropdown-item">About Mount Zion</Link>
-                                <a href="/about#team" className="dropdown-item">The Team</a>
-                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
-                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                                <Link to="/about#team" className="dropdown-item">The Team</Link>
+                                <Link to="/about#rules" className="dropdown-item">Rules & Regulations</Link>
+                                <Link to="/about#notices" className="dropdown-item">Notice</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
-                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
-                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                                <Link to="/admission#procedure" className="dropdown-item">Admission Procedure</Link>
+                                <Link to="/admission#fee" className="dropdown-item">Fee & Payment</Link>
+                                <Link to="/admission#result" className="dropdown-item">Admission Result-2026</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <Link to="/curriculum" className="dropdown-item">Curriculum</Link>
-                                <Link to="/curriculum#uniform" className="dropdown-item">School Uniform</Link>
+                                <Link to="/academics#curriculum" className="dropdown-item">Curriculum</Link>
+                                <Link to="/academics#uniform" className="dropdown-item">School Uniform</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
-                        <Link to="/curriculum" className="nav-link">Curriculum</Link>
-                        <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link active">Gallery</Link>
                         <div className="nav-divider"></div>
-                        <span className="nav-link">Contact Us</span>
+                        <Link to="/contact" className="nav-link">Contact Us</Link>
                     </div>
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
                         {mobileMenuOpen ? <X /> : <Menu />}
@@ -404,6 +403,7 @@ export default function GalleryPublicPage() {
                 </div>
             </section>
 
+            
             {/* ===== Mobile Nav ===== */}
             <AnimatePresence>
                 {mobileMenuOpen && (
@@ -413,25 +413,56 @@ export default function GalleryPublicPage() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: '100%' }}
                     >
+                        
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
-                            <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
-                            <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                            
+                            <div className="mobile-nav-item">
+                                <Link to="/about" onClick={toggleMobileMenu}>About</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/about" onClick={toggleMobileMenu}>About Mount Zion</Link>
+                                    <Link to="/about#team" onClick={toggleMobileMenu}>The Team</Link>
+                                    <Link to="/about#rules" onClick={toggleMobileMenu}>Rules & Regulations</Link>
+                                    <Link to="/about#notices" onClick={toggleMobileMenu}>Notice</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/admission#procedure" onClick={toggleMobileMenu}>Admission Procedure</Link>
+                                    <Link to="/admission#fee" onClick={toggleMobileMenu}>Fee & Payment</Link>
+                                    <Link to="/admission#result" onClick={toggleMobileMenu}>Admission Result-2026</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/academics#curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                                    <Link to="/academics#uniform" onClick={toggleMobileMenu}>School Uniform</Link>
+                                </div>
+                            </div>
+
                             <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
                             <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
+                            
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '10px 0' }}></div>
+                            
+                            <span className="mobile-link" onClick={toggleMobileMenu}><Wallet size={18} style={{marginRight: '10px'}}/> Pay Now</span>
+                            <span className="mobile-link" onClick={toggleMobileMenu}><FileText size={18} style={{marginRight: '10px'}}/> TC</span>
+                            
                             {user ? (
                                 <>
                                     <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
                                     <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
                                 </>
                             ) : (
-                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                                <Link to="/login" onClick={toggleMobileMenu}><LogIn size={18} style={{marginRight: '10px'}}/> Login</Link>
                             )}
                         </div>
-                    </motion.div>
+</motion.div>
                 )}
             </AnimatePresence>
 
@@ -474,7 +505,6 @@ export default function GalleryPublicPage() {
                             <div className="footer-col">
                                 <h4>Support</h4>
                                 <ul className="footer-links">
-                                    <li><Link to="/curriculum">Curriculum</Link></li>
                                     <li><Link to="/gallery">Gallery</Link></li>
                                     <li><Link to="/notices">Notices</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>

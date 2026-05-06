@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -111,7 +112,7 @@ function AppContent() {
       {/* If not logged in, show public admission page. If logged in, let it fall through to /* AppLayout */}
       {!user && <Route path="/admission" element={<AdmissionPublicPage />} />}
       
-      <Route path="/curriculum" element={<CurriculumPage />} />
+      <Route path="/academics" element={<CurriculumPage />} />
       <Route path="/gallery" element={<GalleryPublicPage />} />
       <Route path="/contact" element={<ContactPublicPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -131,6 +132,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ScrollToTop />
         <AppContent />
       </AuthProvider>
     </BrowserRouter>

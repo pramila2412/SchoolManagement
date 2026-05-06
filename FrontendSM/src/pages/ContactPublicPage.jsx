@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Facebook, Youtube, MapPin, Search, Wallet, FileText, LogIn, Menu, X, Phone, Mail, ChevronRight, ChevronDown, Send, Clock, CheckCircle
-} from 'lucide-react';
+, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import './ContactPublicPage.css';
@@ -32,11 +32,23 @@ export default function ContactPublicPage() {
     const { user, logout } = useAuth();
     const [data, setData] = useState(DEFAULTS);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [utilityMenuOpen, setUtilityMenuOpen] = useState(false);
     
     // Form state
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+    const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', phone: '', message: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState(null); // null, 'success', 'error'
+    const [submitStatus, setSubmitStatus] = useState(null);
+    const [countryCode, setCountryCode] = useState('IN');
+    const [showCountries, setShowCountries] = useState(false);
+
+    const countries = [
+        { code: 'IN', dial: '+91', name: 'India' },
+        { code: 'US', dial: '+1', name: 'USA' },
+        { code: 'GB', dial: '+44', name: 'UK' },
+        { code: 'CA', dial: '+1', name: 'Canada' },
+        { code: 'AU', dial: '+61', name: 'Australia' }
+    ];
+    // null, 'success', 'error'
     const [statusMessage, setStatusMessage] = useState('');
 
     const [siteConfig, setSiteConfig] = useState({
@@ -77,7 +89,7 @@ export default function ContactPublicPage() {
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
     const phone1 = siteConfig?.header?.phone1 || '6296490943';
     const phone2 = siteConfig?.header?.phone2 || '6296490943';
-    const emailHeader = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
+    const email = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
     const socials = siteConfig?.header?.socials || {};
 
     const handleFormChange = (e) => {
@@ -158,10 +170,10 @@ export default function ContactPublicPage() {
                 <div className="header-inner" style={{ justifyContent: 'space-between' }}>
                     <Link to="/" className="school-logo footer-logo" style={{ textDecoration: 'none', margin: 0, padding: '10px 15px', gap: '12px' }}>
                         <img src="/logo.png" alt="MZ Logo" style={{ height: '50px' }} />
-                        <div className="footer-logo-text" style={{ textAlign: 'center', maxWidth: '200px' }}>
-                            <h3 style={{ fontSize: '1.2rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
-                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'normal', lineHeight: '1.2' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
-                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'normal' }}>Period of Affiliation :2027</p>
+                        <div className="footer-logo-text" style={{ textAlign: 'center' }}>
+                            <h3 style={{ fontSize: '1.5rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
+                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'nowrap' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
+                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'nowrap' }}>Period of Affiliation :2027</p>
                         </div>
                     </Link>
                     <div className="landing-nav">
@@ -172,40 +184,32 @@ export default function ContactPublicPage() {
                             <Link to="/about" className="nav-link">About <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
                                 <Link to="/about" className="dropdown-item">About Mount Zion</Link>
-                                <a href="/about#team" className="dropdown-item">The Team</a>
-                                <a href="/about#rules" className="dropdown-item">Rules & Regulations</a>
-                                <a href="/about#notices" className="dropdown-item">Notice</a>
+                                <Link to="/about#team" className="dropdown-item">The Team</Link>
+                                <Link to="/about#rules" className="dropdown-item">Rules & Regulations</Link>
+                                <Link to="/about#notices" className="dropdown-item">Notice</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/admission" className="nav-link">Admission <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <a href="/admission#procedure" className="dropdown-item">Admission Procedure</a>
-                                <a href="/admission#fee" className="dropdown-item">Fee & Payment</a>
-                                <a href="/admission#result" className="dropdown-item">Admission Result-2026</a>
+                                <Link to="/admission#procedure" className="dropdown-item">Admission Procedure</Link>
+                                <Link to="/admission#fee" className="dropdown-item">Fee & Payment</Link>
+                                <Link to="/admission#result" className="dropdown-item">Admission Result-2026</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
                         <div className="nav-item-dropdown">
                             <Link to="/academics" className="nav-link">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <Link to="/curriculum" className="dropdown-item">Curriculum</Link>
-                                <Link to="/curriculum#uniform" className="dropdown-item">School Uniform</Link>
+                                <Link to="/academics#curriculum" className="dropdown-item">Curriculum</Link>
+                                <Link to="/academics#uniform" className="dropdown-item">School Uniform</Link>
                             </div>
                         </div>
-                        <div className="nav-divider"></div>
-                        <Link to="/curriculum" className="nav-link">Curriculum</Link>
                         <div className="nav-divider"></div>
                         <Link to="/gallery" className="nav-link">Gallery</Link>
                         <div className="nav-divider"></div>
-                        <div className="nav-item-dropdown">
-                            <Link to="/contact" className="nav-link active">Contact Us <ChevronDown size={14} className="nav-chevron" /></Link>
-                            <div className="dropdown-content">
-                                <a href="/contact#get-in-touch" className="dropdown-item">Get in touch</a>
-                                <a href="/contact#map" className="dropdown-item">See on map</a>
-                            </div>
-                        </div>
+                        <Link to="/contact" className="nav-link active">Contact Us</Link>
                     </div>
                     <button className="mobile-menu-btn lg-hide" onClick={toggleMobileMenu}>
                         {mobileMenuOpen ? <X /> : <Menu />}
@@ -240,11 +244,42 @@ export default function ContactPublicPage() {
 
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#334155', marginBottom: '8px' }}>Phone number</label>
-                                    <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
-                                        <div style={{ background: '#fff', padding: '12px 15px', borderRight: '1px solid #cbd5e1', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.95rem', cursor: 'pointer' }}>
-                                            US <ChevronDown size={14} />
+                                    <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '6px', position: 'relative' }}>
+                                        <div 
+                                            style={{ background: '#fff', padding: '12px 15px', borderRight: '1px solid #cbd5e1', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.95rem', cursor: 'pointer', minWidth: '70px', borderRadius: '6px 0 0 6px' }}
+                                            onClick={() => setShowCountries(!showCountries)}
+                                        >
+                                            {countryCode} <ChevronDown size={14} />
                                         </div>
-                                        <input type="tel" name="phone" placeholder="+1 (555) 000-0000" style={{ flex: '1', padding: '12px 15px', border: 'none', fontSize: '0.95rem', outline: 'none' }} />
+                                        
+                                        {showCountries && (
+                                            <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '5px', zIndex: 10, width: '180px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                                                {countries.map(c => (
+                                                    <div 
+                                                        key={c.code}
+                                                        style={{ padding: '10px 15px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                                                        className="country-option"
+                                                        onClick={() => {
+                                                            setCountryCode(c.code);
+                                                            setShowCountries(false);
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = '#f8fafc'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                                                    >
+                                                        <span>{c.name}</span>
+                                                        <span style={{ color: '#94a3b8' }}>{c.dial}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <input 
+                                            type="tel" 
+                                            name="phone" 
+                                            placeholder={countryCode === 'IN' ? '+91 00000-00000' : '+1 (555) 000-0000'} 
+                                            style={{ flex: '1', padding: '12px 15px', border: 'none', fontSize: '0.95rem', outline: 'none' }} 
+                                            required
+                                        />
                                     </div>
                                 </div>
 
@@ -291,6 +326,7 @@ export default function ContactPublicPage() {
                 </div>
             </section>
 
+            
             {/* ===== Mobile Nav ===== */}
             <AnimatePresence>
                 {mobileMenuOpen && (
@@ -300,25 +336,56 @@ export default function ContactPublicPage() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: '100%' }}
                     >
+                        
                         <div className="mobile-nav-content">
                             <button className="close-btn" onClick={toggleMobileMenu}><X /></button>
                             <Link to="/" onClick={toggleMobileMenu}>Home</Link>
-                            <Link to="/about" onClick={toggleMobileMenu}>About</Link>
-                            <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
-                            <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
-                            <Link to="/curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                            
+                            <div className="mobile-nav-item">
+                                <Link to="/about" onClick={toggleMobileMenu}>About</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/about" onClick={toggleMobileMenu}>About Mount Zion</Link>
+                                    <Link to="/about#team" onClick={toggleMobileMenu}>The Team</Link>
+                                    <Link to="/about#rules" onClick={toggleMobileMenu}>Rules & Regulations</Link>
+                                    <Link to="/about#notices" onClick={toggleMobileMenu}>Notice</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/admission" onClick={toggleMobileMenu}>Admission</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/admission#procedure" onClick={toggleMobileMenu}>Admission Procedure</Link>
+                                    <Link to="/admission#fee" onClick={toggleMobileMenu}>Fee & Payment</Link>
+                                    <Link to="/admission#result" onClick={toggleMobileMenu}>Admission Result-2026</Link>
+                                </div>
+                            </div>
+
+                            <div className="mobile-nav-item">
+                                <Link to="/academics" onClick={toggleMobileMenu}>Academics</Link>
+                                <div className="mobile-sub-nav">
+                                    <Link to="/academics#curriculum" onClick={toggleMobileMenu}>Curriculum</Link>
+                                    <Link to="/academics#uniform" onClick={toggleMobileMenu}>School Uniform</Link>
+                                </div>
+                            </div>
+
                             <Link to="/gallery" onClick={toggleMobileMenu}>Gallery</Link>
                             <Link to="/contact" onClick={toggleMobileMenu}>Contact Us</Link>
+                            
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '10px 0' }}></div>
+                            
+                            <span className="mobile-link" onClick={toggleMobileMenu}><Wallet size={18} style={{marginRight: '10px'}}/> Pay Now</span>
+                            <span className="mobile-link" onClick={toggleMobileMenu}><FileText size={18} style={{marginRight: '10px'}}/> TC</span>
+                            
                             {user ? (
                                 <>
                                     <Link to="/" onClick={toggleMobileMenu}>Dashboard</Link>
                                     <span style={{ cursor: 'pointer', color: '#ff4757', fontWeight: 600 }} onClick={() => { logout(); toggleMobileMenu(); }}>Logout</span>
                                 </>
                             ) : (
-                                <Link to="/login" onClick={toggleMobileMenu}>Login</Link>
+                                <Link to="/login" onClick={toggleMobileMenu}><LogIn size={18} style={{marginRight: '10px'}}/> Login</Link>
                             )}
                         </div>
-                    </motion.div>
+</motion.div>
                 )}
             </AnimatePresence>
 
@@ -361,7 +428,6 @@ export default function ContactPublicPage() {
                             <div className="footer-col">
                                 <h4>Support</h4>
                                 <ul className="footer-links">
-                                    <li><Link to="/curriculum">Curriculum</Link></li>
                                     <li><Link to="/gallery">Gallery</Link></li>
                                     <li><Link to="/notices">Notices</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>

@@ -19,7 +19,7 @@
 
 /* ----- Top Bar ----- */
 .landing-top-bar {
-    background: var(--mz-blue-dark);
+    background: #002549;
     color: white;
     padding: 10px 0;
     font-size: 0.8rem;
@@ -159,7 +159,7 @@
     display: flex;
     height: 100%;
     align-items: center;
-    gap: 40px;
+    gap: 25px;
 }
 
 .nav-link {
@@ -871,7 +871,7 @@
 
 .news-carousel-wrapper {
     position: relative;
-    max-width: 1200px;
+    max-width: 850px;
     margin: 40px auto 0;
     padding: 0 60px;
 }
@@ -889,7 +889,8 @@
 
 .news-slide img {
     width: 100%;
-    height: auto;
+    max-height: 500px;
+    object-fit: cover;
     display: block;
 }
 
@@ -953,7 +954,7 @@
 
 .testimonial-card-main {
     background: #fdfaf5;
-    border-radius: 12px;
+    border-radius: 0;
     padding: 60px;
     display: flex;
     flex-direction: column;
@@ -1028,14 +1029,14 @@
 /* Red CTA Box */
 .cta-box-red {
     background: #d31d2a;
-    border-radius: 12px;
+    border-radius: 0;
     padding: 10px;
 }
 
 .cta-inner-border {
     height: 100%;
     border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 8px;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1083,11 +1084,11 @@
     justify-content: space-between;
     align-items: center;
     gap: 40px;
-    background: #001f3f; /* Deep Navy Blue */
+    background: #002549;
     color: white;
-    padding: 50px 60px;
+    padding: 50px 80px;
     border-radius: 0;
-    max-width: 1050px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -1096,19 +1097,19 @@
 }
 
 .connect-heading {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: 800;
     line-height: 1.2;
     margin-bottom: 25px;
 }
 
 .gold-text {
-    color: #ffb800; /* Bright gold */
+    color: #B29547;
 }
 
 .connect-subtext {
     font-size: 1.1rem;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.9);
     line-height: 1.6;
     margin-bottom: 40px;
     max-width: 550px;
@@ -1126,8 +1127,8 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    font-size: 1rem;
-    color: rgba(255,255,255,0.8);
+    font-size: 0.95rem;
+    color: #ffffff;
     font-weight: 500;
 }
 
@@ -1145,10 +1146,9 @@
 .portal-login-card {
     background: white;
     width: 100%;
-    max-width: 450px;
-    aspect-ratio: 1 / 1;
-    padding: 30px 40px;
-    border-radius: 4px;
+    max-width: 480px;
+    padding: 35px 45px;
+    border-radius: 0;
     color: #1e293b;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -1163,7 +1163,7 @@
 
 .portal-header h3 {
     font-size: 1.75rem;
-    color: #001f3f;
+    color: #002549;
     font-weight: 800;
     margin-bottom: 4px;
 }
@@ -1182,24 +1182,24 @@
     flex: 1;
     padding: 12px;
     border: none;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.85rem;
     cursor: pointer;
     background: #f1f5f9;
-    color: #64748b;
+    color: #002549;
     transition: all 0.3s;
 }
 
 .portal-tab:first-child {
-    border-radius: 4px 0 0 4px;
+    border-radius: 0;
 }
 
 .portal-tab:last-child {
-    border-radius: 0 4px 4px 0;
+    border-radius: 0;
 }
 
 .portal-tab.active {
-    background: #1e293b;
+    background: #002549;
     color: white;
 }
 
@@ -1211,9 +1211,9 @@
 
 .form-group label {
     display: block;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #1e293b;
     margin-bottom: 10px;
 }
 
@@ -1221,17 +1221,17 @@
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #e2e8f0;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 0.9rem;
     background: #fff;
 }
 
 .portal-login-btn {
-    background: #1e293b;
+    background: #002549;
     color: white;
     padding: 15px;
     border: none;
-    border-radius: 4px;
+    border-radius: 0;
     font-weight: 700;
     cursor: pointer;
     margin-top: 10px;
@@ -1373,6 +1373,7 @@
 }
 
 .footer-cta-inner h2 {
+    font-family: 'Roboto', sans-serif;
     font-size: 2.5rem;
     font-weight: 800;
     max-width: 750px;
@@ -1402,25 +1403,53 @@
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
+    grid-template-columns: 2.2fr 0.8fr 0.8fr 1.2fr;
     gap: 60px;
 }
 
 .footer-logo {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     margin-bottom: 25px;
+    background: #fff;
+    padding: 14px 10px;
+    border-radius: 0;
+    width: fit-content;
 }
 
 .footer-logo img {
-    height: 44px;
+    height: 70px;
+    flex-shrink: 0;
+}
+
+.footer-logo-text {
+    text-align: center;
 }
 
 .footer-logo-text h3 {
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 1.5rem;
+    font-weight: 900;
     line-height: 1.2;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.footer-logo-text .footer-affiliation {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.footer-logo-text .footer-affiliation-period {
+    font-family: 'Vesper Libre', serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #64748b;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
 }
 
 .footer-social-circles {
@@ -1450,8 +1479,8 @@
     font-weight: 500;
     margin-bottom: 25px;
     color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 .footer-links {
@@ -1475,9 +1504,14 @@
 }
 
 .footer-address p {
-    font-size: 1rem;
-    margin-bottom: 6px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    margin-bottom: 4px;
     line-height: 1.5;
+}
+
+.footer-address .contact-block {
+    margin-top: 25px;
 }
 
 .map-link {
@@ -1486,7 +1520,7 @@
     gap: 8px;
     color: white;
     text-decoration: none;
-    margin-top: 20px;
+    margin-top: 30px;
     font-size: 0.95rem;
 }
 

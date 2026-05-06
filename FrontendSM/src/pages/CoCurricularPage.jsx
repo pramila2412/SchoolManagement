@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Facebook, Instagram, Youtube, Twitter, Linkedin, MapPin, Search, Wallet, FileText, LogIn, Menu, X, ChevronRight, ChevronDown, Phone, Mail
+    Facebook, Youtube, MapPin, Search, Wallet, FileText, LogIn, Menu, X, ChevronRight, ChevronDown, Phone, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -78,7 +78,7 @@ export default function CoCurricularPage() {
             phone1: '6296490943',
             phone2: '6296490943',
             email: 'mountzionschool2021@gmail.com',
-            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: '#', instagram: '#', whatsapp: '#' }
+            socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos' }
         },
         footer: {
             ctaText: 'EMPOWERING EVERY CHILD TO REACH HIGHER.',
@@ -111,41 +111,39 @@ export default function CoCurricularPage() {
             {/* ===== TOP BAR ===== */}
             <div className="landing-top-bar">
                 <div className="top-bar-content">
-                    <div className="top-left-socials">
-                        <a href={socials.facebook} className="social-icon" target="_blank" rel="noopener noreferrer"><Facebook size={14} fill="white" strokeWidth={0}/></a>
-                        <a href={socials.youtube} className="social-icon" target="_blank" rel="noopener noreferrer"><Youtube size={14} fill="white" strokeWidth={0}/></a>
-                        <a href={socials.instagram} className="social-icon" target="_blank" rel="noopener noreferrer"><Instagram size={14}/></a>
-                        <a href={socials.whatsapp} className="social-icon" target="_blank" rel="noopener noreferrer">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                            </svg>
-                        </a>
+                                                            <div className="top-left-socials">
+                        <a href={socials.facebook} className="social-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z" fill="white"/></svg></a>
+                        <a href={socials.youtube} className="social-icon"><svg width="21" height="15" viewBox="0 0 24 17" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M23.495 2.628c-.232-.866-.918-1.552-1.784-1.784C19.982.417 12 .417 12 .417s-7.982 0-9.711.427c-.866.232-1.552.918-1.784 1.784C.078 4.357.078 8.5.078 8.5s0 4.143.427 5.872c.232.866.918 1.552 1.784 1.784 1.729.427 9.711.427 9.711.427s7.982 0 9.711-.427c.866-.232 1.552-.918 1.784-1.784.427-1.729.427-5.872.427-5.872s0-4.143-.427-5.872zM9.545 12.067V4.933l6.231 3.567-6.231 3.567z" fill="white"/></svg></a>
                     </div>
-                    <div className="top-contact-info">
-                        <a href={`tel:${phone1}`} className="top-info-item"><Phone size={13}/> {phone1}</a>
-                        <a href={`tel:${phone2}`} className="top-info-item"><Phone size={13}/> {phone2}</a>
-                        <a href={`mailto:${emailHeader}`} className="top-info-item hide-tablet"><Mail size={13}/> {emailHeader}</a>
+                    <div className="top-contact-info" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                        <a href={`tel:${phone1}`} className="top-info-item"><Phone size={14}/> {phone1}</a>
+                        <div style={{width: '1px', height: '14px', background: 'rgba(255,255,255,0.3)'}}></div>
+                        <a href={`mailto:${email}`} className="top-info-item hide-tablet"><Mail size={14}/> {email}</a>
+                        <div style={{width: '1px', height: '14px', background: 'rgba(255,255,255,0.3)'}}></div>
+                        <span className="top-link"><Wallet size={14}/> Pay Now</span>
+                        <div style={{width: '1px', height: '14px', background: 'rgba(255,255,255,0.3)'}}></div>
+                        <span className="top-link"><FileText size={14}/> TC</span>
+                        <div style={{width: '1px', height: '14px', background: 'rgba(255,255,255,0.3)'}}></div>
+                        <Link to="/login" className="top-link top-login-link"><LogIn size={14}/> Login</Link>
                     </div>
                     <div className="top-right-links">
-                        <span className="top-link"><Wallet size={13}/> Pay Now</span>
-                        <span className="top-link"><FileText size={13}/> TC</span>
-                        <Link to="/login" className="top-link top-login-link"><LogIn size={13}/> Login</Link>
                         <div className="top-search-box">
-                            <Search size={13} className="search-icon-small" />
+                            <Search size={14} className="search-icon-small" />
                             <input type="text" placeholder="Search" />
                         </div>
                     </div>
-                </div>
+                    </div>
             </div>
 
             {/* ===== HEADER ===== */}
             <header className="landing-header">
                 <div className="header-inner" style={{ justifyContent: 'space-between' }}>
-                    <Link to="/" className="school-logo" style={{ textDecoration: 'none' }}>
-                        <img src="/logo.png" alt="MZ Logo" />
-                        <div className="school-logo-text">
-                            <h2>MOUNT ZION</h2>
-                            <h2>SCHOOL</h2>
+                    <Link to="/" className="school-logo footer-logo" style={{ textDecoration: 'none', margin: 0, padding: '10px 15px', gap: '12px' }}>
+                        <img src="/logo.png" alt="MZ Logo" style={{ height: '50px' }} />
+                        <div className="footer-logo-text" style={{ textAlign: 'center', maxWidth: '200px' }}>
+                            <h3 style={{ fontSize: '1.2rem', margin: 0, whiteSpace: 'nowrap' }}>MOUNT ZION SCHOOL</h3>
+                            <p className="footer-affiliation" style={{ fontSize: '0.75rem', marginTop: '2px', whiteSpace: 'normal', lineHeight: '1.2' }}>Affiliated to CBSE, New Delhi upto +2 level</p>
+                            <p className="footer-affiliation-period" style={{ fontSize: '0.7rem', marginTop: '4px', whiteSpace: 'normal' }}>Period of Affiliation :2027</p>
                         </div>
                     </Link>
                     <div className="landing-nav">
@@ -174,9 +172,8 @@ export default function CoCurricularPage() {
                         <div className="nav-item-dropdown">
                             <Link to="/academics" className="nav-link active">Academics <ChevronDown size={14} className="nav-chevron" /></Link>
                             <div className="dropdown-content">
-                                <Link to="/results" className="dropdown-item">Results</Link>
-                                <Link to="/co-curricular" className="dropdown-item">Co-curricular</Link>
-                                <Link to="/academic-calendar" className="dropdown-item">Calendar</Link>
+                                <Link to="/curriculum" className="dropdown-item">Curriculum</Link>
+                                <Link to="/curriculum#uniform" className="dropdown-item">School Uniform</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
@@ -261,22 +258,23 @@ export default function CoCurricularPage() {
                         </div>
 
                         {/* Image Side */}
-                        <div style={{ flex: '1.5' }}>
+                        <div style={{ flex: '1.5', minWidth: '300px' }}>
                             <div className="acad-img-grid" style={{ 
                                 display: 'grid', 
                                 gridTemplateColumns: '1.4fr 1fr', 
-                                gap: '15px'
+                                gap: '15px',
+                                height: '100%'
                             }}>
-                                <div style={{ gridColumn: '1 / -1' }}>
-                                    <img src="/curriculum1.jpg" alt="Curriculum 1" style={{ width: '100%', maxWidth: '800px', height: '300px', objectFit: 'cover', display: 'block' }} />
+                                <div style={{ gridColumn: '1 / -1', height: '100%' }}>
+                                    <img src="/curriculum1.jpg" alt="Curriculum 1" style={{ width: '100%', height: '100%', minHeight: '250px', objectFit: 'cover', display: 'block' }} />
                                 </div>
-                                <div style={{ gridColumn: '1 / 2' }}>
+                                <div style={{ gridColumn: '1 / 2', height: '100%' }}>
                                     <img src="/curriculum2.jpg" alt="Curriculum 2" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
                                 </div>
                                 <div style={{ gridColumn: '2 / 3', gridRow: '2 / 4', height: '100%' }}>
                                     <img src="/curriculum3.jpg" alt="Curriculum 3" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                 </div>
-                                <div style={{ gridColumn: '1 / 2' }}>
+                                <div style={{ gridColumn: '1 / 2', height: '100%' }}>
                                     <img src="/curriculum4.jpg" alt="Curriculum 4" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
                                 </div>
                             </div>
@@ -333,15 +331,14 @@ export default function CoCurricularPage() {
                                 <div className="footer-logo">
                                     <img src="/logo.png" alt="MZ Logo" />
                                     <div className="footer-logo-text">
-                                        <h3>MOUNT ZION</h3>
-                                        <h3>SCHOOL</h3>
+                                        <h3>MOUNT ZION SCHOOL</h3>
+                                        <p className="footer-affiliation">Affiliated to CBSE, New Delhi upto +2 level</p>
+                                        <p className="footer-affiliation-period">Period of Affiliation :2027</p>
                                     </div>
                                 </div>
                                 <div className="footer-social-circles">
-                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><Facebook size={16}/></a>
-                                    <a href="#" className="social-circle"><Instagram size={16}/></a>
-                                    <a href="#" className="social-circle"><Linkedin size={16}/></a>
-                                    <a href="#" className="social-circle"><Twitter size={16}/></a>
+                                    <a href={socials.facebook} className="social-circle" target="_blank" rel="noopener noreferrer"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="white"/><path d="M15.89 14.96L16.34 12.06H13.56V10.18C13.56 9.39 13.95 8.62 15.19 8.62H16.45V6.15C16.45 6.15 15.31 5.96 14.22 5.96C11.93 5.96 10.44 7.34 10.44 9.85V12.06H7.9V14.96H10.44V21.96C10.96 22.03 11.48 22.06 12 22.06C12.52 22.06 13.04 22.03 13.56 21.96V14.96H15.89Z" fill="#d31d2a"/></svg></a>
+                                    <a href={socials.youtube || '#'} className="social-circle" target="_blank" rel="noopener noreferrer"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814z" fill="white"/><path d="M9.993 15.026V8.974L15.286 12l-5.293 3.026z" fill="#d31d2a"/></svg></a>
                                 </div>
                             </div>
                             <div className="footer-col">
@@ -365,9 +362,18 @@ export default function CoCurricularPage() {
                             <div className="footer-col">
                                 <h4>Address</h4>
                                 <div className="footer-address">
-                                    {siteConfig.footer.address.split(',').map((line, i) => (
-                                        <p key={i}>{line.trim()}</p>
-                                    ))}
+                                    <div className="address-block">
+                                        <p>MOUNT ZION SCHOOL</p>
+                                        <p>SION NAGAR</p>
+                                        <p>PURNEA - 854301</p>
+                                        <p>BIHAR</p>
+                                    </div>
+                                    <div className="contact-block">
+                                        <p>Contact No. 6296490943</p>
+                                        <p>Office Timing : 7.00 am to 1:30 pm (Summer)</p>
+                                        <p>8.30 am to 2.30 pm (winter)</p>
+                                        <p>Sunday Holiday</p>
+                                    </div>
                                     <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" target="_blank" rel="noopener noreferrer" className="map-link">
                                         <MapPin size={16} />
                                         <span>See on Map</span>

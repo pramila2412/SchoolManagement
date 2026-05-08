@@ -10,6 +10,8 @@ import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import AdmissionPublicPage from './pages/AdmissionPublicPage';
 import CurriculumPage from './pages/CurriculumPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import GalleryPublicPage from './pages/GalleryPublicPage';
 import ContactPublicPage from './pages/ContactPublicPage';
 import CoCurricularPage from './pages/CoCurricularPage';
@@ -113,6 +115,8 @@ function AppContent() {
       {!user && <Route path="/admission" element={<AdmissionPublicPage />} />}
       
       <Route path="/academics" element={<CurriculumPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/gallery" element={<GalleryPublicPage />} />
       <Route path="/contact" element={<ContactPublicPage />} />
       <Route path="/login" element={<LoginPage />} />

@@ -20,7 +20,7 @@ export default function LandingPage() {
             email: 'mountzionschool2021@gmail.com',
             socials: {
                 facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
-                youtube: 'https://youtube.com'
+                youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos'
             }
         },
         hero: {
@@ -124,14 +124,14 @@ export default function LandingPage() {
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [portalTab, setPortalTab] = useState('parent');
 
-    const CLONE_COUNT = 40;
+    const CLONE_COUNT = 3;
     const facilitiesLooped = siteConfig?.facilities ? Array(CLONE_COUNT).fill(siteConfig.facilities).flat() : [];
     const newsLooped = siteConfig?.news ? Array(CLONE_COUNT).fill(siteConfig.news).flat() : [];
     const achievementsLooped = siteConfig?.achievements ? Array(CLONE_COUNT).fill(siteConfig.achievements).flat() : [];
 
     useEffect(() => {
         const updateItems = () => {
-            if (window.innerWidth < 640) setItemsToShow(1.2);
+            if (window.innerWidth < 640) setItemsToShow(1);
             else if (window.innerWidth < 1024) setItemsToShow(2.2);
             else if (window.innerWidth < 1280) setItemsToShow(3.2);
             else setItemsToShow(3.8);
@@ -180,15 +180,18 @@ export default function LandingPage() {
     };
 
     useEffect(() => {
-        const saved = localStorage.getItem('mzs_site_config');
-        if (saved) {
+        const fetchLandingData = async () => {
             try {
-                const parsed = JSON.parse(saved);
-                setSiteConfig(prev => ({ ...prev, ...parsed }));
-            } catch (e) {
-                console.error("Failed to parse site config", e);
+                const response = await fetch('/api/landing-page');
+                if (response.ok) {
+                    const data = await response.json();
+                    setSiteConfig(prev => ({ ...prev, ...data }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch landing page config:", err);
             }
-        }
+        };
+        fetchLandingData();
     }, []);
 
     const heroTitle = siteConfig?.hero?.title || 'A Global Campus for Global Students';
@@ -213,16 +216,21 @@ export default function LandingPage() {
                     </motion.div>
                 </div>
                 
-                <div className="hero-announcement-strip">
-                    <div className="strip-inner">
-                        <span className="strip-heading">ANNOUNCEMENTS</span>
-                        <div className="strip-divider"></div>
-                        <div className="pulse-dot"></div>
-                        <span className="strip-text">
-                            Calls for admission for the academic year 2025-26 now online or <a href="https://maps.app.goo.gl/EqYY3hjh4gDCozwHA" target="_blank" rel="noopener noreferrer" className="strip-inline-link">visit our school</a>
-                        </span>
+                {siteConfig.announcements.heroStrip.show && (
+                    <div className="hero-announcement-strip">
+                        <div className="strip-inner">
+                            <span className="strip-heading">ANNOUNCEMENTS</span>
+                            <div className="strip-divider"></div>
+                            <div className="pulse-dot"></div>
+                            <span className="strip-text">
+                                {siteConfig.announcements.heroStrip.text}
+                                <Link to={siteConfig.announcements.heroStrip.link} className="strip-inline-link" style={{ marginLeft: '10px' }}>
+                                    Learn More
+                                </Link>
+                            </span>
+                        </div>
                     </div>
-                </div>
+                )}
             </section>
 
             <section className="facilities-section">
@@ -245,11 +253,18 @@ export default function LandingPage() {
                                 }}
                             >
                                 {facilitiesLooped.map((fac, idx) => (
-                                    <div className="facility-card-item" key={idx}>
-                                        <div 
-                                            className="facility-card" 
-                                            style={{ backgroundImage: `url(${fac.image})` }}
-                                        >
+                                    <div className="facility-card-item" key={idx} style={{ flex: `0 0 ${100 / facilitiesLooped.length}%`, height: '100%' }}>
+                                        <div style={{ 
+                                            height: '100%',
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            borderRadius: '0'
+                                        }}>
+                                            <img 
+                                                src={fac.image} 
+                                                alt={fac.title} 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                            />
                                             <div className="facility-overlay">
                                                 <h4>{fac.title}</h4>
                                                 <p>Know More</p>
@@ -283,10 +298,10 @@ export default function LandingPage() {
 
             <section className="landing-gallery">
                 <div className="section-container">
-                    <div className="gallery-header" style={{ display: 'flex', justifyContent: 'flex-start', gap: '80px', alignItems: 'center', marginBottom: '40px' }}>
-                        <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>Gallery</h2>
-                        <Link to="/gallery" style={{ display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.9rem', textDecoration: 'none', fontWeight: 600 }}>
-                            View More <div style={{ marginLeft: '8px', border: '1.5px solid #1e293b', borderRadius: '50%', padding: '3px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowUpRight size={14} strokeWidth={2}/></div>
+                    <div className="gallery-header">
+                        <h2 className="section-title">Gallery</h2>
+                        <Link to="/gallery" className="view-more-link">
+                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
                         </Link>
                     </div>
 
@@ -303,12 +318,12 @@ export default function LandingPage() {
             
             <section className="landing-about">
                 <div className="section-container">
-                    <div className="about-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
-                        <div className="about-text-side" style={{ flex: 1.2 }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '180px', marginBottom: '10px' }}>
-                                <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>{siteConfig.about.title}</h2>
-                                <Link to="/about" style={{ display: 'flex', alignItems: 'center', color: '#64748b', fontSize: '0.9rem', textDecoration: 'none', fontWeight: 600 }}>
-                                    View More <div style={{ marginLeft: '8px', border: '1.5px solid #1e293b', borderRadius: '50%', padding: '3px', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowUpRight size={14} strokeWidth={2}/></div>
+                    <div className="about-content-wrapper">
+                        <div className="about-text-side">
+                            <div className="about-header-row">
+                                <h2 className="section-title">{siteConfig.about.title}</h2>
+                                <Link to="/about" className="view-more-link">
+                                    View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
                                 </Link>
                             </div>
                             
@@ -336,9 +351,9 @@ export default function LandingPage() {
 
                         </div>
 
-                        <div className="about-image-side" style={{ flex: 1 }}>
-                            <div className="principal-image-box" style={{ height: '100%' }}>
-                                <img src={siteConfig.about.image} alt="About Us" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0' }} />
+                        <div className="about-image-side">
+                            <div className="principal-image-box">
+                                <img src={siteConfig.about.image} alt="About Us" />
                             </div>
                         </div>
                     </div>
@@ -407,7 +422,7 @@ export default function LandingPage() {
                         
                         <div className="facilities-track-container">
                             <motion.div 
-                                className="facilities-track"
+                                className="facilities-track achievements-track"
                                 animate={{ x: `-${achievementIndex * (100 / achievementsLooped.length)}%` }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 style={{ 
@@ -416,12 +431,17 @@ export default function LandingPage() {
                                 }}
                             >
                                 {achievementsLooped.map((img, idx) => (
-                                    <div className="facility-card-item" key={idx}>
-                                        <div 
-                                            className="facility-card achievement-card" 
-                                            style={{ backgroundImage: `url(${img})` }}
-                                        >
-                                            {/* No overlay for achievement posters usually */}
+                                    <div className="facility-card-item" key={idx} style={{ flex: `0 0 ${100 / achievementsLooped.length}%`, height: '100%' }}>
+                                        <div style={{ 
+                                            height: '100%',
+                                            position: 'relative',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <img 
+                                                src={img} 
+                                                alt="Achievement" 
+                                                style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#f8fafc' }}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -452,9 +472,9 @@ export default function LandingPage() {
             {/* Testimonials Section */}
             <section className="landing-testimonials">
                 <div className="section-container">
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginBottom: '40px' }}>
-                        <h2 className="section-title" style={{ margin: 0, paddingLeft: 0, borderLeft: 'none' }}>Testimonials</h2>
-                        <div style={{ border: '1.5px solid var(--mz-blue-dark)', borderRadius: '50%', padding: '4px', color: 'var(--mz-blue-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="section-header-centered">
+                        <h2 className="section-title">Testimonials</h2>
+                        <div className="title-arrow-icon">
                             <ArrowUpRight size={20} strokeWidth={2}/>
                         </div>
                     </div>
@@ -473,20 +493,22 @@ export default function LandingPage() {
                                         "{siteConfig.testimonials[testimonialIndex].text}"
                                     </motion.p>
                                 </AnimatePresence>
-                                
-                                <div className="testimonial-footer">
+                                                                 <div className="testimonial-footer">
                                     <div className="testimonial-author">
-                                        <img src={siteConfig.testimonials[testimonialIndex].image} alt={siteConfig.testimonials[testimonialIndex].author} />
+                                        <div className="author-photo-wrapper">
+                                            <img src={siteConfig.testimonials[testimonialIndex].image} alt={siteConfig.testimonials[testimonialIndex].author} />
+                                        </div>
                                         <div className="author-info">
                                             <h4>{siteConfig.testimonials[testimonialIndex].author}</h4>
                                             <p>{siteConfig.testimonials[testimonialIndex].id}</p>
                                         </div>
                                     </div>
                                     <div className="testimonial-nav">
-                                        <button className="nav-arrow" onClick={prevTestimonial}><ChevronLeft size={20}/></button>
-                                        <button className="nav-arrow" onClick={nextTestimonial}><ChevronRight size={20}/></button>
+                                        <button className="nav-arrow" onClick={prevTestimonial} aria-label="Previous testimonial"><ChevronLeft size={20}/></button>
+                                        <button className="nav-arrow" onClick={nextTestimonial} aria-label="Next testimonial"><ChevronRight size={20}/></button>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
 

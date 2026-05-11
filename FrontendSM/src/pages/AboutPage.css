@@ -1,4 +1,15 @@
 /* ===== About Page Styles ===== */
+.section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 100px;
+}
+
+@media (max-width: 768px) {
+    .section-container {
+        padding: 0 40px;
+    }
+}
 
 /* ----- Hero Banner ----- */
 .about-hero {
@@ -117,8 +128,12 @@
 }
 
 /* ----- Intro Section ----- */
+.about-us-section,
+.about-rules-section,
+.about-team-section,
+.about-notices-section,
 .about-intro-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #fff;
 }
 
@@ -206,7 +221,7 @@
 
 /* ----- Mission & Vision ----- */
 .about-mv-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #f8fafc;
 }
 
@@ -296,7 +311,7 @@
 
 /* ----- Principal Section ----- */
 .about-principal-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #fff;
 }
 
@@ -371,7 +386,7 @@
 
 /* ----- Core Values ----- */
 .about-values-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #f8fafc;
 }
 
@@ -459,7 +474,7 @@
 
 /* ----- Timeline / Milestones ----- */
 .about-timeline-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #fff;
 }
 
@@ -551,7 +566,7 @@
 
 /* ----- CTA Section ----- */
 .about-cta-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: linear-gradient(135deg, #051A29 0%, #0B3C5D 100%);
 }
 
@@ -664,12 +679,16 @@
 
     .values-grid { grid-template-columns: 1fr; }
 
+    .about-us-section,
+    .about-rules-section,
+    .about-team-section,
+    .about-notices-section,
     .about-intro-section,
     .about-mv-section,
     .about-principal-section,
     .about-values-section,
     .about-timeline-section,
-    .about-cta-section { padding: 60px 0; }
+    .about-cta-section { padding: 40px 0; }
 
     .mv-card { padding: 35px 25px; }
     
@@ -696,7 +715,7 @@
 
 /* ===== RULES SECTION ===== */
 .about-rules-section {
-    padding: 100px 0;
+    padding: 60px 0;
     background: #fff;
 }
 

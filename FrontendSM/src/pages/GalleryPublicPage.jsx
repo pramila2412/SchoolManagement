@@ -22,39 +22,43 @@ const CATEGORY_MAP = {
 const VIDEO_GALLERY_DATA = [
     {
         videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
+        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
         videoTitle: "How to get started",
         videoPart: "Part 1",
         testimonialName: "Sandra Henry",
         testimonialRole: "Alumni - University Assistant",
         testimonialText: "\"Mount Zion School has shaped my child's character and confidence. The care and values they instill are truly exceptional.\"",
-        testimonialImage: "/principal.jpeg"
+        testimonialImage: "https://i.pravatar.cc/150?u=sandra"
     },
     {
         videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
+        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
         videoTitle: "Campus Tour & Facilities",
         videoPart: "Part 2",
         testimonialName: "John Doe",
         testimonialRole: "Parent",
         testimonialText: "\"The facilities and the teaching staff are world-class. We couldn't have asked for a better environment for our son.\"",
-        testimonialImage: "/principal.jpeg"
+        testimonialImage: "https://i.pravatar.cc/150?u=john"
     },
     {
         videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
+        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
         videoTitle: "Annual Day Highlights",
         videoPart: "Part 3",
         testimonialName: "Maria Garcia",
         testimonialRole: "Parent",
         testimonialText: "\"Seeing my daughter perform on stage with so much confidence brought tears to my eyes. Thank you Mount Zion!\"",
-        testimonialImage: "/principal.jpeg"
+        testimonialImage: "https://i.pravatar.cc/150?u=maria"
     },
     {
         videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
+        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
         videoTitle: "Sports Achievements",
         videoPart: "Part 4",
         testimonialName: "David Smith",
         testimonialRole: "Alumni",
         testimonialText: "\"The sports infrastructure and coaching helped me secure a national level scholarship. Proud to be an alumni.\"",
-        testimonialImage: "/principal.jpeg"
+        testimonialImage: "https://i.pravatar.cc/150?u=david"
     }
 ];
 
@@ -70,6 +74,17 @@ export default function GalleryPublicPage() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 6;
+
+    // Auto-scroll logic
+    useEffect(() => {
+        let interval;
+        if (!isVideoPlaying) {
+            interval = setInterval(() => {
+                setActiveVideoIndex((prev) => (prev + 1) % VIDEO_GALLERY_DATA.length);
+            }, 5000); // Change every 5 seconds
+        }
+        return () => clearInterval(interval);
+    }, [isVideoPlaying]);
 
     useEffect(() => {
         const fetchGallery = async () => {
@@ -270,27 +285,20 @@ export default function GalleryPublicPage() {
             </section>
 
             {/* ===== VIDEO GALLERY SECTION ===== */}
-            <section style={{ padding: '80px 0', background: '#fff', borderTop: '1px solid #f1f5f9' }}>
-                <div className="section-container" style={{ maxWidth: '1000px' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-                        <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#334155', textTransform: 'uppercase', marginBottom: '15px' }}>
-                            VIDEO GALLERY 
-                        </h2>
-                        <p style={{ fontSize: '1.1rem', color: '#475569' }}>Moments that reflect our journey of learning, growth, and excellence.</p>
+            <section className="video-gallery-section">
+                <div className="section-container">
+                    <div className="video-section-header">
+                        <h2>VIDEO GALLERY</h2>
+                        <p>Moments that reflect our journey of learning, growth, and excellence.</p>
                     </div>
 
-                    <div style={{ background: '#fcfaf6', display: 'flex', padding: '40px', gap: '40px', flexWrap: 'wrap', alignItems: 'center' }}>
-                        {/* Left side: Video + Button */}
-                        <div style={{ flex: '1.5', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <div style={{ 
-                                background: 'linear-gradient(135deg, #7c3aed 0%, rgba(139, 92, 246, 0.8) 50%, #93c5fd 100%)', 
-                                borderRadius: '8px', 
-                                aspectRatio: '16/9', 
-                                position: 'relative', 
-                                padding: isVideoPlaying ? '0' : '20px', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                overflow: 'hidden'
+                    <div className="video-gallery-layout">
+                        {/* Left side: Video */}
+                        <div className="video-main-player-side">
+                            <div className="video-aspect-container" style={{ 
+                                backgroundImage: `url(${VIDEO_GALLERY_DATA[activeVideoIndex].videoThumbnail})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
                             }}>
                                 {isVideoPlaying ? (
                                     <iframe 
@@ -304,29 +312,17 @@ export default function GalleryPublicPage() {
                                         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                                     ></iframe>
                                 ) : (
-                                    <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                    <div className="video-placeholder-content" style={{ background: 'rgba(0,0,0,0.4)' }}>
                                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                            <div style={{ position: 'absolute', left: 0, top: '40%' }}>
-                                                <span style={{ background: 'rgba(255,255,255,0.3)', color: '#fff', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', display: 'inline-block', marginBottom: '8px' }}>{VIDEO_GALLERY_DATA[activeVideoIndex].videoPart}</span>
-                                                <h3 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '500', letterSpacing: '0.5px' }}>{VIDEO_GALLERY_DATA[activeVideoIndex].videoTitle}</h3>
-                                            </div>
-                                            <div onClick={() => setIsVideoPlaying(true)} style={{ width: '60px', height: '60px', background: 'rgba(255,255,255,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
+                                            <div onClick={() => setIsVideoPlaying(true)} className="play-button-outer">
                                                 <div style={{ width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '15px solid #fff', marginLeft: '5px' }}></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto' }}>
-                                            <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #fff' }}></div>
-                                            <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px', position: 'relative' }}>
-                                                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: '#fff', borderRadius: '2px' }}></div>
-                                                <div style={{ position: 'absolute', left: '30%', top: '50%', transform: 'translateY(-50%)', width: '8px', height: '8px', background: '#fff', borderRadius: '50%' }}></div>
                                             </div>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            <a href="https://www.youtube.com/watch?v=5Peo-ivmupE" target="_blank" rel="noopener noreferrer" style={{ background: '#002147', color: '#fff', border: 'none', padding: '10px 20px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', width: 'max-content', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', borderRadius: '4px' }}>
+                            <a href={VIDEO_GALLERY_DATA[activeVideoIndex].videoLink} target="_blank" rel="noopener noreferrer" className="video-visit-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z"/>
                                 </svg>
@@ -334,51 +330,55 @@ export default function GalleryPublicPage() {
                             </a>
                         </div>
                         
-                        <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ background: '#fff', padding: '30px 20px', borderRadius: '12px', width: '100%', maxWidth: '300px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', position: 'relative', marginTop: '20px' }}>
-                                <div style={{ position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '60px', borderRadius: '50%', border: '2px solid #22c55e', padding: '3px', background: '#fff' }}>
-                                    <img src={VIDEO_GALLERY_DATA[activeVideoIndex].testimonialImage} alt="Parent" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        {/* Right side: Testimonial + Thumbnails */}
+                        <div className="video-testimonial-side">
+                            <div className="testimonial-card-v2">
+                                <div className="parent-thumb-wrapper">
+                                    <img src={VIDEO_GALLERY_DATA[activeVideoIndex].testimonialImage} alt="Parent" />
                                 </div>
                                 
-                                <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#002147', opacity: 0.8 }}>
+                                <div className="quote-icon-v2">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
                                 </div>
 
-                                <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', color: '#f59e0b', fontSize: '0.8rem', gap: '2px', marginBottom: '10px' }}>
-                                        ★ ★ ★ ★ ★
-                                    </div>
-
-                                    <h4 style={{ color: '#002147', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '2px' }}>{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialName}</h4>
-                                    <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialRole}</span>
-                                    
-                                    <p style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic', lineHeight: '1.6', marginTop: '15px' }}>
-                                        {VIDEO_GALLERY_DATA[activeVideoIndex].testimonialText}
-                                    </p>
+                                <div className="testimonial-content-v2">
+                                    <div className="stars-row">★ ★ ★ ★ ★</div>
+                                    <h4 className="parent-name">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialName}</h4>
+                                    <span className="parent-role">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialRole}</span>
+                                    <p className="parent-message">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialText}</p>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '25px' }}>
+                            {/* Parent Thumbnails / Scrolling Feedbacks */}
+                            <div style={{ display: 'flex', gap: '15px', marginTop: '30px', overflowX: 'auto', padding: '10px', width: '100%', justifyContent: 'center' }}>
+                                {VIDEO_GALLERY_DATA.map((item, idx) => (
+                                    <div 
+                                        key={idx}
+                                        onClick={() => { setActiveVideoIndex(idx); setIsVideoPlaying(false); }}
+                                        style={{ 
+                                            width: '50px', 
+                                            height: '50px', 
+                                            borderRadius: '50%', 
+                                            border: activeVideoIndex === idx ? '3px solid #d97706' : '3px solid transparent', 
+                                            padding: '2px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            flexShrink: 0,
+                                            opacity: activeVideoIndex === idx ? 1 : 0.6
+                                        }}
+                                    >
+                                        <img src={item.testimonialImage} alt={item.testimonialName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="video-nav-dots">
                                 {VIDEO_GALLERY_DATA.map((_, idx) => (
                                     <div 
                                         key={idx} 
                                         onClick={() => { setActiveVideoIndex(idx); setIsVideoPlaying(false); }}
-                                        style={{ 
-                                            width: activeVideoIndex === idx ? '14px' : '10px', 
-                                            height: activeVideoIndex === idx ? '14px' : '10px', 
-                                            borderRadius: '50%', 
-                                            border: activeVideoIndex === idx ? '1px solid #d97706' : 'none', 
-                                            background: activeVideoIndex === idx ? 'transparent' : '#cbd5e1',
-                                            padding: activeVideoIndex === idx ? '2px' : '0', 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            alignSelf: 'center'
-                                        }}
-                                    >
-                                        {activeVideoIndex === idx && <div style={{ width: '6px', height: '6px', background: '#d97706', borderRadius: '50%' }}></div>}
-                                    </div>
+                                        className={`nav-dot ${activeVideoIndex === idx ? 'active' : ''}`}
+                                    ></div>
                                 ))}
                             </div>
                         </div>

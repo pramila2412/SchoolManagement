@@ -51,10 +51,18 @@ export default function PublicHeader() {
     });
 
     useEffect(() => {
-        const saved = localStorage.getItem('mzs_site_config');
-        if (saved) {
-            try { setSiteConfig(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
-        }
+        const fetchHeaderData = async () => {
+            try {
+                const response = await fetch('/api/landing-page');
+                if (response.ok) {
+                    const data = await response.json();
+                    setSiteConfig(prev => ({ ...prev, ...data }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch header config:", err);
+            }
+        };
+        fetchHeaderData();
     }, []);
 
     const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);

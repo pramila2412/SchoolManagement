@@ -21,6 +21,7 @@ const admissionPageRoutes = require('./routes/admissionPage');
 const curriculumPageRoutes = require('./routes/curriculumPage');
 const galleryRoutes = require('./routes/gallery');
 const contactRoutes = require('./routes/contact');
+const landingPageRoutes = require('./routes/landingPage');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,6 +55,7 @@ app.use('/api/admission-page', admissionPageRoutes);
 app.use('/api/curriculum-page', curriculumPageRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/landing-page', landingPageRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

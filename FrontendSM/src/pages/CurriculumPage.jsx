@@ -10,6 +10,7 @@ const DEFAULTS = {
     pageTitle: 'The Curriculum',
     pageSubtitle: 'The following subjects are taught at different levels:',
     heroImage: '/school.jpeg',
+    curriculumImages: ['/curriculum1.jpg', '/curriculum2.jpg', '/curriculum3.jpg', '/curriculum4.jpg'],
     levels: [
         {
             number: 1,
@@ -67,6 +68,31 @@ const DEFAULTS = {
                 }
             ]
         }
+    ],
+    uniformTitle: 'School Uniform',
+    uniformSubtitle: 'Mount Zion School',
+    uniformImage: '/uniform.png',
+    uniformGroups: [
+        {
+            title: 'For Boys:-',
+            description: 'Khaki grey Trousers and Blue stripped Shirts with school emblem\nTie, Belt, khaki grey socks and Black Shoes'
+        },
+        {
+            title: 'For Senior Girls:-',
+            description: 'Khaki grey Salwar and Blue stripped three fourth sleeved Kurti with khaki grey waistcoat with school emblem.\nKhaki grey socks and Black Shoes.'
+        },
+        {
+            title: 'Junior Girls:-',
+            description: 'Khaki grey tunic with school emblem and Blue stripped Shirts\nTie, belt, Khaki grey socks and Black Shoes.'
+        },
+        {
+            title: 'Monday and Saturday',
+            description: 'P.T. uniform for Std. 1 to 10'
+        },
+        {
+            title: 'Black trousers and House T- shirts',
+            description: 'White socks and respective House colour shoes.'
+        }
     ]
 };
 
@@ -100,7 +126,7 @@ export default function CurriculumPage() {
                         {/* Text Side */}
                         <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
                             <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000', marginBottom: '10px', fontFamily: "'Inter', sans-serif" }}>{data.pageTitle}</h2>
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', fontFamily: "'Inter', sans-serif" }}>Mount Zion School</h3>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', fontFamily: "'Inter', sans-serif" }}>{data.uniformSubtitle}</h3>
                             
                             <p style={{ color: '#334155', fontSize: '0.85rem', marginBottom: '10px', fontWeight: '600' }}>
                                 {data.pageSubtitle}
@@ -155,16 +181,16 @@ export default function CurriculumPage() {
                                 minHeight: '650px'
                             }}>
                                 <div style={{ gridColumn: '1 / -1' }}>
-                                    <img src="/curriculum1.jpg" alt="Curriculum 1" style={{ width: '100%', height: '100%', minHeight: '300px', objectFit: 'cover', display: 'block' }} />
+                                    <img src={data.curriculumImages[0] || "/curriculum1.jpg"} alt="Curriculum 1" style={{ width: '100%', height: '100%', minHeight: '300px', objectFit: 'cover', display: 'block' }} />
                                 </div>
                                 <div style={{ gridColumn: '1 / 2' }}>
-                                    <img src="/curriculum2.jpg" alt="Curriculum 2" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
+                                    <img src={data.curriculumImages[1] || "/curriculum2.jpg"} alt="Curriculum 2" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
                                 </div>
                                 <div style={{ gridColumn: '2 / 3', gridRow: '2 / 4' }}>
-                                    <img src="/curriculum3.jpg" alt="Curriculum 3" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                    <img src={data.curriculumImages[2] || "/curriculum3.jpg"} alt="Curriculum 3" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                 </div>
                                 <div style={{ gridColumn: '1 / 2' }}>
-                                    <img src="/curriculum4.jpg" alt="Curriculum 4" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
+                                    <img src={data.curriculumImages[3] || "/curriculum4.jpg"} alt="Curriculum 4" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '4/3' }} />
                                 </div>
                             </div>
                         </div>
@@ -177,40 +203,19 @@ export default function CurriculumPage() {
                 <div className="section-container">
                     <div className="uniform-content-wrapper">
                         <div className="uniform-image-col">
-                            <img src="/uniform.png" alt="School Uniform Students" />
+                            <img src={data.uniformImage || "/uniform.png"} alt="School Uniform Students" />
                         </div>
                         <div className="uniform-text-col">
-                            <h2>School Uniform</h2>
-                            <h3 className="uniform-subtitle">Mount Zion School</h3>
+                            <h2>{data.uniformTitle}</h2>
+                            <h3 className="uniform-subtitle">{data.uniformSubtitle}</h3>
                             
                             <div className="uniform-details">
-                                <div className="uniform-group">
-                                    <h4>For Boys:-</h4>
-                                    <p>Khaki grey Trousers and Blue stripped Shirts with school emblem<br/>
-                                    Tie, Belt, khaki grey socks and Black Shoes</p>
-                                </div>
-                                
-                                <div className="uniform-group">
-                                    <h4>For Senior Girls:-</h4>
-                                    <p>Khaki grey Salwar and Blue stripped three fourth sleeved Kurti with khaki grey waistcoat with school emblem.<br/>
-                                    Khaki grey socks and Black Shoes.</p>
-                                </div>
-                                
-                                <div className="uniform-group">
-                                    <h4>Junior Girls:-</h4>
-                                    <p>Khaki grey tunic with school emblem and Blue stripped Shirts<br/>
-                                    Tie, belt, Khaki grey socks and Black Shoes.</p>
-                                </div>
-                                
-                                <div className="uniform-group">
-                                    <h4>Monday and Saturday</h4>
-                                    <p>P.T. uniform for Std. 1 to 10</p>
-                                </div>
-                                
-                                <div className="uniform-group">
-                                    <h4>Black trousers and House T- shirts</h4>
-                                    <p>White socks and respective House colour shoes.</p>
-                                </div>
+                                {data.uniformGroups.map((group, gIdx) => (
+                                    <div key={gIdx} className="uniform-group">
+                                        <h4>{group.title}</h4>
+                                        <p style={{ whiteSpace: 'pre-line' }}>{group.description}</p>
+                                    </div>
+                                ))}
                             </div>
                             
                             <div className="uniform-visit-container">

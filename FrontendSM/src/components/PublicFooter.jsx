@@ -15,10 +15,18 @@ export default function PublicFooter() {
     });
 
     useEffect(() => {
-        const saved = localStorage.getItem('mzs_site_config');
-        if (saved) {
-            try { setSiteConfig(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
-        }
+        const fetchFooterData = async () => {
+            try {
+                const response = await fetch('/api/landing-page');
+                if (response.ok) {
+                    const data = await response.json();
+                    setSiteConfig(prev => ({ ...prev, ...data }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch footer config:", err);
+            }
+        };
+        fetchFooterData();
     }, []);
 
     const socials = siteConfig?.header?.socials || {};

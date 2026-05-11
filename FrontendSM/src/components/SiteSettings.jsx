@@ -16,7 +16,7 @@ export default function SiteSettings() {
             email: 'mountzionschool2021@gmail.com',
             socials: {
                 facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
-                youtube: 'https://youtube.com',
+                youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos',
                 instagram: 'https://instagram.com',
                 whatsapp: 'https://wa.me/916296490943'
             }
@@ -94,22 +94,72 @@ export default function SiteSettings() {
         }
     });
 
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
     useEffect(() => {
-        const saved = localStorage.getItem('mzs_site_config');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Merge with default to ensure new fields exist
-                setConfig(prev => ({ ...prev, ...parsed }));
-            } catch (e) {
-                console.error("Failed to parse site config", e);
-            }
-        }
+        fetchConfig();
     }, []);
 
-    const handleSave = () => {
-        localStorage.setItem('mzs_site_config', JSON.stringify(config));
-        customAlert('Site Configuration updated successfully! Refresh the landing page to see changes.', 'Success', 'success');
+    const fetchConfig = async () => {
+        try {
+            const res = await fetch('/api/landing-page');
+            if (res.ok) {
+                const data = await res.json();
+                setConfig(prev => ({ ...prev, ...data }));
+            }
+        } catch (err) {
+            console.error("Failed to fetch landing page config:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch('/api/landing-page', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            if (res.ok) {
+                customAlert('Site Configuration updated successfully!', 'Success', 'success');
+            } else {
+                const err = await res.json();
+                customAlert('Error: ' + err.message, 'Update Failed', 'error');
+            }
+        } catch (err) {
+            customAlert('Server error: ' + err.message, 'Error', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleFileUpload = (e, section, field, index = null) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            if (index !== null && Array.isArray(config[section])) {
+                const newArr = [...config[section]];
+                if (typeof newArr[index] === 'object') {
+                    newArr[index] = { ...newArr[index], [field]: base64String };
+                } else {
+                    newArr[index] = base64String;
+                }
+                setConfig({ ...config, [section]: newArr });
+            } else if (field) {
+                setConfig({
+                    ...config,
+                    [section]: { ...config[section], [field]: base64String }
+                });
+            } else {
+                setConfig({ ...config, [section]: base64String });
+            }
+        };
+        reader.readAsDataURL(file);
     };
 
     const updateNested = (section, field, value) => {
@@ -171,9 +221,71 @@ export default function SiteSettings() {
                                 <label>Phone 2</label>
                                 <input type="text" value={config.header.phone2} onChange={e => updateNested('header', 'phone2', e.target.value)} />
                             </div>
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                            <div className="form-group">
                                 <label>Email</label>
                                 <input type="email" value={config.header.email} onChange={e => updateNested('header', 'email', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label>Facebook URL</label>
+                                <input type="text" value={config.header.socials.facebook} onChange={e => {
+                                    const newSocials = { ...config.header.socials, facebook: e.target.value };
+                                    updateNested('header', 'socials', newSocials);
+                                }} />
+                            </div>
+                            <div className="form-group">
+                                <label>YouTube URL</label>
+                                <input type="text" value={config.header.socials.youtube} onChange={e => {
+                                    const newSocials = { ...config.header.socials, youtube: e.target.value };
+                                    updateNested('header', 'socials', newSocials);
+                                }} />
+                            </div>
+                        </div>
+
+                        <h3 style={{ marginTop: 40 }}>Announcements Ticker</h3>
+                        <div className="items-list">
+                            {config.announcements.ticker.map((item, idx) => (
+                                <div key={idx} className="list-item-card">
+                                    <input type="text" value={item} onChange={e => {
+                                        const newTicker = [...config.announcements.ticker];
+                                        newTicker[idx] = e.target.value;
+                                        updateNested('announcements', 'ticker', newTicker);
+                                    }} />
+                                    <button className="remove-btn" onClick={() => {
+                                        const newTicker = config.announcements.ticker.filter((_, i) => i !== idx);
+                                        updateNested('announcements', 'ticker', newTicker);
+                                    }}><Trash2 size={16}/></button>
+                                </div>
+                            ))}
+                            <button className="add-btn" onClick={() => {
+                                const newTicker = [...config.announcements.ticker, 'New Announcement'];
+                                updateNested('announcements', 'ticker', newTicker);
+                            }}><Plus size={16}/> Add Ticker Item</button>
+                        </div>
+
+                        <h3 style={{ marginTop: 40 }}>Hero Strip Announcement</h3>
+                        <div className="settings-grid">
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label>Strip Text</label>
+                                <input type="text" value={config.announcements.heroStrip.text} onChange={e => {
+                                    const newStrip = { ...config.announcements.heroStrip, text: e.target.value };
+                                    updateNested('announcements', 'heroStrip', newStrip);
+                                }} />
+                            </div>
+                            <div className="form-group">
+                                <label>Link</label>
+                                <input type="text" value={config.announcements.heroStrip.link} onChange={e => {
+                                    const newStrip = { ...config.announcements.heroStrip, link: e.target.value };
+                                    updateNested('announcements', 'heroStrip', newStrip);
+                                }} />
+                            </div>
+                            <div className="form-group">
+                                <label className="checkbox-label" style={{ marginTop: 35 }}>
+                                    <input type="checkbox" checked={config.announcements.heroStrip.show} onChange={e => {
+                                        const newStrip = { ...config.announcements.heroStrip, show: e.target.checked };
+                                        updateNested('announcements', 'heroStrip', newStrip);
+                                    }} />
+                                    Show Announcement Strip
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -191,8 +303,15 @@ export default function SiteSettings() {
                             <textarea rows="2" value={config.hero.subtitle} onChange={e => updateNested('hero', 'subtitle', e.target.value)} />
                         </div>
                         <div className="form-group">
-                            <label>Hero Image (Path)</label>
-                            <input type="text" value={config.hero.image} onChange={e => updateNested('hero', 'image', e.target.value)} />
+                            <label>Hero Image</label>
+                            <div className="image-upload-wrapper">
+                                <input type="text" value={config.hero.image} onChange={e => updateNested('hero', 'image', e.target.value)} placeholder="Image Path or Base64" />
+                                <div className="upload-btn-wrapper">
+                                    <button className="upload-btn"><Camera size={16} /> Upload</button>
+                                    <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'hero', 'image')} />
+                                </div>
+                            </div>
+                            {config.hero.image && <div className="preview-mini"><img src={config.hero.image} alt="Preview" /></div>}
                         </div>
                     </div>
                 )}
@@ -203,12 +322,18 @@ export default function SiteSettings() {
                         <div className="items-list">
                             {config.facilities.map((fac, idx) => (
                                 <div key={idx} className="list-item-card">
-                                    <input type="text" placeholder="Title" value={fac.title} onChange={e => updateArrayItem('facilities', idx, 'title', e.target.value)} />
-                                    <input type="text" placeholder="Image Path" value={fac.image} onChange={e => updateArrayItem('facilities', idx, 'image', e.target.value)} />
-                                    <button className="remove-btn" onClick={() => removeFromArray('facilities', idx)}><Trash2 size={16}/></button>
+                                    <div className="item-row">
+                                        <input type="text" placeholder="Title" value={fac.title} onChange={e => updateArrayItem('facilities', idx, 'title', e.target.value)} />
+                                        <div className="upload-btn-wrapper">
+                                            <button className="upload-btn"><Camera size={14} /></button>
+                                            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'facilities', 'image', idx)} />
+                                        </div>
+                                        <button className="remove-btn" onClick={() => removeFromArray('facilities', idx)}><Trash2 size={16}/></button>
+                                    </div>
+                                    {fac.image && <div className="preview-mini"><img src={fac.image} alt="Preview" /></div>}
                                 </div>
                             ))}
-                            <button className="add-btn" onClick={() => addToArray('facilities', { title: 'New Facility', image: '/Fac-Transport.png' })}><Plus size={16}/> Add Facility</button>
+                            <button className="add-btn" onClick={() => addToArray('facilities', { title: 'New Facility', image: '' })}><Plus size={16}/> Add Facility</button>
                         </div>
                     </div>
                 )}
@@ -219,13 +344,19 @@ export default function SiteSettings() {
                         <div className="items-list">
                             {config.gallery.map((item, idx) => (
                                 <div key={idx} className="list-item-card">
-                                    <input type="text" placeholder="Title" value={item.title} onChange={e => updateArrayItem('gallery', idx, 'title', e.target.value)} />
-                                    <input type="text" placeholder="Category" value={item.category} onChange={e => updateArrayItem('gallery', idx, 'category', e.target.value)} />
-                                    <input type="text" placeholder="Image Path" value={item.image} onChange={e => updateArrayItem('gallery', idx, 'image', e.target.value)} />
-                                    <button className="remove-btn" onClick={() => removeFromArray('gallery', idx)}><Trash2 size={16}/></button>
+                                    <div className="item-row">
+                                        <input type="text" placeholder="Title" value={item.title} onChange={e => updateArrayItem('gallery', idx, 'title', e.target.value)} />
+                                        <input type="text" placeholder="Category" value={item.category} onChange={e => updateArrayItem('gallery', idx, 'category', e.target.value)} />
+                                        <div className="upload-btn-wrapper">
+                                            <button className="upload-btn"><Camera size={14} /></button>
+                                            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'gallery', 'image', idx)} />
+                                        </div>
+                                        <button className="remove-btn" onClick={() => removeFromArray('gallery', idx)}><Trash2 size={16}/></button>
+                                    </div>
+                                    {item.image && <div className="preview-mini"><img src={item.image} alt="Preview" /></div>}
                                 </div>
                             ))}
-                            <button className="add-btn" onClick={() => addToArray('gallery', { title: 'New Image', category: 'General', image: '/Gallery1.png' })}><Plus size={16}/> Add Gallery Item</button>
+                            <button className="add-btn" onClick={() => addToArray('gallery', { title: 'New Image', category: 'General', image: '' })}><Plus size={16}/> Add Gallery Item</button>
                         </div>
                     </div>
                 )}
@@ -242,19 +373,33 @@ export default function SiteSettings() {
                             <textarea rows="5" value={config.about.message} onChange={e => updateNested('about', 'message', e.target.value)} />
                         </div>
                         <div className="form-group">
-                            <label>About Image Path</label>
-                            <input type="text" value={config.about.image} onChange={e => updateNested('about', 'image', e.target.value)} />
+                            <label>About Image</label>
+                            <div className="image-upload-wrapper">
+                                <input type="text" value={config.about.image} onChange={e => updateNested('about', 'image', e.target.value)} />
+                                <div className="upload-btn-wrapper">
+                                    <button className="upload-btn"><Camera size={16} /> Upload</button>
+                                    <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'about', 'image')} />
+                                </div>
+                            </div>
+                            {config.about.image && <div className="preview-mini"><img src={config.about.image} alt="Preview" /></div>}
                         </div>
 
                         <h3 style={{ marginTop: 40 }}>Latest News Images</h3>
                         <div className="items-list">
                             {config.news.map((n, idx) => (
                                 <div key={idx} className="list-item-card">
-                                    <input type="text" value={n} onChange={e => updateArrayItem('news', idx, null, e.target.value)} />
-                                    <button className="remove-btn" onClick={() => removeFromArray('news', idx)}><Trash2 size={16}/></button>
+                                    <div className="item-row">
+                                        <input type="text" value={n} onChange={e => updateArrayItem('news', idx, null, e.target.value)} />
+                                        <div className="upload-btn-wrapper">
+                                            <button className="upload-btn"><Camera size={14} /></button>
+                                            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'news', null, idx)} />
+                                        </div>
+                                        <button className="remove-btn" onClick={() => removeFromArray('news', idx)}><Trash2 size={16}/></button>
+                                    </div>
+                                    {n && <div className="preview-mini"><img src={n} alt="Preview" /></div>}
                                 </div>
                             ))}
-                            <button className="add-btn" onClick={() => addToArray('news', '/news1.png')}><Plus size={16}/> Add News Image</button>
+                            <button className="add-btn" onClick={() => addToArray('news', '')}><Plus size={16}/> Add News Image</button>
                         </div>
                     </div>
                 )}
@@ -265,11 +410,18 @@ export default function SiteSettings() {
                         <div className="items-list">
                             {config.achievements.map((a, idx) => (
                                 <div key={idx} className="list-item-card">
-                                    <input type="text" value={a} onChange={e => updateArrayItem('achievements', idx, null, e.target.value)} />
-                                    <button className="remove-btn" onClick={() => removeFromArray('achievements', idx)}><Trash2 size={16}/></button>
+                                    <div className="item-row">
+                                        <input type="text" value={a} onChange={e => updateArrayItem('achievements', idx, null, e.target.value)} />
+                                        <div className="upload-btn-wrapper">
+                                            <button className="upload-btn"><Camera size={14} /></button>
+                                            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'achievements', null, idx)} />
+                                        </div>
+                                        <button className="remove-btn" onClick={() => removeFromArray('achievements', idx)}><Trash2 size={16}/></button>
+                                    </div>
+                                    {a && <div className="preview-mini"><img src={a} alt="Preview" /></div>}
                                 </div>
                             ))}
-                            <button className="add-btn" onClick={() => addToArray('achievements', '/Achievement1.png')}><Plus size={16}/> Add Achievement</button>
+                            <button className="add-btn" onClick={() => addToArray('achievements', '')}><Plus size={16}/> Add Achievement</button>
                         </div>
                     </div>
                 )}
@@ -281,12 +433,16 @@ export default function SiteSettings() {
                             {config.testimonials.map((t, idx) => (
                                 <div key={idx} className="list-item-card" style={{ flexDirection: 'column' }}>
                                     <textarea placeholder="Testimonial Text" value={t.text} onChange={e => updateArrayItem('testimonials', idx, 'text', e.target.value)} />
-                                    <div style={{ display: 'flex', gap: 10 }}>
+                                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                                         <input type="text" placeholder="Author" value={t.author} onChange={e => updateArrayItem('testimonials', idx, 'author', e.target.value)} />
                                         <input type="text" placeholder="ID/Subtext" value={t.id} onChange={e => updateArrayItem('testimonials', idx, 'id', e.target.value)} />
-                                        <input type="text" placeholder="Image URL" value={t.image} onChange={e => updateArrayItem('testimonials', idx, 'image', e.target.value)} />
+                                        <div className="upload-btn-wrapper">
+                                            <button className="upload-btn"><Camera size={14} /></button>
+                                            <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'testimonials', 'image', idx)} />
+                                        </div>
                                         <button className="remove-btn" onClick={() => removeFromArray('testimonials', idx)}><Trash2 size={16}/></button>
                                     </div>
+                                    {t.image && <div className="preview-mini" style={{ marginTop: 10 }}><img src={t.image} alt="Preview" /></div>}
                                 </div>
                             ))}
                             <button className="add-btn" onClick={() => addToArray('testimonials', { text: '', author: '', id: '', image: '' })}><Plus size={16}/> Add Testimonial</button>
@@ -341,8 +497,8 @@ export default function SiteSettings() {
                 )}
 
                 <div className="settings-actions">
-                    <button className="btn btn-primary btn-lg" onClick={handleSave}>
-                        <Save size={18} /> Save All Changes
+                    <button className="btn btn-primary btn-lg" onClick={handleSave} disabled={saving}>
+                        {saving ? 'Saving...' : <><Save size={18} /> Save All Changes</>}
                     </button>
                 </div>
             </div>

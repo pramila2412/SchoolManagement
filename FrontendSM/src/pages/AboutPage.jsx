@@ -79,8 +79,8 @@ export default function AboutPage() {
             <PublicHeader />
 
             {/* ===== ABOUT US ===== */}
-            <section className="about-us-section" id="about" style={{ padding: '80px 0', background: '#fff' }}>
-                <div className="section-container" style={{ maxWidth: '1200px' }}>
+            <section className="about-us-section" id="about">
+                <div className="section-container">
                     <div style={{ display: 'flex', gap: '60px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         {/* Left Side: Images */}
                         <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -91,27 +91,27 @@ export default function AboutPage() {
                         {/* Right Side: Text & Information */}
                         <div style={{ flex: '1.2', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
                             {/* Top right Visit */}
-                            <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                                 <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visit &nbsp;&nbsp;:</span>
                                 <a href="https://www.facebook.com/share/1DYSZWV8DU/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: '#000', borderRadius: '50%', color: '#fff', textDecoration: 'none' }}>
                                     <Facebook fill="#fff" strokeWidth={0} size={14} style={{ marginLeft: '1px', marginTop: '1px' }}/>
                                 </a>
                             </div>
 
-                            <h2 style={{ fontSize: '2.5rem', marginBottom: '20px', fontWeight: '900', color: '#000' }}>About Us</h2>
-                            <h3 style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '25px' }}>Mount Zion School</h3>
+                            <h2 style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000' }}>About Us</h2>
+                            <h3 style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '15px' }}>Mount Zion School</h3>
 
-                            <div style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.8', marginBottom: '40px' }}>
+                            <div style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '15px' }}>
                                 <p>Mount Zion School is a co-educational non-denominational (Christian) institution which is run by missionaries whose H.Q at Kerala, Mount Zion Welfare Society.</p>
-                                <p style={{ marginTop: '15px' }}>It was established in 1994 and the purpose of starting this school was to give "Education to Everyone". From a humble beginning with the grace of God the school has now become a full-fledged institution. Mount Zion aims at educating different levels of students from different societies and communities and mould them in desired shapes. We give all the concerns for the scholastic and co-scholastic development of students by holding the core of the disciplinary steps. Apart from this the students are not only to excel in academic interests but also to understand that we all are made in the image of God, who wants to be fulfilled in life and work, in relationship with God, with each other and with the world He made for us to enjoy.</p>
+                                <p style={{ marginTop: '8px' }}>It was established in 1994 and the purpose of starting this school was to give "Education to Everyone". From a humble beginning with the grace of God the school has now become a full-fledged institution. Mount Zion aims at educating different levels of students from different societies and communities and mould them in desired shapes. We give all the concerns for the scholastic and co-scholastic development of students by holding the core of the disciplinary steps. Apart from this the students are not only to excel in academic interests but also to understand that we all are made in the image of God, who wants to be fulfilled in life and work, in relationship with God, with each other and with the world He made for us to enjoy.</p>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <div>
                                     <h4 style={{ fontSize: '0.9rem', fontWeight: '900', color: '#000', textTransform: 'uppercase', marginBottom: '5px' }}>INFORMATION ABOUT SCHOOL</h4>
                                     <p style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '5px', textTransform: 'uppercase' }}>SCHOOL HOURS:</p>
                                     
-                                    <p style={{ fontSize: '0.85rem', color: '#000', fontWeight: '900', marginTop: '10px' }}>DAY CLASS :</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#000', fontWeight: '900', marginTop: '5px' }}>DAY CLASS :</p>
                                     <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: '80px 1fr', gap: '5px 10px', marginTop: '5px' }}>
                                         <span>ASSEMBLY</span>
                                         <span>: 08:30 AM<br/><span style={{ paddingLeft: '10px' }}>Prayer / Pledges / Songs / Scripture</span></span>
@@ -120,7 +120,7 @@ export default function AboutPage() {
                                         <span style={{ gridColumn: '1 / -1' }}>LUNCH BREAK: 11:25 AM to 11:50 AM</span>
                                     </div>
                                     
-                                    <p style={{ fontSize: '0.85rem', color: '#000', fontWeight: '900', marginTop: '20px' }}>MORNING CLASS:</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#000', fontWeight: '900', marginTop: '10px' }}>MORNING CLASS:</p>
                                     <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: '80px 1fr', gap: '5px 10px', marginTop: '5px' }}>
                                         <span>ASSEMBLY</span>
                                         <span>: 07:30 AM</span>
@@ -131,7 +131,7 @@ export default function AboutPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ marginTop: '10px' }}>
+                                <div style={{ marginTop: '5px' }}>
                                     <h4 style={{ fontSize: '0.85rem', fontWeight: '900', color: '#000', textTransform: 'uppercase', marginBottom: '5px' }}>TIME FOR SEEING THE PRINCIPAL</h4>
                                     <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: '1.6' }}>
                                         09:30 AM to 11:00 AM (Day Class)<br/>
@@ -152,13 +152,14 @@ export default function AboutPage() {
                 </div>
             </section>
             {/* ===== RULES & REGULATIONS ===== */}
-            <section className="about-rules-section" id="rules" style={{ padding: '80px 0', background: '#fff' }}>
-                <div className="section-container" style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                    <div className="rules-content-wrapper" style={{ display: 'flex', gap: '50px', alignItems: 'stretch' }}>
+            <section className="about-rules-section" id="rules">
+                <div className="section-container">
+                    <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000', marginLeft: '-40px' }}>Rules & Regulations</h2>
+                    <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '40px', marginLeft: '-40px' }}>Mount Zion School</h3>
+
+                    <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
                         
-                        <div className="rules-text-side" style={{ flex: '1.5' }}>
-                            <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '15px', fontWeight: '900', color: '#000' }}>Rules & Regulations</h2>
-                            <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '25px' }}>Mount Zion School</h3>
+                        <div className="rules-text-side" style={{ flex: '1' }}>
 
                             <div className="about-description" style={{ color: '#1e293b', fontSize: '0.85rem', lineHeight: '1.6' }}>
                                 <p style={{ marginBottom: '20px' }}><strong>MOUNT ZION SCHOOL</strong>, lays great stress on the development of character & conduct among the students and expects them to be worthy of highest standards of behaviour, individually & collectively in our lives. Courtesy, kindness, helpfulness and tolerance are virtues which they are particularly advised to cultivate. The following general rules of discipline should be observed strictly.</p>
@@ -193,7 +194,7 @@ export default function AboutPage() {
                             </div>
                         </div>
 
-                        <div className="rules-image-side" style={{ flex: '0.8', display: 'flex', flexDirection: 'column', gap: '15px', height: 'auto' }}>
+                        <div className="rules-image-side" style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '15px', height: 'auto', paddingTop: '100px' }}>
                             <div className="rules-image-top" style={{ flex: '0.45', minHeight: '200px' }}>
                                 <img src="/rule1.jpg" alt="Rules 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
@@ -217,8 +218,8 @@ export default function AboutPage() {
                 </div>
             </section>
             {/* ===== OUR TEAM ===== */}
-            <section className="about-team-section" id="team" style={{ padding: '80px 0', background: '#fff' }}>
-                <div className="section-container" style={{ maxWidth: '1200px' }}>
+            <section className="about-team-section" id="team">
+                <div className="section-container">
                     <div className="team-header-center" style={{ textAlign: 'center', marginBottom: '30px' }}>
                         <h2 className="section-title" style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000' }}>Our Team</h2>
                     </div>
@@ -255,7 +256,7 @@ export default function AboutPage() {
             </section>
 
             {/* ===== NOTICES ===== */}
-            <section className="about-notices-section" id="notices" style={{ padding: '100px 0', background: '#fff', marginTop: '40px' }}>
+            <section className="about-notices-section" id="notices">
                 <div className="section-container">
                     <div className="notices-header-center" style={{ textAlign: 'center', marginBottom: '50px' }}>
                         <h2 className="section-title" style={{ fontSize: '2.5rem', fontWeight: '900', color: '#333' }}>Notices</h2>

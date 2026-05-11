@@ -1009,6 +1009,199 @@ function ReportsTab() {
     );
 }
 
+// ======================== PUBLIC CONTENT (Curriculum & Uniform) ========================
+function PublicContentTab() {
+    const [data, setData] = useState({
+        pageTitle: '', pageSubtitle: '', heroImage: '',
+        curriculumImages: [],
+        levels: [],
+        uniformTitle: '', uniformSubtitle: '', uniformImage: '',
+        uniformGroups: []
+    });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const res = await fetch('/api/curriculum-page');
+            if (res.ok) {
+                const d = await res.json();
+                setData(d);
+            }
+        } catch (err) {
+            console.error('Error fetching public content:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch('/api/curriculum-page', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                customAlert('Public content updated successfully!', 'Success', 'success');
+            } else {
+                const err = await res.json();
+                customAlert('Error: ' + err.message, 'Update Failed', 'error');
+            }
+        } catch (err) {
+            customAlert('Server error: ' + err.message, 'Error', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleFileUpload = (e, field, index = null) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            if (index !== null && Array.isArray(data[field])) {
+                const newArr = [...data[field]];
+                newArr[index] = base64String;
+                setData({ ...data, [field]: newArr });
+            } else {
+                setData({ ...data, [field]: base64String });
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const updateLevel = (idx, field, value) => {
+        const newLevels = [...data.levels];
+        newLevels[idx] = { ...newLevels[idx], [field]: value };
+        setData({ ...data, levels: newLevels });
+    };
+
+    const addLevel = () => {
+        setData({
+            ...data,
+            levels: [...data.levels, { number: data.levels.length + 1, title: '', subtitle: '', subjects: [], streams: [] }]
+        });
+    };
+
+    const removeLevel = (idx) => {
+        setData({ ...data, levels: data.levels.filter((_, i) => i !== idx) });
+    };
+
+    const updateUniformGroup = (idx, field, value) => {
+        const newGroups = [...data.uniformGroups];
+        newGroups[idx] = { ...newGroups[idx], [field]: value };
+        setData({ ...data, uniformGroups: newGroups });
+    };
+
+    if (loading) return <div className="spinner" style={{ margin: '40px auto' }}></div>;
+
+    return (
+        <div className="animate-fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid var(--border-light)', paddingBottom: 16 }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}><Eye size={20}/> Manage Public Page Content</h3>
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                    {saving ? 'Saving...' : <><Save size={16}/> Save All Changes</>}
+                </button>
+            </div>
+
+            <div className="acad-two-col">
+                <div className="acad-form-panel" style={{ flex: 1.2 }}>
+                    <h4><BookMarked size={18}/> Curriculum Section</h4>
+                    <div className="acad-form">
+                        <div className="form-group">
+                            <label className="form-label">Page Title</label>
+                            <input type="text" className="form-input" value={data.pageTitle} onChange={e => setData({ ...data, pageTitle: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Page Subtitle</label>
+                            <textarea className="form-input" rows="2" value={data.pageSubtitle} onChange={e => setData({ ...data, pageSubtitle: e.target.value })} />
+                        </div>
+
+                        <h5 style={{ marginTop: 24, marginBottom: 12 }}>Curriculum Grid Images (4 Images)</h5>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {[0, 1, 2, 3].map(i => (
+                                <div key={i} className="form-group">
+                                    <label className="form-label">Image {i + 1}</label>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <div style={{ width: 40, height: 40, borderRadius: 4, background: '#eee', overflow: 'hidden' }}>
+                                            {data.curriculumImages?.[i] && <img src={data.curriculumImages[i]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                        </div>
+                                        <input type="file" className="form-input" onChange={e => handleFileUpload(e, 'curriculumImages', i)} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <h5 style={{ marginTop: 24, marginBottom: 12 }}>Curriculum Levels</h5>
+                        {data.levels.map((level, idx) => (
+                            <div key={idx} style={{ background: 'var(--bg-light)', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid var(--border-light)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <strong>Level {idx + 1}</strong>
+                                    <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => removeLevel(idx)}><Trash2 size={14}/></button>
+                                </div>
+                                <div className="form-row-2">
+                                    <div className="form-group"><label className="form-label">Title</label><input type="text" className="form-input" value={level.title} onChange={e => updateLevel(idx, 'title', e.target.value)} /></div>
+                                    <div className="form-group"><label className="form-label">Subtitle</label><input type="text" className="form-input" value={level.subtitle} onChange={e => updateLevel(idx, 'subtitle', e.target.value)} /></div>
+                                </div>
+                                <div className="form-group" style={{ marginTop: 10 }}>
+                                    <label className="form-label">Subjects (comma separated)</label>
+                                    <input type="text" className="form-input" value={level.subjects?.join(', ')} onChange={e => updateLevel(idx, 'subjects', e.target.value.split(',').map(s => s.trim()))} />
+                                </div>
+                            </div>
+                        ))}
+                        <button className="btn btn-outline" style={{ width: '100%' }} onClick={addLevel}><PlusCircle size={16}/> Add New Level</button>
+                    </div>
+                </div>
+
+                <div className="acad-form-panel">
+                    <h4><GraduationCap size={18}/> School Uniform Section</h4>
+                    <div className="acad-form">
+                        <div className="form-group">
+                            <label className="form-label">Uniform Title</label>
+                            <input type="text" className="form-input" value={data.uniformTitle} onChange={e => setData({ ...data, uniformTitle: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Uniform Subtitle</label>
+                            <input type="text" className="form-input" value={data.uniformSubtitle} onChange={e => setData({ ...data, uniformSubtitle: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Uniform Image</label>
+                            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+                                <div style={{ width: 100, height: 100, borderRadius: 8, background: '#eee', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+                                    {data.uniformImage && <img src={data.uniformImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <input type="file" className="form-input" onChange={e => handleFileUpload(e, 'uniformImage')} />
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Recommended: High quality PNG with students.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 style={{ marginTop: 24, marginBottom: 12 }}>Uniform Details (Groups)</h5>
+                        {data.uniformGroups.map((group, idx) => (
+                            <div key={idx} style={{ padding: 12, border: '1px solid var(--border-light)', borderRadius: 8, marginBottom: 12 }}>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                                    <input type="text" className="form-input" style={{ fontWeight: 600 }} placeholder="Group Title (e.g. For Boys)" value={group.title} onChange={e => updateUniformGroup(idx, 'title', e.target.value)} />
+                                    <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={() => setData({ ...data, uniformGroups: data.uniformGroups.filter((_, i) => i !== idx) })}><Trash2 size={14}/></button>
+                                </div>
+                                <textarea className="form-input" rows="3" placeholder="Description..." value={group.description} onChange={e => updateUniformGroup(idx, 'description', e.target.value)} />
+                            </div>
+                        ))}
+                        <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setData({ ...data, uniformGroups: [...data.uniformGroups, { title: '', description: '' }] })}><PlusCircle size={16}/> Add Uniform Group</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ======================== SETTINGS ========================
 function SettingsTab() {
     const settings = [
@@ -1061,6 +1254,7 @@ const TABS = [
     { id: 'materials', label: 'Materials', icon: FolderOpen },
     { id: 'promotion', label: 'Promotion', icon: ArrowUpRight },
     { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'public-content', label: 'Public Content', icon: Eye },
     { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

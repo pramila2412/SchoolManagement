@@ -5,6 +5,12 @@ const curriculumPageSchema = new mongoose.Schema({
     pageSubtitle: { type: String, default: 'The following subjects are taught at different levels' },
     heroImage: { type: String, default: '/school.jpeg' },
 
+    // Curriculum Grid Images
+    curriculumImages: {
+        type: [String],
+        default: ['/curriculum1.jpg', '/curriculum2.jpg', '/curriculum3.jpg', '/curriculum4.jpg']
+    },
+
     levels: {
         type: [{
             number: Number,
@@ -74,6 +80,39 @@ const curriculumPageSchema = new mongoose.Schema({
                         subjects: ['English Core', 'Hindi / Sanskrit', 'History', 'Geography', 'Economics', 'Political Science', 'Physical Education']
                     }
                 ]
+            }
+        ]
+    },
+
+    // School Uniform Section
+    uniformTitle: { type: String, default: 'School Uniform' },
+    uniformSubtitle: { type: String, default: 'Mount Zion School' },
+    uniformImage: { type: String, default: '/uniform.png' },
+    uniformGroups: {
+        type: [{
+            title: String,
+            description: String
+        }],
+        default: [
+            {
+                title: 'For Boys:-',
+                description: 'Khaki grey Trousers and Blue stripped Shirts with school emblem\nTie, Belt, khaki grey socks and Black Shoes'
+            },
+            {
+                title: 'For Senior Girls:-',
+                description: 'Khaki grey Salwar and Blue stripped three fourth sleeved Kurti with khaki grey waistcoat with school emblem.\nKhaki grey socks and Black Shoes.'
+            },
+            {
+                title: 'Junior Girls:-',
+                description: 'Khaki grey tunic with school emblem and Blue stripped Shirts\nTie, belt, Khaki grey socks and Black Shoes.'
+            },
+            {
+                title: 'Monday and Saturday',
+                description: 'P.T. uniform for Std. 1 to 10'
+            },
+            {
+                title: 'Black trousers and House T- shirts',
+                description: 'White socks and respective House colour shoes.'
             }
         ]
     }

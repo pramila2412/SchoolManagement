@@ -1,73 +1,70 @@
 const mongoose = require('mongoose');
 
 const aboutPageSchema = new mongoose.Schema({
-    // Hero / header info
-    pageTitle: { type: String, default: 'About Mount Zion School' },
-    pageSubtitle: { type: String, default: 'Nurturing Young Minds Since 1995' },
-    heroImage: { type: String, default: '/school.jpeg' },
-
-    // Principal section
-    principalName: { type: String, default: 'Dr. Jacob Samuel' },
-    principalTitle: { type: String, default: 'OUR PRINCIPAL' },
-    principalImage: { type: String, default: '/About.png' },
-    principalMessage: {
-        type: String,
-        default: `<p>It is with immense pride and gratitude that I welcome you to Mount Zion School, an institution that has been a beacon of educational excellence since 1995.</p>
-<p><strong>Our Journey: From Humble Beginnings to Remarkable Growth</strong><br/>Twenty-nine years ago, Mount Zion School began with a vision and unwavering faith. What started as a modest initiative with just 5 students has blossomed into a thriving educational community of over 600 students today. This extraordinary growth is not merely a testament to increasing numbers, but a reflection of the trust that generations of parents have placed in us, and the dedication of our exceptional faculty.</p>
-<p><strong>The Mount Zion Legacy:</strong><br/>When we opened our doors in 1995, we dreamed of creating more than just a school—we envisioned a nurturing environment where young minds could flourish, where character is built alongside academic achievement, and where every child discovers their unique potential. Today, that dream stands realized in the laughter of our students, the pride of our parents, and the achievements of our alumni.</p>`
+    aboutUs: {
+        title: { type: String, default: 'About Us' },
+        subtitle: { type: String, default: 'Mount Zion School' },
+        content: { type: String, default: '<p>Mount Zion School is a co-educational non-denominational (Christian) institution which is run by missionaries whose H.Q at Kerala, Mount Zion Welfare Society.</p><p style="margin-top: 8px;">It was established in 1994 and the purpose of starting this school was to give "Education to Everyone". From a humble beginning with the grace of God the school has now become a full-fledged institution. Mount Zion aims at educating different levels of students from different societies and communities and mould them in desired shapes. We give all the concerns for the scholastic and co-scholastic development of students by holding the core of the disciplinary steps. Apart from this the students are not only to excel in academic interests but also to understand that we all are made in the image of God, who wants to be fulfilled in life and work, in relationship with God, with each other and with the world He made for us to enjoy.</p>' },
+        image1: { type: String, default: '/About Us1.jpg' },
+        image2: { type: String, default: '/About Us.png' },
+        visitUrl: { type: String, default: 'https://www.facebook.com/share/1DYSZWV8DU/' }
     },
-
-    // Mission & Vision
-    mission: {
-        type: String,
-        default: 'To provide quality education that nurtures the intellectual, physical, emotional, and spiritual growth of every student, preparing them to become responsible global citizens.'
+    rules: {
+        title: { type: String, default: 'Rules & Regulations' },
+        subtitle: { type: String, default: 'Mount Zion School' },
+        content: { type: String, default: '<p style="margin-bottom: 20px;"><strong>MOUNT ZION SCHOOL</strong>, lays great stress on the development of character & conduct among the students and expects them to be worthy of highest standards of behaviour, individually & collectively in our lives. Courtesy, kindness, helpfulness and tolerance are virtues which they are particularly advised to cultivate. The following general rules of discipline should be observed strictly.</p><ol style="padding-left: 20px; margin: 0; list-style-type: decimal;"><li style="margin-bottom: 8px;">Children are strictly forbidden to go out of the school premises during school hours without permission of the Principal.</li><li style="margin-bottom: 8px;">Parents and Guardians are not allowed to see their wards or to visit teachers or to enter school verandah during school hours.</li><li style="margin-bottom: 8px;">Those who come on bicycle, should keep it at the cycle stand, properly locked.</li></ol>' },
+        images: { type: [String], default: ['/rule1.jpg', '/rule2.jpg', '/rule3.jpg', '/rule4.jpg'] }
     },
-    vision: {
-        type: String,
-        default: 'To be a premier educational institution recognized for academic excellence, innovation, and the holistic development of students rooted in strong moral values.'
+    team: {
+        title: { type: String, default: 'Our Team' },
+        content: { type: String, default: '<p style="margin-bottom: 10px;">Mount Zion School is a Co-Educational English Medium School.</p><p>With its motto "Wisdom and Righteousness", we make every unremitting effort not only for academic performance but also for the physical, mental and intellectual development of our learners from various sectors of society by imparting quality education with self-discipline, self esteem and self confidence. Mount Zion School provides a safe and supportive environment to develop their skills for a future that reflects their highest aspiration and challenge to fly them as high as they can.</p>' },
+        images: { type: [String], default: ['/Team1.png', '/Team2.png', '/Team3.png', '/Team4.png'] }
     },
-
-    // Core Values
-    coreValues: {
-        type: [{
-            title: String,
-            description: String
-        }],
-        default: [
-            { title: 'Excellence in Education', description: 'From our humble beginning with 5 students to our current strength of 600, our commitment to academic excellence has remained unwavering. We combine traditional values with modern teaching methodologies, ensuring our students are prepared for the challenges of tomorrow.' },
-            { title: 'Holistic Development', description: 'We believe education extends far beyond textbooks. Our comprehensive approach encompasses academics, sports, arts, life skills, and moral values—nurturing well-rounded individuals ready to contribute meaningfully to society.' },
-            { title: 'Individual Attention', description: 'Despite our growth, we have never lost sight of the individual. Each student at Mount Zion receives personalized attention, ensuring no child is left behind and every talent is discovered and nurtured.' },
-            { title: 'Faith & Values', description: 'Rooted in strong moral and spiritual values, we guide our students to develop integrity, compassion, and a sense of responsibility towards their community and the world.' }
-        ]
+    notices: {
+        sectionTitle: { type: String, default: 'Notices' },
+        image: { type: String, default: '/news1.png' },
+        subtitle: { type: String, default: 'MOUNT ZION SCHOOL, PURNEA' },
+        title: { type: String, default: 'SCHOOL CLOSED' },
+        reason: { type: String, default: 'ON ACCOUNT OF MAKAR SANKRANTI FESTIVAL' },
+        closureDate: { type: String, default: '14 January 2030 (Wednesday)' },
+        reopeningDate: { type: String, default: 'School will reopen on 15 January 2030 (Thursday)' },
+        infoText: { type: String, default: 'This is to inform parents and students that the school will remain closed on the above mentioned date due to the festival holiday.' }
     },
+    schoolHours: {
+        title: { type: String, default: 'INFORMATION ABOUT SCHOOL' },
+        content: { type: String, default: `
+            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; pt: 25px;">
+                <p style="font-weight: 800; color: #000; margin-bottom: 15px; font-size: 0.9rem;">INFORMATION ABOUT SCHOOL</p>
+                <p style="font-weight: 700; font-size: 0.85rem; margin-bottom: 10px;">SCHOOL HOURS:</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: 700; font-size: 0.85rem; margin-bottom: 5px;">DAY CLASS :</p>
+                    <p style="margin: 0 0 4px 15px;">ASSEMBLY : 08:30 AM</p>
+                    <p style="margin: 0 0 4px 30px; font-size: 0.8rem; color: #475569;">Prayer / Pledges / Songs / Scripture</p>
+                    <p style="margin: 0 0 4px 15px;">CLASS : 08:45 AM to 02:15 PM</p>
+                    <p style="margin: 0 0 4px 15px;">LUNCH BREAK: 11:25 AM to 11:50 AM</p>
+                </div>
 
-    // Statistics
-    stats: {
-        type: [{
-            number: String,
-            label: String
-        }],
-        default: [
-            { number: '29+', label: 'Years of Excellence' },
-            { number: '600+', label: 'Students Enrolled' },
-            { number: '50+', label: 'Dedicated Faculty' },
-            { number: '100%', label: 'Board Pass Rate' }
-        ]
-    },
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: 700; font-size: 0.85rem; margin-bottom: 5px;">MORNING CLASS:</p>
+                    <p style="margin: 0 0 4px 15px;">ASSEMBLY : 07:30 AM</p>
+                    <p style="margin: 0 0 4px 15px;">CLASS : 07:45 AM to 01:15 PM</p>
+                    <p style="margin: 0 0 4px 15px;">LUNCH BREAK: 10:35 AM to 11:00 AM</p>
+                    <p style="margin: 10px 0 0 0; font-size: 0.8rem; font-style: italic;">Parents should take their child immediately when the class is Over.</p>
+                </div>
 
-    // History milestones
-    milestones: {
-        type: [{
-            year: String,
-            title: String,
-            description: String
-        }],
-        default: [
-            { year: '1995', title: 'Foundation', description: 'Mount Zion School was founded with just 5 students and a dream to provide quality education.' },
-            { year: '2005', title: 'CBSE Affiliation', description: 'Achieved CBSE affiliation, marking a major milestone in our journey towards academic excellence.' },
-            { year: '2015', title: 'Growing Community', description: 'Crossed 400+ students with state-of-the-art facilities including computer labs and science labs.' },
-            { year: '2024', title: 'Modern Campus', description: 'Expanded to 600+ students with modern infrastructure, auditorium, and sports facilities.' }
-        ]
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: 700; font-size: 0.85rem; margin-bottom: 5px;">TIME FOR SEEING THE PRINCIPAL</p>
+                    <p style="margin: 0 0 4px 15px;">09:30 AM to 11:00 AM (Day Class)</p>
+                    <p style="margin: 0 0 4px 15px;">08:30 AM to 10:00 AM (Morning Class)</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: 700; font-size: 0.85rem; margin-bottom: 5px;">TIME FOR SEEING THE TEACHER</p>
+                    <p style="margin: 0 0 4px 15px;">Every Saturday after school hour with prior appointment through the school diary.</p>
+                </div>
+            </div>
+        ` }
     }
 }, { timestamps: true });
 

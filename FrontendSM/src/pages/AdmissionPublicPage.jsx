@@ -195,10 +195,10 @@ export default function AdmissionPublicPage() {
             </section>
 
             {/* ===== FEE & PAYMENT ===== */}
-            <section className="about-us-section" id="fee" style={{ padding: '80px 0', background: '#f8fafc' }}>
+            <section className="about-us-section" id="fee" style={{ padding: '80px 0', background: '#fff' }}>
                 <div className="section-container">
                     <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
-                        <div className="rules-text-side" style={{ flex: '1.2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div className="rules-text-side" style={{ flex: '1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div>
                                 <h2 className="section-title" style={{ marginBottom: '15px', paddingLeft: 0, borderLeft: 'none', fontWeight: '900', color: '#000' }}>Fee & Payment</h2>
                                 <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '25px' }}>Mount Zion School</h3>
@@ -230,8 +230,8 @@ export default function AdmissionPublicPage() {
                         </div>
                         
                         <div className="rules-image-side" style={{ flex: '1' }}>
-                            <div className="rules-image-box" style={{ background: '#fff', padding: '10px', borderRadius: '0', border: '1px solid #e2e8f0', height: '100%' }}>
-                                <img src="/Fee.png" alt="Fee Structure" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0', display: 'block' }} />
+                            <div className="rules-image-box" style={{ height: '100%' }}>
+                                <img src="/Fee details 26-27_cropped.jpg" alt="Fee Structure" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '0', display: 'block' }} />
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react';
 export default function PublicFooter() {
     const [siteConfig, setSiteConfig] = useState({
         header: {
+            phone: '6296490943',
             socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos' }
         },
         footer: {
@@ -98,7 +99,7 @@ export default function PublicFooter() {
                                     <p>BIHAR</p>
                                 </div>
                                 <div className="contact-block">
-                                    <p>Contact No. 6296490943</p>
+                                    <p>Contact No. {siteConfig?.header?.phone || '6296490943'}</p>
                                     <p>Office Timing : 7.00 am to 1:30 pm (Summer)</p>
                                     <p>8.30 am to 2.30 pm (winter)</p>
                                     <p>Sunday Holiday</p>

@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const LandingPageSchema = new mongoose.Schema({
     header: {
-        phone1: { type: String, default: '6296490943' },
-        phone2: { type: String, default: '6296490943' },
+        phone: { type: String, default: '6296490943' },
         email: { type: String, default: 'mountzionschool2021@gmail.com' },
         socials: {
             facebook: { type: String, default: 'https://www.facebook.com/share/1DYSZWV8DU/' },

@@ -37,7 +37,7 @@ export default function PublicHeader() {
     
     const [siteConfig, setSiteConfig] = useState({
         header: {
-            phone1: '6296490943',
+            phone: '6296490943',
             email: 'mountzionschool2021@gmail.com',
             socials: { facebook: 'https://www.facebook.com/share/1DYSZWV8DU/', youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos' }
         },
@@ -138,7 +138,7 @@ export default function PublicHeader() {
         }
     }, [location.pathname, location.hash]);
 
-    const phone1 = siteConfig?.header?.phone1 || '6296490943';
+    const phone = siteConfig?.header?.phone || '6296490943';
     const email = siteConfig?.header?.email || 'mountzionschool2021@gmail.com';
     const socials = siteConfig?.header?.socials || {};
     const tickerItems = siteConfig?.announcements?.ticker || [];
@@ -161,7 +161,7 @@ export default function PublicHeader() {
                         </a>
                     </div>
                     <div className="top-contact-info" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        <a href={`tel:${phone1}`} className="top-info-item"><Phone size={14}/> {phone1}</a>
+                        <a href={`tel:${phone}`} className="top-info-item"><Phone size={14}/> {phone}</a>
                         <div style={{width: '1px', height: '14px', background: 'rgba(255,255,255,0.3)'}}></div>
                         <a href={`mailto:${email}`} className="top-info-item hide-tablet"><Mail size={14}/> {email}</a>
                     </div>

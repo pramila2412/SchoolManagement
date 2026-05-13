@@ -15,8 +15,7 @@ export default function LandingPage() {
     const navigate = useNavigate();
     const [siteConfig, setSiteConfig] = useState({
         header: {
-            phone1: '6296490943',
-            phone2: '6296490943',
+            phone: '6296490943',
             email: 'mountzionschool2021@gmail.com',
             socials: {
                 facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
@@ -150,23 +149,41 @@ export default function LandingPage() {
     useEffect(() => {
         const timer = setInterval(() => {
             if (siteConfig?.facilities?.length) {
-                setFacilityIndex((prev) => prev + 1);
+                setFacilityIndex(prev => {
+                    const max = Math.max(0, facilitiesLooped.length - Math.ceil(itemsToShow));
+                    return prev >= max ? 0 : prev + 1;
+                });
             }
             if (siteConfig?.achievements?.length) {
-                setAchievementIndex((prev) => prev + 1);
+                setAchievementIndex(prev => {
+                    const max = Math.max(0, achievementsLooped.length - Math.ceil(itemsToShow));
+                    return prev >= max ? 0 : prev + 1;
+                });
             }
         }, 5000);
         return () => clearInterval(timer);
-    }, [siteConfig]);
+    }, [siteConfig, facilitiesLooped.length, achievementsLooped.length, itemsToShow]);
 
-    const nextFacility = () => setFacilityIndex((prev) => prev + 1);
-    const prevFacility = () => setFacilityIndex((prev) => prev - 1);
+    const nextFacility = () => setFacilityIndex(prev => {
+        const max = Math.max(0, facilitiesLooped.length - Math.ceil(itemsToShow));
+        return prev >= max ? 0 : prev + 1;
+    });
+    const prevFacility = () => setFacilityIndex(prev => {
+        const max = Math.max(0, facilitiesLooped.length - Math.ceil(itemsToShow));
+        return prev <= 0 ? max : prev - 1;
+    });
 
     const nextNews = () => setNewsIndex((prev) => prev + 1);
     const prevNews = () => setNewsIndex((prev) => prev - 1);
 
-    const nextAchievement = () => setAchievementIndex((prev) => prev + 1);
-    const prevAchievement = () => setAchievementIndex((prev) => prev - 1);
+    const nextAchievement = () => setAchievementIndex(prev => {
+        const max = Math.max(0, achievementsLooped.length - Math.ceil(itemsToShow));
+        return prev >= max ? 0 : prev + 1;
+    });
+    const prevAchievement = () => setAchievementIndex(prev => {
+        const max = Math.max(0, achievementsLooped.length - Math.ceil(itemsToShow));
+        return prev <= 0 ? max : prev - 1;
+    });
 
     const nextTestimonial = () => {
         if (!siteConfig?.testimonials) return;
@@ -318,21 +335,21 @@ export default function LandingPage() {
             
             <section className="landing-about">
                 <div className="section-container">
+                    <div className="about-header-row" style={{ width: '100%', justifyContent: 'space-between', marginBottom: '15px' }}>
+                        <h2 className="section-title">{siteConfig.about.title}</h2>
+                        <Link to="/about" className="view-more-link">
+                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
+                        </Link>
+                    </div>
+
                     <div className="about-content-wrapper">
-                        <div className="about-text-side">
-                            <div className="about-header-row">
-                                <h2 className="section-title">{siteConfig.about.title}</h2>
-                                <Link to="/about" className="view-more-link">
-                                    View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
-                                </Link>
+                        <div className="about-text-side" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div>
+                                <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '700', marginBottom: '10px' }}>{siteConfig.about.subtitle}</h3>
+                                <div className="about-description" dangerouslySetInnerHTML={{ __html: siteConfig.about.message }} style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6' }} />
                             </div>
-                            
-                            <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '700', marginBottom: '10px' }}>{siteConfig.about.subtitle}</h3>
-                            
 
-                            <div className="about-description" dangerouslySetInnerHTML={{ __html: siteConfig.about.message }} style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6' }} />
-
-                            <div className="uniform-visit-container">
+                            <div className="uniform-visit-container" style={{ marginTop: '20px' }}>
                                 <div className="uniform-visit">
                                     <span className="visit-text">Visit : </span>
                                     <a href={socials.youtube || '#'} target="_blank" rel="noopener noreferrer" className="visit-icon">

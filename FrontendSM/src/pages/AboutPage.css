@@ -761,3 +761,66 @@
     height: auto;
     display: block;
 }
+
+/* ----- Rich Content Styling ----- */
+.about-rich-content {
+    color: #334155;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.about-rich-content p {
+    margin-bottom: 1.2rem;
+}
+
+.about-rich-content strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.school-hours-rich-content {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    color: #1e293b;
+}
+
+.school-hours-rich-content p {
+    margin-bottom: 4px;
+}
+
+.school-hours-rich-content .info-title {
+    font-weight: 900;
+    color: #000;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.school-hours-rich-content .timing-block {
+    margin-bottom: 12px;
+}
+
+.school-hours-rich-content .timing-label {
+    font-weight: 800;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.92rem;
+}
+
+.school-hours-rich-content .timing-detail {
+    margin-left: 20px;
+    display: block;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.school-hours-rich-content .timing-subdetail {
+    margin-left: 40px;
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-style: italic;
+}

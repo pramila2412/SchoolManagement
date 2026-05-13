@@ -29,6 +29,7 @@ import HR from './pages/HR';
 import ParentPortal from './pages/ParentPortal';
 import AdminParentPortal from './pages/AdminParentPortal';
 import ChildSelectorPage from './pages/ChildSelectorPage';
+import SiteSettings from './components/SiteSettings';
 
 import Attendance from './pages/Attendance';
 import Certificates from './pages/Certificates';
@@ -120,8 +121,14 @@ function AppContent() {
       <Route path="/gallery" element={<GalleryPublicPage />} />
       <Route path="/contact" element={<ContactPublicPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin" element={<LoginPage />} />
       <Route path="/parent-selector" element={
         <ProtectedRoute children={<ChildSelectorPage />} />
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <SiteSettings />
+        </ProtectedRoute>
       } />
       <Route path="/*" element={
         <ProtectedRoute>

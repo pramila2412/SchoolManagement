@@ -35,6 +35,8 @@ export default function LoginPage() {
                 } else {
                     navigate('/parent-portal', { replace: true });
                 }
+            } else if (user.role === 'Super Admin') {
+                navigate('/settings', { replace: true });
             } else {
                 navigate('/', { replace: true });
             }

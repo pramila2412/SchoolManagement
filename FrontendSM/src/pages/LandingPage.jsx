@@ -213,7 +213,7 @@ export default function LandingPage() {
 
     const heroTitle = siteConfig?.hero?.title || 'A Global Campus for Global Students';
     const heroSubtitle = siteConfig?.hero?.subtitle || 'With a faculty from over 100 countries, we foster a vibrant, inclusive community that is globally connected.';
-    const heroImage = siteConfig?.hero?.image === '/school.png' ? '/mount school.jpeg' : (siteConfig?.hero?.image || '/mount school.jpeg');
+    const heroImage = siteConfig?.hero?.image || '/mount school.jpeg';
     const socials = siteConfig?.header?.socials || {};
 
     return (

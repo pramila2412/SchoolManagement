@@ -6,7 +6,9 @@ const LandingPageSchema = new mongoose.Schema({
         email: { type: String, default: 'mountzionschool2021@gmail.com' },
         socials: {
             facebook: { type: String, default: 'https://www.facebook.com/share/1DYSZWV8DU/' },
-            youtube: { type: String, default: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos' }
+            youtube: { type: String, default: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos' },
+            instagram: { type: String, default: 'https://instagram.com' },
+            whatsapp: { type: String, default: 'https://wa.me/916296490943' }
         }
     },
     hero: {

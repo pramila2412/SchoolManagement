@@ -14,35 +14,50 @@ router.get('/', async (req, res) => {
                     { title: 'Library', image: '/Fac-Library.png' },
                     { title: 'Hostel', image: '/Fac-Hostel.png' },
                     { title: 'Auditorium', image: '/Fac-Auditorium.png' },
-                    { title: 'Play Ground', image: '/Fac-Play.png' },
-                    { title: 'Computer Lab', image: '/Fac-computer.png' }
-                ],
-                gallery: [
-                    { title: 'Sports', category: 'Sports', image: '/Gallery1.png' },
-                    { title: 'School Tour', category: 'School Tour', image: '/Gallery2.png' },
-                    { title: 'Programs & Events', category: 'Programs & Events', image: '/Gallery3.png' },
-                    { title: 'Annual Day', category: 'Annual Day', image: '/Gallery5.png' },
-                    { title: 'Meetings', category: 'Meetings', image: '/Gallery4.png' }
-                ],
-                news: ['/news1.png', '/news2.png'],
-                achievements: ['/Achievement1.png', '/Achievement2.png', '/Achievement3.png', '/Achievement4.png'],
                 header: {
-                    phone1: '6296490943',
-                    phone2: '6296490943',
+                    phone: '6296490943',
                     email: 'mountzionschool2021@gmail.com',
                     socials: {
                         facebook: 'https://www.facebook.com/share/1DYSZWV8DU/',
-                        youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos'
+                        youtube: 'https://www.youtube.com/@MountZionSchoolMadhubaniPurnea/videos',
+                        instagram: 'https://instagram.com',
+                        whatsapp: 'https://wa.me/916296490943'
                     }
                 },
+                hero: {
+                    title: 'A Global Campus for Global Students',
+                    subtitle: 'With a faculty from over 100 countries, we foster a vibrant, inclusive community that is globally connected.',
+                    cta: "Apply / Admitted? Let's make it official!",
+                    image: '/mount school.jpeg'
+                },
+                announcements: {
+                    ticker: [
+                        'Admission Open for Session 2025-26',
+                        'Mount Zion School Ranked #1 in Purnea',
+                        'New Sports Complex Inaugurated'
+                    ]
+                },
+                facilities: [
+                    { title: 'Smart Classrooms', description: 'Interactive learning with modern tech.', icon: 'Laptop', image: '/Facility1.png' },
+                    { title: 'Science Labs', description: 'Advanced labs for physics, chemistry & bio.', icon: 'FlaskConical', image: '/Facility2.png' },
+                    { title: 'Sports Complex', description: 'Spacious ground for various sports.', icon: 'Trophy', image: '/Facility3.png' },
+                    { title: 'Library', description: 'Extensive collection of books and journals.', icon: 'Library', image: '/Facility4.png' }
+                ],
+                gallery: [
+                    { title: 'Annual Day 2024', category: 'Events', image: '/Gallery1.png' },
+                    { title: 'Sports Meet', category: 'Sports', image: '/Gallery2.png' },
+                    { title: 'Science Exhibition', category: 'Academic', image: '/Gallery3.png' },
+                    { title: 'Campus View', category: 'Campus', image: '/Gallery4.png' }
+                ],
+                news: [
+                    { title: 'Registration Open', date: '15 May 2024', summary: 'Registration for session 2025-26 is now open for all classes.' },
+                    { title: 'Summer Vacation', date: '01 June 2024', summary: 'School will remain closed for summer break from June 1st to June 30th.' }
+                ],
+                achievements: [
+                    { title: 'Best School Award', year: '2023', description: 'Awarded for excellence in academic results and infrastructure.' },
+                    { title: 'Sports Championship', year: '2023', description: 'Winner of district level inter-school sports competition.' }
+                ],
                 testimonials: [
-                    {
-                        text: "Choosing this school was one of the best decisions I've ever made. The teachers are incredibly supportive and my child has grown so much.",
-                        author: "Ronald Richards",
-                        id: "Parent of Class 5 Student",
-                        image: "https://i.pravatar.cc/150?u=ronald"
-                    },
-                    {
                         text: "The academic curriculum is rigorous but balanced perfectly with sports and extracurricular activities. We couldn't be happier with Mount Zion.",
                         author: "Sarah Jenkins",
                         id: "Parent of Class 8 Student",

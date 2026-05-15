@@ -229,7 +229,7 @@ export default function GalleryPublicPage() {
                         {filteredImages.length > 0 ? (
                             filteredImages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((img, i) => (
                                 <div key={img._id || i} style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', background: '#fff', padding: '15px', cursor: 'pointer' }} onClick={() => setSelectedImage(img)}>
-                                    <img src={img.image || `/Gallery${i % 4 + 1}.png`} alt={img.title} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
+                                    <img src={img.url || `/Gallery${i % 4 + 1}.png`} alt={img.title} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
                                     {img.title && <p style={{ marginTop: '10px', fontSize: '0.9rem', fontWeight: '600', color: '#334155' }}>{img.title}</p>}
                                 </div>
                             ))
@@ -405,7 +405,7 @@ export default function GalleryPublicPage() {
                             exit={{ scale: 0.9, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <img src={selectedImage.image || `/Gallery1.png`} alt={selectedImage.title} />
+                            <img src={selectedImage.url || `/Gallery1.png`} alt={selectedImage.title} />
                             <div className="gal-lightbox-caption">
                                 <h3>{selectedImage.title}</h3>
                                 <span>{selectedImage.category}</span>

@@ -251,13 +251,26 @@ export default function SiteSettings() {
             const [lpData, aboutData, curData, admData, galData] = await Promise.all([
                 safeFetch('/api/landing-page'),
                 safeFetch('/api/about'),
-                safeFetch('/api/curriculum'),
-                safeFetch('/api/admission'),
+                safeFetch('/api/curriculum-page'),
+                safeFetch('/api/admission-page'),
                 safeFetch('/api/gallery')
             ]);
-            if (lpData) setConfig(prev => ({ ...prev, ...lpData }));
+            if (lpData) {
+                setConfig(prev => ({
+                    ...prev,
+                    ...lpData,
+                    header: { ...prev.header, ...(lpData.header || {}) },
+                    hero: { ...prev.hero, ...(lpData.hero || {}) },
+                    announcements: { ...prev.announcements, ...(lpData.announcements || {}) },
+                    connect: { ...prev.connect, ...(lpData.connect || {}) },
+                    about: { ...prev.about, ...(lpData.about || {}) },
+                    footer: { ...prev.footer, ...(lpData.footer || {}) }
+                }));
+            }
             if (aboutData) {
                 setAboutConfig(prev => ({
+                    ...prev,
+                    ...aboutData,
                     aboutUs: { ...prev.aboutUs, ...(aboutData.aboutUs || {}) },
                     rules: { ...prev.rules, ...(aboutData.rules || {}) },
                     team: { ...prev.team, ...(aboutData.team || {}) },
@@ -265,9 +278,9 @@ export default function SiteSettings() {
                     schoolHours: { ...prev.schoolHours, ...(aboutData.schoolHours || {}) }
                 }));
             }
-            if (curData) setCurriculumConfig(curData);
-            if (admData) setAdmissionConfig(admData);
-            if (galData && Array.isArray(galData)) setPublicGallery(galData);
+            if (curData) setCurriculumConfig(prev => ({ ...prev, ...curData }));
+            if (admData) setAdmissionConfig(prev => ({ ...prev, ...admData }));
+            if (galData) setPublicGallery(galData);
         } catch (err) {
             console.error("Failed to fetch configs:", err);
         } finally {
@@ -281,13 +294,24 @@ export default function SiteSettings() {
             const [resLP, resAbout, resCur, resAdm] = await Promise.all([
                 fetch('/api/landing-page', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) }),
                 fetch('/api/about', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(aboutConfig) }),
-                fetch('/api/curriculum', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(curriculumConfig) }),
-                fetch('/api/admission', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admissionConfig) })
+                fetch('/api/curriculum-page', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(curriculumConfig) }),
+                fetch('/api/admission-page', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(admissionConfig) })
             ]);
-            if (resLP.ok && resAbout.ok && resCur.ok && resAdm.ok) {
-                customAlert('Site Configuration updated successfully!', 'Success', 'success');
+
+            const results = [
+                { name: 'Landing Page', ok: resLP.ok },
+                { name: 'About Page', ok: resAbout.ok },
+                { name: 'Curriculum', ok: resCur.ok },
+                { name: 'Admission', ok: resAdm.ok }
+            ];
+
+            const failed = results.filter(r => !r.ok);
+            
+            if (failed.length === 0) {
+                customAlert('All configurations updated successfully!', 'Success', 'success');
             } else {
-                customAlert('Error saving configurations', 'Update Failed', 'error');
+                const failedNames = failed.map(f => f.name).join(', ');
+                customAlert(`Updated successfully, but failed for: ${failedNames}`, 'Partial Update', 'warning');
             }
         } catch (err) {
             customAlert('Server error: ' + err.message, 'Error', 'error');

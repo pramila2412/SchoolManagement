@@ -183,25 +183,11 @@ export default function LoginPage() {
             >
                 <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
                     <div className="p-8 pb-4 text-center">
-                        <h1 className="text-3xl font-extrabold text-[#0B3C5D] mb-2">Parent Portal</h1>
+                        <h1 className="text-3xl font-extrabold text-[#0B3C5D] mb-2">Login</h1>
                         <p className="text-sm text-gray-500 font-medium">Mount Zion School, Purnea</p>
                     </div>
 
-                    {/* Figma Style Tabs */}
-                    <div className="flex p-2 bg-gray-100/50">
-                        <button 
-                            onClick={() => setLoginType('parent')}
-                            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-all duration-300 ${loginType === 'parent' ? 'bg-white text-[#0B3C5D] shadow-sm rounded-lg' : 'text-gray-400 hover:text-gray-600'}`}
-                        >
-                            Parent <span className={loginType === 'parent' ? 'bg-yellow-400 px-1' : ''}>Login</span>
-                        </button>
-                        <button 
-                            onClick={() => setLoginType('admin')}
-                            className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-all duration-300 ${loginType === 'admin' ? 'bg-[#0B3C5D] text-white shadow-sm rounded-lg' : 'text-gray-400 hover:text-gray-600 font-bold'}`}
-                        >
-                            Staff <span className={loginType === 'admin' ? 'bg-yellow-400 text-black px-1' : ''}>Login</span>
-                        </button>
-                    </div>
+
 
                     <div className="p-8">
                         <AnimatePresence mode="wait">
@@ -270,19 +256,13 @@ export default function LoginPage() {
                                 )}
                             </button>
 
-                            <div className="text-center">
-                                <button type="button" className="text-sm font-bold text-gray-500 hover:text-[#0B3C5D]">
-                                    Forgot Password? <span className="text-[#0B3C5D] underline ml-1">Click here</span>
-                                </button>
-                            </div>
+
                         </form>
                     </div>
                 </div>
 
                 <div className="mt-8 text-center">
-                    <p className="text-sm text-gray-500 font-medium">
-                        Don't have an account? <span className="text-[#0B3C5D] font-bold cursor-pointer hover:underline">Contact Administrator</span>
-                    </p>
+
                     <Link to="/" className="inline-block mt-4 text-[#1CA7A6] font-bold flex items-center justify-center gap-1 hover:gap-2 transition-all">
                         ← Back to Main Website
                     </Link>

@@ -9,11 +9,6 @@ router.get('/', async (req, res) => {
         if (!landing) {
             // Create default entry if none exists
             landing = await LandingPage.create({
-                facilities: [
-                    { title: 'Transport', image: '/Fac-Transport.png' },
-                    { title: 'Library', image: '/Fac-Library.png' },
-                    { title: 'Hostel', image: '/Fac-Hostel.png' },
-                    { title: 'Auditorium', image: '/Fac-Auditorium.png' },
                 header: {
                     phone: '6296490943',
                     email: 'mountzionschool2021@gmail.com',
@@ -38,10 +33,10 @@ router.get('/', async (req, res) => {
                     ]
                 },
                 facilities: [
-                    { title: 'Smart Classrooms', description: 'Interactive learning with modern tech.', icon: 'Laptop', image: '/Facility1.png' },
-                    { title: 'Science Labs', description: 'Advanced labs for physics, chemistry & bio.', icon: 'FlaskConical', image: '/Facility2.png' },
-                    { title: 'Sports Complex', description: 'Spacious ground for various sports.', icon: 'Trophy', image: '/Facility3.png' },
-                    { title: 'Library', description: 'Extensive collection of books and journals.', icon: 'Library', image: '/Facility4.png' }
+                    { title: 'Smart Classrooms', image: '/Facility1.png' },
+                    { title: 'Science Labs', image: '/Facility2.png' },
+                    { title: 'Sports Complex', image: '/Facility3.png' },
+                    { title: 'Library', image: '/Facility4.png' }
                 ],
                 gallery: [
                     { title: 'Annual Day 2024', category: 'Events', image: '/Gallery1.png' },
@@ -50,14 +45,15 @@ router.get('/', async (req, res) => {
                     { title: 'Campus View', category: 'Campus', image: '/Gallery4.png' }
                 ],
                 news: [
-                    { title: 'Registration Open', date: '15 May 2024', summary: 'Registration for session 2025-26 is now open for all classes.' },
-                    { title: 'Summer Vacation', date: '01 June 2024', summary: 'School will remain closed for summer break from June 1st to June 30th.' }
+                    'Registration Open for 2025-26',
+                    'Summer Vacation starts from June 1st'
                 ],
                 achievements: [
-                    { title: 'Best School Award', year: '2023', description: 'Awarded for excellence in academic results and infrastructure.' },
-                    { title: 'Sports Championship', year: '2023', description: 'Winner of district level inter-school sports competition.' }
+                    'Best School Award 2023',
+                    'District Sports Championship'
                 ],
                 testimonials: [
+                    {
                         text: "The academic curriculum is rigorous but balanced perfectly with sports and extracurricular activities. We couldn't be happier with Mount Zion.",
                         author: "Sarah Jenkins",
                         id: "Parent of Class 8 Student",
@@ -73,25 +69,22 @@ router.get('/', async (req, res) => {
                 connect: {
                     title: "Stay Connected with",
                     goldText: "Your Child's Progress",
-                    subtext: "The Mount Zion Parent Portal gives you real-time access to your child's academic journey, attendance, fees, and school communications.",
+                    subtext: "The Mount Zion Parent Portal gives you real-time access to your child's academic journey.",
                     features: [
-                        "View attendance records & daily reports",
-                        "Track academic performance & grades",
-                        "Access fee receipts & payment history",
-                        "Download circulars & notices",
-                        "Communicate with teachers",
-                        "View homework & assignments"
+                        "View attendance records",
+                        "Track academic performance",
+                        "Access fee receipts"
                     ]
                 },
                 about: {
                     title: "Principal's Message.",
                     subtitle: "Welcome to Mount Zion School",
-                    message: "<p><strong>Motto: WISDOM AND RIGHTEOUSNESS</strong></p><p>It is with great pride and joy that I welcome you to the official website of Mount Zion School, a place where learning meets values and dreams take flight.</p><p>Our motto, <strong>WISDOM AND RIGHTEOUSNESS</strong>, is the guiding light of every step we take. At Mount Zion, we believe education must enlighten the mind with wisdom and strengthen the character with righteousness. We are committed to nurturing young minds who not only excel academically but also grow into compassionate, responsible citizens.</p><p>Over the years, children in thousands have passed out from Mount Zion and are today serving society from reputed posts in Medical, Teaching, Administration, and Engineering. They are building up the society with integrity and excellence, and they remain our greatest achievement and pride.</p><p>Our dedicated team of teachers works tirelessly to create a safe, inclusive, and stimulating environment where students are encouraged to ask questions, think creatively, and grow into lifelong learners.</p><p>To our parents, thank you for your trust and partnership. Together, we will continue to guide our children toward a future filled with purpose and values.</p><p>I invite you to explore our website and discover the Mount Zion spirit. May our children continue to Arise and Shine.</p><div style='text-align: right; margin-top: 30px;'><strong>Warm regards,</strong><br/><strong>REENA ALBERT</strong><br/>Principal.</div>",
+                    message: "<p>Mount Zion School is committed to providing quality education...</p>",
                     image: "/About.png"
                 },
                 footer: {
                     ctaText: "EMPOWERING EVERY CHILD TO REACH HIGHER.",
-                    address: "MOUNT ZION SCHOOL, SION NAGAR, PURNEA - 854301, BIHAR, Office Timing : 7.00 am to 1:30 pm (Summer), 8.30 am to 2.30 pm (winter), Sunday Holiday",
+                    address: "MOUNT ZION SCHOOL, SION NAGAR, PURNEA - 854301, BIHAR",
                     copyright: "Copyright © 2025 Mount Zion School, Inc. All rights reserved."
                 }
             });

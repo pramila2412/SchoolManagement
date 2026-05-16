@@ -1,8 +1,8 @@
 /* ===== About Page Styles ===== */
 .section-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 100px;
+    padding: 0 80px;
 }
 
 @media (max-width: 768px) {
@@ -727,10 +727,12 @@
 
 .rules-text-side {
     flex: 1.2;
+    min-width: 0;
 }
 
 .rules-image-side {
     flex: 1;
+    min-width: 0;
 }
 
 .rules-image-box img {
@@ -766,18 +768,107 @@
 .about-rich-content {
     color: #334155;
     font-size: 0.95rem;
-    line-height: 1.7;
+    line-height: 1.8;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+    white-space: pre-wrap !important;
+    text-align: left;
+    max-width: 100%;
+}
+
+.about-rich-content * {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere !important;
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+}
+
+.about-rich-content img {
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
 }
 
 .about-rich-content p {
+    margin-bottom: 0.6rem;
+}
+
+.about-rich-content p:empty {
+    margin-bottom: 0.8rem;
+}
+
+/* Ordered list: numbered 1, 2, 3... */
+.about-rich-content ol {
+    list-style-type: decimal;
+    padding-left: 2rem;
+    margin-bottom: 1.2rem;
+    counter-reset: none;
+}
+
+.about-rich-content ol li {
+    margin-bottom: 0.6rem;
+    padding-left: 0.3rem;
+    line-height: 1.7;
+}
+
+.about-rich-content ol li::marker {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Unordered list */
+.about-rich-content ul {
+    list-style-type: disc;
+    padding-left: 2rem;
     margin-bottom: 1.2rem;
 }
 
-.about-rich-content strong {
-    color: #0f172a;
-    font-weight: 700;
+.about-rich-content ul li {
+    margin-bottom: 0.5rem;
+    line-height: 1.7;
 }
 
+/* Bold / Strong text - headings in content */
+.about-rich-content strong,
+.about-rich-content b {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+/* Underline */
+.about-rich-content u {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Headings inside rich content */
+.about-rich-content h1,
+.about-rich-content h2,
+.about-rich-content h3,
+.about-rich-content h4 {
+    color: #0f172a;
+    font-weight: 800;
+    margin: 1.2rem 0 0.6rem;
+}
+
+.about-rich-content h1 { font-size: 1.4rem; }
+.about-rich-content h2 { font-size: 1.2rem; }
+.about-rich-content h3 { font-size: 1.05rem; }
+.about-rich-content h4 { font-size: 0.95rem; }
+
+/* Blockquote */
+.about-rich-content blockquote {
+    border-left: 4px solid #1CA7A6;
+    padding-left: 16px;
+    margin: 1rem 0;
+    color: #475569;
+    font-style: italic;
+}
+
+/* ----- School Hours Section ----- */
 .school-hours-rich-content {
     margin-top: 15px;
     padding-top: 15px;
@@ -824,3 +915,4 @@
     color: #64748b;
     font-style: italic;
 }
+

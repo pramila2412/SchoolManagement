@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
                     title: "Principal's Message.",
                     subtitle: "Welcome to Mount Zion School",
                     message: "<p>Mount Zion School is committed to providing quality education...</p>",
-                    image: "/About.png"
+                    image: "/About.jpeg"
                 },
                 footer: {
                     ctaText: "EMPOWERING EVERY CHILD TO REACH HIGHER.",
@@ -104,6 +104,12 @@ router.put('/', async (req, res) => {
             landing = await LandingPage.create(req.body);
         } else {
             Object.assign(landing, req.body);
+            // Explicitly mark nested array fields as modified so Mongoose saves them
+            if (req.body.videoGallery) landing.markModified('videoGallery');
+            if (req.body.certificates) landing.markModified('certificates');
+            if (req.body.testimonials) landing.markModified('testimonials');
+            if (req.body.facilities) landing.markModified('facilities');
+            if (req.body.gallery) landing.markModified('gallery');
             await landing.save();
         }
         res.json({ message: 'Landing page updated successfully', data: landing });

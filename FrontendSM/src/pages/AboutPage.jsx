@@ -84,6 +84,11 @@ export default function AboutPage() {
         }
     };
 
+    const cleanHTML = (html) => {
+        if (!html) return '';
+        return html.replace(/&nbsp;/g, ' ');
+    };
+
     return (
         <div className="landing-page about-page">
             <PublicHeader />
@@ -92,10 +97,8 @@ export default function AboutPage() {
             <section className="about-us-section" id="about">
                 <div className="section-container">
                     <div style={{ display: 'flex', gap: '60px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        {/* Left Side: Images */}
-                        <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <img src={aboutData.aboutUs.image1} alt="About Mount Zion School Top" style={{ width: '100%', objectFit: 'cover', display: 'block' }} />
-                            <img src={aboutData.aboutUs.image2} alt="About Mount Zion School Bottom" style={{ width: '100%', objectFit: 'cover', display: 'block' }} />
+                        <div style={{ flex: '1', minWidth: '300px' }}>
+                            <img src={aboutData.aboutUs.image} alt="About Mount Zion School" style={{ width: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }} />
                         </div>
 
                         {/* Right Side: Text & Information */}
@@ -111,10 +114,10 @@ export default function AboutPage() {
                             <h2 style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000' }}>{aboutData.aboutUs.title}</h2>
                             <h3 style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '15px' }}>{aboutData.aboutUs.subtitle}</h3>
 
-                            <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: aboutData.aboutUs.content }} />
+                            <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: cleanHTML(aboutData.aboutUs.content) }} />
                             
                             {/* School Information / Hours integrated below content */}
-                            <div className="about-rich-content school-hours-rich-content" dangerouslySetInnerHTML={{ __html: aboutData.schoolHours.content }} />
+                            <div className="about-rich-content school-hours-rich-content" dangerouslySetInnerHTML={{ __html: cleanHTML(aboutData.schoolHours.content) }} />
                         </div>
                     </div>
                 </div>
@@ -122,14 +125,14 @@ export default function AboutPage() {
             {/* ===== RULES & REGULATIONS ===== */}
             <section className="about-rules-section" id="rules">
                 <div className="section-container">
-                    <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000', marginLeft: '-100px' }}>{aboutData.rules.title}</h2>
-                    <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '40px', marginLeft: '-80px' }}>{aboutData.rules.subtitle}</h3>
+                    <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000' }}>{aboutData.rules.title}</h2>
+                    <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '40px' }}>{aboutData.rules.subtitle}</h3>
 
                     <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>
                         
-                        <div className="rules-text-side" style={{ flex: '1', marginLeft: '-100px' }}>
+                        <div className="rules-text-side" style={{ flex: '1' }}>
 
-                            <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: aboutData.rules.content }} />
+                            <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: cleanHTML(aboutData.rules.content) }} />
                         </div>
 
                         <div className="rules-image-side" style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '15px', height: 'auto', paddingTop: '100px' }}>
@@ -162,9 +165,9 @@ export default function AboutPage() {
                         <h2 className="section-title" style={{ fontSize: '2.5rem', fontWeight: '900', color: '#000' }}>{aboutData.team.title}</h2>
                     </div>
                     
-                    <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: aboutData.team.content }} style={{ textAlign: 'left', maxWidth: '1000px', margin: '0 auto 50px' }} />
+                    <div className="about-rich-content" dangerouslySetInnerHTML={{ __html: cleanHTML(aboutData.team.content) }} style={{ textAlign: 'left', margin: '0 auto 50px' }} />
 
-                    <div className="team-carousel-wrapper" style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
+                    <div className="team-carousel-wrapper" style={{ position: 'relative', maxWidth: '800px', margin: '0 auto' }}>
                         <AnimatePresence mode="wait">
                             <motion.img 
                                 key={teamIndex}

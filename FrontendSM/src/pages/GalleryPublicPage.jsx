@@ -19,52 +19,12 @@ const CATEGORY_MAP = {
     'Facilities': ['Campus View', 'Library', 'Classrooms', 'Laboratory']
 };
 
-const VIDEO_GALLERY_DATA = [
-    {
-        videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
-        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
-        videoTitle: "How to get started",
-        videoPart: "Part 1",
-        testimonialName: "Sandra Henry",
-        testimonialRole: "Alumni - University Assistant",
-        testimonialText: "\"Mount Zion School has shaped my child's character and confidence. The care and values they instill are truly exceptional.\"",
-        testimonialImage: "https://i.pravatar.cc/150?u=sandra"
-    },
-    {
-        videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
-        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
-        videoTitle: "Campus Tour & Facilities",
-        videoPart: "Part 2",
-        testimonialName: "John Doe",
-        testimonialRole: "Parent",
-        testimonialText: "\"The facilities and the teaching staff are world-class. We couldn't have asked for a better environment for our son.\"",
-        testimonialImage: "https://i.pravatar.cc/150?u=john"
-    },
-    {
-        videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
-        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
-        videoTitle: "Annual Day Highlights",
-        videoPart: "Part 3",
-        testimonialName: "Maria Garcia",
-        testimonialRole: "Parent",
-        testimonialText: "\"Seeing my daughter perform on stage with so much confidence brought tears to my eyes. Thank you Mount Zion!\"",
-        testimonialImage: "https://i.pravatar.cc/150?u=maria"
-    },
-    {
-        videoLink: "https://www.youtube.com/embed/5Peo-ivmupE",
-        videoThumbnail: "https://img.youtube.com/vi/5Peo-ivmupE/maxresdefault.jpg",
-        videoTitle: "Sports Achievements",
-        videoPart: "Part 4",
-        testimonialName: "David Smith",
-        testimonialRole: "Alumni",
-        testimonialText: "\"The sports infrastructure and coaching helped me secure a national level scholarship. Proud to be an alumni.\"",
-        testimonialImage: "https://i.pravatar.cc/150?u=david"
-    }
-];
+// Video gallery data is now fully managed via CMS (Site Settings -> Video Gallery)
 
 export default function GalleryPublicPage() {
     const [images, setImages] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
+    const [videoGallery, setVideoGallery] = useState(null); // Changed to null for loading state
     const [loading, setLoading] = useState(true);
     const [activeVideoIndex, setActiveVideoIndex] = useState(0);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -78,13 +38,14 @@ export default function GalleryPublicPage() {
     // Auto-scroll logic
     useEffect(() => {
         let interval;
-        if (!isVideoPlaying) {
+        const currentData = videoGallery || [];
+        if (!isVideoPlaying && currentData.length > 0) {
             interval = setInterval(() => {
-                setActiveVideoIndex((prev) => (prev + 1) % VIDEO_GALLERY_DATA.length);
+                setActiveVideoIndex((prev) => (prev + 1) % currentData.length);
             }, 5000); // Change every 5 seconds
         }
         return () => clearInterval(interval);
-    }, [isVideoPlaying]);
+    }, [isVideoPlaying, videoGallery?.length]);
 
     useEffect(() => {
         const fetchGallery = async () => {
@@ -94,6 +55,14 @@ export default function GalleryPublicPage() {
                 if (res.ok) {
                     const data = await res.json();
                     setImages(data);
+                }
+
+                const resLP = await fetch(`${API}/landing-page?t=${Date.now()}`);
+                if (resLP.ok) {
+                    const lpData = await resLP.json();
+                    setVideoGallery(lpData.videoGallery || []);
+                } else {
+                    setVideoGallery([]); // Fallback to empty if fetch fails
                 }
             } catch (err) {
                 console.error('Error fetching gallery:', err);
@@ -117,6 +86,29 @@ export default function GalleryPublicPage() {
             }
             return img.category === activeCategory;
         });
+
+    const activeVideoData = videoGallery || [];
+    const currentVideo = activeVideoData[activeVideoIndex] || activeVideoData[0];
+
+    const getYTThumb = (url) => {
+        if (!url) return '';
+        // Handle embed links
+        let id = url.match(/(?:embed\/|v=)([^&?]+)/)?.[1];
+        if (!id && url.includes('youtu.be/')) {
+            id = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
+        }
+        return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : '';
+    };
+
+    const getEmbedUrl = (url) => {
+        if (!url) return '';
+        if (url.includes('/embed/')) return url;
+        let id = url.match(/(?:v=|youtu\.be\/|youtube\.com\/watch\?v=)([^&?]+)/)?.[1];
+        return id ? `https://www.youtube.com/embed/${id}` : url;
+    };
+
+    const currentVideoLink = currentVideo ? getEmbedUrl(currentVideo.videoLink) : '';
+    const currentThumb = currentVideo ? (currentVideo.videoThumbnail || getYTThumb(currentVideo.videoLink)) : '';
 
     return (
         <div className="landing-page gallery-public-page">
@@ -285,7 +277,8 @@ export default function GalleryPublicPage() {
             </section>
 
             {/* ===== VIDEO GALLERY SECTION ===== */}
-            <section className="video-gallery-section">
+            {activeVideoData.length > 0 && (
+                <section className="video-gallery-section">
                 <div className="section-container">
                     <div className="video-section-header">
                         <h2>VIDEO GALLERY</h2>
@@ -295,63 +288,92 @@ export default function GalleryPublicPage() {
                     <div className="video-gallery-layout">
                         {/* Left side: Video */}
                         <div className="video-main-player-side">
-                            <div className="video-aspect-container" style={{ 
-                                backgroundImage: `url(${VIDEO_GALLERY_DATA[activeVideoIndex].videoThumbnail})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center'
-                            }}>
-                                {isVideoPlaying ? (
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        src={`${VIDEO_GALLERY_DATA[activeVideoIndex].videoLink}?autoplay=1`}
-                                        title="YouTube video player" 
-                                        frameBorder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowFullScreen
-                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                                    ></iframe>
-                                ) : (
-                                    <div className="video-placeholder-content" style={{ background: 'rgba(0,0,0,0.4)' }}>
-                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                                            <div onClick={() => setIsVideoPlaying(true)} className="play-button-outer">
-                                                <div style={{ width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '15px solid #fff', marginLeft: '5px' }}></div>
+                            {currentVideo.videoLink ? (
+                                <>
+                                    <div className="video-aspect-container" style={{ 
+                                        backgroundImage: `url(${currentThumb})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center'
+                                    }}>
+                                        {isVideoPlaying ? (
+                                            <iframe 
+                                                width="100%" 
+                                                height="100%" 
+                                                src={`${currentVideoLink}${currentVideoLink.includes('?') ? '&' : '?'}autoplay=1`}
+                                                title="YouTube video player" 
+                                                frameBorder="0" 
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowFullScreen
+                                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                                            ></iframe>
+                                        ) : (
+                                            <div className="video-placeholder-content" style={{ background: 'rgba(0,0,0,0.4)' }}>
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                                    <div onClick={() => setIsVideoPlaying(true)} className="play-button-outer">
+                                                        <div style={{ width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '15px solid #fff', marginLeft: '5px' }}></div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-
-                            <a href={VIDEO_GALLERY_DATA[activeVideoIndex].videoLink} target="_blank" rel="noopener noreferrer" className="video-visit-btn">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z"/>
-                                </svg>
-                                VISIT NOW
-                            </a>
+        
+                                    <a href={currentVideo.videoLink} target="_blank" rel="noopener noreferrer" className="video-visit-btn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z"/>
+                                        </svg>
+                                        VISIT NOW
+                                    </a>
+                                </>
+                            ) : (
+                                <div style={{ 
+                                    height: '400px', 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    background: '#f8fafc', 
+                                    borderRadius: '12px',
+                                    border: '1px dashed #cbd5e1',
+                                    color: '#64748b'
+                                }}>
+                                    <h3 style={{ margin: '0 0 10px' }}>{currentVideo.videoTitle || 'Mount Zion Gallery'}</h3>
+                                    <p>Video content coming soon!</p>
+                                </div>
+                            )}
                         </div>
                         
                         {/* Right side: Testimonial + Thumbnails */}
                         <div className="video-testimonial-side">
-                            <div className="testimonial-card-v2">
-                                <div className="parent-thumb-wrapper">
-                                    <img src={VIDEO_GALLERY_DATA[activeVideoIndex].testimonialImage} alt="Parent" />
+                            {(currentVideo.testimonialName || currentVideo.testimonialText) ? (
+                                <div className="testimonial-card-v2">
+                                    <div className="parent-thumb-wrapper">
+                                        <img 
+                                            src={currentVideo.testimonialImage || 'https://i.pravatar.cc/150?u=school'} 
+                                            alt="Parent" 
+                                            onError={(e) => { e.target.src = 'https://i.pravatar.cc/150?u=school'; }}
+                                        />
+                                    </div>
+                                    
+                                    <div className="quote-icon-v2">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                    </div>
+    
+                                    <div className="testimonial-content-v2">
+                                        <div className="stars-row">★ ★ ★ ★ ★</div>
+                                        {currentVideo.testimonialName && <h4 className="parent-name">{currentVideo.testimonialName}</h4>}
+                                        {currentVideo.testimonialRole && <span className="parent-role">{currentVideo.testimonialRole}</span>}
+                                        {currentVideo.testimonialText && <p className="parent-message">{currentVideo.testimonialText}</p>}
+                                    </div>
                                 </div>
-                                
-                                <div className="quote-icon-v2">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                            ) : (
+                                <div className="testimonial-card-v2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px', opacity: 0.8 }}>
+                                    <p style={{ color: '#64748b', fontStyle: 'italic' }}>Feedback from parents and students for this session will be updated soon.</p>
                                 </div>
-
-                                <div className="testimonial-content-v2">
-                                    <div className="stars-row">★ ★ ★ ★ ★</div>
-                                    <h4 className="parent-name">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialName}</h4>
-                                    <span className="parent-role">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialRole}</span>
-                                    <p className="parent-message">{VIDEO_GALLERY_DATA[activeVideoIndex].testimonialText}</p>
-                                </div>
-                            </div>
-
+                            )}
+ 
                             {/* Parent Thumbnails / Scrolling Feedbacks */}
                             <div style={{ display: 'flex', gap: '15px', marginTop: '30px', overflowX: 'auto', padding: '10px', width: '100%', justifyContent: 'center' }}>
-                                {VIDEO_GALLERY_DATA.map((item, idx) => (
+                                {activeVideoData.map((item, idx) => (
                                     <div 
                                         key={idx}
                                         onClick={() => { setActiveVideoIndex(idx); setIsVideoPlaying(false); }}
@@ -367,13 +389,18 @@ export default function GalleryPublicPage() {
                                             opacity: activeVideoIndex === idx ? 1 : 0.6
                                         }}
                                     >
-                                        <img src={item.testimonialImage} alt={item.testimonialName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                        <img 
+                                            src={item.testimonialImage || 'https://i.pravatar.cc/150?u=school'} 
+                                            alt={item.testimonialName || 'Parent'} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                            onError={(e) => { e.target.src = 'https://i.pravatar.cc/150?u=school'; }}
+                                        />
                                     </div>
                                 ))}
                             </div>
-
+ 
                             <div className="video-nav-dots">
-                                {VIDEO_GALLERY_DATA.map((_, idx) => (
+                                {activeVideoData.map((_, idx) => (
                                     <div 
                                         key={idx} 
                                         onClick={() => { setActiveVideoIndex(idx); setIsVideoPlaying(false); }}
@@ -384,7 +411,8 @@ export default function GalleryPublicPage() {
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+            )}
 
             <AnimatePresence>
                 {selectedImage && (

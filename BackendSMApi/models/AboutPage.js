@@ -5,8 +5,7 @@ const aboutPageSchema = new mongoose.Schema({
         title: { type: String, default: 'About Us' },
         subtitle: { type: String, default: 'Mount Zion School' },
         content: { type: String, default: '<p>Mount Zion School is a co-educational non-denominational (Christian) institution which is run by missionaries whose H.Q at Kerala, Mount Zion Welfare Society.</p><p style="margin-top: 8px;">It was established in 1994 and the purpose of starting this school was to give "Education to Everyone". From a humble beginning with the grace of God the school has now become a full-fledged institution. Mount Zion aims at educating different levels of students from different societies and communities and mould them in desired shapes. We give all the concerns for the scholastic and co-scholastic development of students by holding the core of the disciplinary steps. Apart from this the students are not only to excel in academic interests but also to understand that we all are made in the image of God, who wants to be fulfilled in life and work, in relationship with God, with each other and with the world He made for us to enjoy.</p>' },
-        image1: { type: String, default: '/About Us1.jpg' },
-        image2: { type: String, default: '/About Us.png' },
+        image: { type: String, default: '/About Us.png' },
         visitUrl: { type: String, default: 'https://www.facebook.com/share/1DYSZWV8DU/' }
     },
     rules: {

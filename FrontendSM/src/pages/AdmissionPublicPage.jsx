@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-    Search, ChevronDown, Filter, ChevronLeft, ChevronRight
+    Search, ChevronDown, Filter, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import { motion, AnimatePresence } from 'framer-motion';
 import './AdmissionPublicPage.css';
 import './LandingPage.css';
 
@@ -71,6 +72,11 @@ export default function AdmissionPublicPage() {
     const dropdownRef = useRef(null);
     const itemsPerPage = 5;
 
+    const [siteConfig, setSiteConfig] = useState({ achievements: [], certificates: [] });
+
+    const [certIndex, setCertIndex] = useState(0);
+    const [selectedCert, setSelectedCert] = useState(null);
+
     useEffect(() => {
         (async () => {
             try {
@@ -79,11 +85,35 @@ export default function AdmissionPublicPage() {
                     const d = await res.json();
                     setData({ ...DEFAULTS, ...d });
                 }
+
+                // Fetch certificates from landing page config
+                const resLP = await fetch(`${API}/landing-page`);
+                if (resLP.ok) {
+                    const lpData = await resLP.json();
+                    setSiteConfig(lpData);
+                }
             } catch (err) {
                 console.warn('Using default admission data:', err.message);
             }
         })();
     }, []);
+
+    const validCertificates = siteConfig.certificates?.map(c => {
+        if (typeof c === 'string') return { title: '', url: c };
+        return c;
+    }).filter(c => c && c.url) || [];
+
+    // Auto-scroll logic for certificates
+    useEffect(() => {
+        if (validCertificates.length <= 1) return;
+        const timer = setInterval(() => {
+            setCertIndex(prev => (prev + 1) % validCertificates.length);
+        }, 3000);
+        return () => clearInterval(timer);
+    }, [validCertificates.length]);
+
+    const nextCert = () => setCertIndex(prev => (prev + 1) % validCertificates.length);
+    const prevCert = () => setCertIndex(prev => (prev - 1 + validCertificates.length) % validCertificates.length);
 
     // Handle click outside for dropdown
     useEffect(() => {
@@ -238,159 +268,169 @@ export default function AdmissionPublicPage() {
                 </div>
             </section>
 
-            {/* ===== ADMISSION RESULT ===== */}
-            <section className="about-us-section" id="result" style={{ padding: '80px 0', background: '#fff' }}>
-                <div className="section-container" style={{ maxWidth: '1000px' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                        <h2 className="section-title" style={{ fontWeight: '900', color: '#000' }}>Admission Result -2026</h2>
+            {/* ===== SCHOOL CERTIFICATES ===== */}
+            <section className="about-us-section" id="certificates" style={{ padding: '80px 0', background: '#f8fafc' }}>
+                <div className="section-container">
+                    <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+                        <h2 className="section-title" style={{ fontWeight: '900', color: '#000', borderLeft: 'none', paddingLeft: 0 }}>School Certificates</h2>
+                        <p style={{ color: '#64748b', marginTop: '10px' }}>Our recognition and academic excellence awards (Click to enlarge)</p>
                     </div>
 
-                    <div className="about-description" style={{ color: '#334155', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '40px' }}>
-                        <p style={{ fontWeight: '700', color: '#000', marginBottom: '5px' }}>Admission Result & Confirmation</p>
-                        <p>After appearing for the entrance examination, parents/guardians are required to check the admission result as per the schedule provided by the school. Students who successfully clear the entrance test (applicable from LKG onwards) or meet the interaction criteria (for Nursery) will be considered eligible for admission.</p>
-                        <p style={{ marginTop: '10px' }}>Selected candidates must complete the admission process by submitting the duly filled admission form along with all required documents and passport-size photographs. Final confirmation of admission will be granted only after document verification and payment of the prescribed fees.</p>
-                        <p style={{ marginTop: '10px' }}>Parents are advised to submit original documents at the time of admission for verification. It is important to note that basic details such as Date of Birth, address, and parents' names, once recorded in the school admission register, will not be changed under any circumstances.</p>
-                    </div>
+                    {validCertificates.length > 0 ? (
+                        <div className="facilities-carousel-wrapper" style={{ position: 'relative', overflow: 'hidden' }}>
+                            <button className="carousel-arrow prev" onClick={prevCert} style={{ left: '10px', zIndex: 10 }}>
+                                <ChevronLeft size={24} />
+                            </button>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '15px', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '10px 15px', borderRadius: '6px', flex: '1', maxWidth: '400px', border: '1px solid #e2e8f0' }}>
-                            <Search size={16} color="#94a3b8" style={{ marginRight: '10px' }} />
-                            <input 
-                                type="text" 
-                                placeholder="Search by Student name, Class, Roll..." 
-                                style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.9rem', color: '#334155' }} 
-                                value={searchTerm}
-                                onChange={handleSearch}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <div className="custom-dropdown-container" style={{ position: 'relative' }} ref={dropdownRef}>
-                                <button 
-                                    className="dropdown-trigger"
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', padding: '10px 15px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#475569', fontSize: '0.9rem', fontWeight: '500', cursor: 'pointer', minWidth: '160px', justifyContent: 'space-between' }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <Filter size={16} style={{ marginRight: '8px' }} />
-                                        {classFilter === 'All Classes' ? 'All Classes' : `Class ${classFilter}`}
-                                    </div>
-                                    <ChevronDown size={14} style={{ marginLeft: '10px', transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                                </button>
-                                
-                                {isDropdownOpen && (
-                                    <div 
-                                        className="dropdown-options"
-                                        style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', marginTop: '5px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, maxHeight: '300px', overflowY: 'auto' }}
+                            <div className="carousel-container" style={{ display: 'flex', transition: 'transform 0.5s ease' }}>
+                                <AnimatePresence mode="wait">
+                                    <motion.div 
+                                        key={certIndex}
+                                        initial={{ opacity: 0, x: 100 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -100 }}
+                                        transition={{ duration: 0.5 }}
+                                        style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
                                     >
-                                        {ALL_CLASSES.map(cls => (
-                                            <div 
-                                                key={cls} 
-                                                className={`dropdown-option ${classFilter === cls ? 'active' : ''}`}
-                                                onClick={() => handleSelectClass(cls)}
-                                                style={{ 
-                                                    padding: '12px 15px', 
-                                                    cursor: 'pointer', 
-                                                    fontSize: '0.9rem', 
-                                                    color: classFilter === cls ? '#fff' : '#475569', 
-                                                    background: classFilter === cls ? '#0B3C5D' : 'transparent',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (classFilter !== cls) e.currentTarget.style.background = '#f1f5f9';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    if (classFilter !== cls) e.currentTarget.style.background = 'transparent';
-                                                }}
-                                            >
-                                                {cls === 'All Classes' ? 'All Classes' : `Class ${cls}`}
+                                        <div 
+                                            onClick={() => setSelectedCert(validCertificates[certIndex])}
+                                            style={{ 
+                                                width: '100%',
+                                                maxWidth: '800px',
+                                                height: '550px', 
+                                                overflow: 'hidden', 
+                                                borderRadius: '12px', 
+                                                background: '#fff',
+                                                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                                                cursor: 'zoom-in',
+                                                border: '1px solid #e2e8f0',
+                                                padding: '20px',
+                                                display: 'flex',
+                                                flexDirection: 'column'
+                                            }}
+                                        >
+                                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                <img 
+                                                    src={validCertificates[certIndex].url} 
+                                                    alt={validCertificates[certIndex].title} 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                                />
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            {validCertificates[certIndex].title && (
+                                                <div style={{ 
+                                                    padding: '20px 0 0', 
+                                                    textAlign: 'center',
+                                                    borderTop: '1px solid #f1f5f9',
+                                                    marginTop: '15px'
+                                                }}>
+                                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0B3C5D', margin: 0 }}>
+                                                        {validCertificates[certIndex].title}
+                                                    </h3>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
+
+                            <button className="carousel-arrow next" onClick={nextCert} style={{ right: '10px', zIndex: 10 }}>
+                                <ChevronRight size={24} />
+                            </button>
+
+                            <div className="carousel-dots" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '30px' }}>
+                                {validCertificates.map((_, i) => (
+                                    <button 
+                                        key={i}
+                                        onClick={() => setCertIndex(i)}
+                                        className={`dot ${i === certIndex ? 'active' : ''}`}
+                                        style={{ 
+                                            width: i === certIndex ? '24px' : '8px', 
+                                            height: '8px', 
+                                            borderRadius: '4px', 
+                                            background: i === certIndex ? '#0B3C5D' : '#cbd5e1',
+                                            border: 'none',
+                                            transition: 'all 0.3s'
+                                        }}
+                                    />
+                                ))}
                             </div>
                         </div>
-                    </div>
-
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem', color: '#334155' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Exam Roll Number</th>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Class</th>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Name of the Student</th>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Date</th>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Time</th>
-                                    <th style={{ padding: '15px 10px', fontWeight: '600' }}>Interview Panel</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paginatedResults.length > 0 ? (
-                                    paginatedResults.map((row, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '15px 10px' }}>{row.roll}</td>
-                                            <td style={{ padding: '15px 10px' }}>{row.cls}</td>
-                                            <td style={{ padding: '15px 10px', color: '#0f172a', fontWeight: '500' }}>{row.name}</td>
-                                            <td style={{ padding: '15px 10px' }}>
-                                                <span style={{ color: '#059669', background: '#d1fae5', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' }}>{row.date}</span>
-                                            </td>
-                                            <td style={{ padding: '15px 10px', fontWeight: '500' }}>{row.time}</td>
-                                            <td style={{ padding: '15px 10px' }}>{row.panel}</td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                                            No matching students found for {classFilter === 'All Classes' ? 'any class' : `Class ${classFilter}`}.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '30px' }}>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button 
-                                onClick={prevPage}
-                                disabled={currentPage === 1}
-                                style={{ 
-                                    width: '36px', 
-                                    height: '36px', 
-                                    borderRadius: '50%', 
-                                    border: '1px solid #e2e8f0', 
-                                    background: '#fff', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center', 
-                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer', 
-                                    color: currentPage === 1 ? '#e2e8f0' : '#94a3b8' 
-                                }}
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
-                            <button 
-                                onClick={nextPage}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                style={{ 
-                                    width: '36px', 
-                                    height: '36px', 
-                                    borderRadius: '50%', 
-                                    border: '1px solid #e2e8f0', 
-                                    background: '#fff', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center', 
-                                    cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer', 
-                                    color: (currentPage === totalPages || totalPages === 0) ? '#e2e8f0' : '#f59e0b', 
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)' 
-                                }}
-                            >
-                                <ChevronRight size={16} />
-                            </button>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
+                            <p>No certificates available at the moment.</p>
                         </div>
-                    </div>
+                    )}
                 </div>
             </section>
+
+            {/* ===== LIGHTBOX MODAL ===== */}
+            <AnimatePresence>
+                {selectedCert && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedCert(null)}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            background: 'rgba(0,0,0,0.9)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 3000,
+                            padding: '40px',
+                            cursor: 'zoom-out'
+                        }}
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button 
+                                onClick={() => setSelectedCert(null)}
+                                style={{
+                                    position: 'absolute',
+                                    top: '-40px',
+                                    right: '0',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '1rem'
+                                }}
+                            >
+                                Close <X size={24} />
+                            </button>
+                            <img 
+                                src={selectedCert.url} 
+                                alt={selectedCert.title} 
+                                style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '4px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} 
+                            />
+                            {selectedCert.title && (
+                                <div style={{ 
+                                    background: 'rgba(255,255,255,0.95)', 
+                                    padding: '15px 25px', 
+                                    marginTop: '10px', 
+                                    borderRadius: '8px', 
+                                    textAlign: 'center' 
+                                }}>
+                                    <h3 style={{ color: '#0B3C5D', margin: 0, fontWeight: '700' }}>{selectedCert.title}</h3>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <PublicFooter />
         </div>

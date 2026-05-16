@@ -15,7 +15,7 @@ const PUBLIC_PAGES = [
     { name: 'Admission', path: '/admission', category: 'Admission' },
     { name: 'Admission Procedure', path: '/admission#procedure', category: 'Admission' },
     { name: 'Fee & Payment', path: '/admission#fee', category: 'Admission' },
-    { name: 'Admission Result 2026', path: '/admission#result', category: 'Admission' },
+    { name: 'School Certificates', path: '/admission#certificates', category: 'General' },
     { name: 'Academics', path: '/academics', category: 'Academics' },
     { name: 'Curriculum', path: '/academics#curriculum', category: 'Academics' },
     { name: 'School Uniform', path: '/academics#uniform', category: 'Academics' },
@@ -266,7 +266,7 @@ export default function PublicHeader() {
                             <div className="dropdown-content">
                                 <Link to="/admission#procedure" className="dropdown-item">Admission Procedure</Link>
                                 <Link to="/admission#fee" className="dropdown-item">Fee & Payment</Link>
-                                <Link to="/admission#result" className="dropdown-item">Admission Result-2026</Link>
+                                <Link to="/admission#certificates" className="dropdown-item">School Certificates</Link>
                             </div>
                         </div>
                         <div className="nav-divider"></div>
@@ -330,7 +330,7 @@ export default function PublicHeader() {
                                 <div className="mobile-sub-nav">
                                     <Link to="/admission#procedure" onClick={toggleMobileMenu}>Admission Procedure</Link>
                                     <Link to="/admission#fee" onClick={toggleMobileMenu}>Fee & Payment</Link>
-                                    <Link to="/admission#result" onClick={toggleMobileMenu}>Admission Result-2026</Link>
+                                    <Link to="/admission#certificates" onClick={toggleMobileMenu}>School Certificates</Link>
                                 </div>
                             </div>
 

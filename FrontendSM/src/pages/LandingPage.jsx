@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
     ChevronRight, ChevronLeft, GraduationCap,
     Check, ArrowUpRight
 } from 'lucide-react';
@@ -72,7 +72,7 @@ export default function LandingPage() {
                     <p style="margin:0;">Principal.</p>
                 </div>
             `,
-            image: '/About.png'
+            image: '/About.jpeg'
         },
         news: ['/news1.png', '/news2.png'],
         achievements: ['/Achievement1.png', '/Achievement2.png', '/Achievement3.png', '/Achievement4.png'],
@@ -124,9 +124,13 @@ export default function LandingPage() {
     const [portalTab, setPortalTab] = useState('parent');
 
     const CLONE_COUNT = 3;
-    const facilitiesLooped = siteConfig?.facilities ? Array(CLONE_COUNT).fill(siteConfig.facilities).flat() : [];
-    const newsLooped = siteConfig?.news ? Array(CLONE_COUNT).fill(siteConfig.news).flat() : [];
-    const achievementsLooped = siteConfig?.achievements ? Array(CLONE_COUNT).fill(siteConfig.achievements).flat() : [];
+    const validFacilities = siteConfig?.facilities?.filter(f => f.image) || [];
+    const validNews = siteConfig?.news?.filter(n => n) || [];
+    const validAchievements = siteConfig?.achievements?.filter(a => a) || [];
+
+    const facilitiesLooped = Array(CLONE_COUNT).fill(validFacilities).flat();
+    const newsLooped = Array(CLONE_COUNT).fill(validNews).flat();
+    const achievementsLooped = Array(CLONE_COUNT).fill(validAchievements).flat();
 
     useEffect(() => {
         const updateItems = () => {
@@ -141,10 +145,15 @@ export default function LandingPage() {
     }, []);
 
     useEffect(() => {
-        if (siteConfig?.facilities) setFacilityIndex(Math.floor(CLONE_COUNT / 2) * siteConfig.facilities.length);
-        if (siteConfig?.news) setNewsIndex(Math.floor(CLONE_COUNT / 2) * siteConfig.news.length);
-        if (siteConfig?.achievements) setAchievementIndex(Math.floor(CLONE_COUNT / 2) * siteConfig.achievements.length);
-    }, [siteConfig]);
+        if (validFacilities.length) setFacilityIndex(Math.floor(CLONE_COUNT / 2) * validFacilities.length);
+        if (validAchievements.length) setAchievementIndex(Math.floor(CLONE_COUNT / 2) * validAchievements.length);
+    }, [validFacilities.length, validAchievements.length]);
+
+    useEffect(() => {
+        if (newsIndex >= validNews.length && validNews.length > 0) {
+            setNewsIndex(0);
+        }
+    }, [validNews.length, newsIndex]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -160,9 +169,12 @@ export default function LandingPage() {
                     return prev >= max ? 0 : prev + 1;
                 });
             }
+            if (validNews.length) {
+                setNewsIndex(prev => (prev + 1) % validNews.length);
+            }
         }, 5000);
         return () => clearInterval(timer);
-    }, [siteConfig, facilitiesLooped.length, achievementsLooped.length, itemsToShow]);
+    }, [validFacilities.length, validNews.length, validAchievements.length, facilitiesLooped.length, achievementsLooped.length, itemsToShow]);
 
     const nextFacility = () => setFacilityIndex(prev => {
         const max = Math.max(0, facilitiesLooped.length - Math.ceil(itemsToShow));
@@ -173,8 +185,8 @@ export default function LandingPage() {
         return prev <= 0 ? max : prev - 1;
     });
 
-    const nextNews = () => setNewsIndex((prev) => prev + 1);
-    const prevNews = () => setNewsIndex((prev) => prev - 1);
+    const nextNews = () => setNewsIndex((prev) => (prev + 1) % validNews.length);
+    const prevNews = () => setNewsIndex((prev) => (prev - 1 + validNews.length) % validNews.length);
 
     const nextAchievement = () => setAchievementIndex(prev => {
         const max = Math.max(0, achievementsLooped.length - Math.ceil(itemsToShow));
@@ -232,7 +244,7 @@ export default function LandingPage() {
                         <p className="hero-description">{heroSubtitle}</p>
                     </motion.div>
                 </div>
-                
+
                 {siteConfig.announcements.heroStrip.show && (
                     <div className="hero-announcement-strip">
                         <div className="strip-inner">
@@ -253,33 +265,33 @@ export default function LandingPage() {
             <section className="facilities-section">
                 <div className="section-container">
                     <h2 className="section-title">Our Facilities</h2>
-                    
+
                     <div className="facilities-carousel-wrapper">
                         <button className="carousel-arrow prev" onClick={prevFacility}>
                             <ChevronLeft size={24} />
                         </button>
-                        
+
                         <div className="facilities-track-container">
-                            <motion.div 
+                            <motion.div
                                 className="facilities-track"
                                 animate={{ x: `-${facilityIndex * (100 / facilitiesLooped.length)}%` }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                style={{ 
+                                style={{
                                     display: 'flex',
                                     width: `${(facilitiesLooped.length * 100) / itemsToShow}%`
                                 }}
                             >
                                 {facilitiesLooped.map((fac, idx) => (
                                     <div className="facility-card-item" key={idx} style={{ flex: `0 0 ${100 / facilitiesLooped.length}%`, height: '100%' }}>
-                                        <div style={{ 
+                                        <div style={{
                                             height: '100%',
                                             position: 'relative',
                                             overflow: 'hidden',
                                             borderRadius: '0'
                                         }}>
-                                            <img 
-                                                src={fac.image} 
-                                                alt={fac.title} 
+                                            <img
+                                                src={fac.image}
+                                                alt={fac.title}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                             />
                                             <div className="facility-overlay">
@@ -302,8 +314,8 @@ export default function LandingPage() {
                             const length = siteConfig.facilities.length;
                             const currentMod = ((facilityIndex % length) + length) % length;
                             return (
-                                <button 
-                                    key={idx} 
+                                <button
+                                    key={idx}
                                     className={`dot ${currentMod === idx ? 'active' : ''}`}
                                     onClick={() => setFacilityIndex(facilityIndex + (idx - currentMod))}
                                 />
@@ -318,7 +330,7 @@ export default function LandingPage() {
                     <div className="gallery-header">
                         <h2 className="section-title">Gallery</h2>
                         <Link to="/gallery" className="view-more-link">
-                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
+                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2} /></div>
                         </Link>
                     </div>
 
@@ -332,13 +344,13 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
-            
+
             <section className="landing-about">
                 <div className="section-container">
                     <div className="about-header-row" style={{ width: '100%', justifyContent: 'space-between', marginBottom: '15px' }}>
                         <h2 className="section-title">{siteConfig.about.title}</h2>
                         <Link to="/about" className="view-more-link">
-                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2}/></div>
+                            View More <div className="arrow-circle-small"><ArrowUpRight size={14} strokeWidth={2} /></div>
                         </Link>
                     </div>
 
@@ -354,12 +366,12 @@ export default function LandingPage() {
                                     <span className="visit-text">Visit : </span>
                                     <a href={socials.youtube || '#'} target="_blank" rel="noopener noreferrer" className="visit-icon">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="#022a4d" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z"/>
+                                            <path d="M21.582 6.186a2.66 2.66 0 0 0-1.87-1.884C18.062 3.86 12 3.86 12 3.86s-6.062 0-7.712.442a2.66 2.66 0 0 0-1.87 1.884C2 7.846 2 12 2 12s0 4.154.442 5.814a2.66 2.66 0 0 0 1.87 1.884C5.938 20.14 12 20.14 12 20.14s6.062 0 7.712-.442a2.66 2.66 0 0 0 1.87-1.884C22 16.154 22 12 22 12s0-4.154-.418-5.814zM9.993 15.026V8.974L15.286 12l-5.293 3.026z" />
                                         </svg>
                                     </a>
                                     <a href={socials.facebook || '#'} target="_blank" rel="noopener noreferrer" className="visit-icon">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="#022a4d" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+                                            <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" />
                                         </svg>
                                     </a>
                                 </div>
@@ -380,26 +392,26 @@ export default function LandingPage() {
             <section className="landing-news">
                 <div className="section-container">
                     <h2 className="section-title text-center">Latest News</h2>
-                    
+
                     <div className="news-carousel-wrapper">
                         <button className="carousel-arrow prev" onClick={prevNews}>
                             <ChevronLeft size={24} />
                         </button>
-                        
+
                         <div className="news-viewport">
                             <AnimatePresence mode="wait">
-                                {siteConfig.news?.length > 0 && (
-                                    <motion.div 
-                                        key={newsIndex}
+                                {validNews.length > 0 && (
+                                    <motion.div
+                                        key={`${newsIndex}-${validNews.length}`}
                                         initial={{ opacity: 0, x: 50 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -50 }}
                                         transition={{ duration: 0.4 }}
                                         className="news-image-container"
                                     >
-                                        <img 
-                                            src={siteConfig.news[((newsIndex % siteConfig.news.length) + siteConfig.news.length) % siteConfig.news.length]} 
-                                            alt={`News ${newsIndex + 1}`} 
+                                        <img
+                                            src={validNews[newsIndex]}
+                                            alt={`News ${newsIndex + 1}`}
                                         />
                                     </motion.div>
                                 )}
@@ -412,14 +424,14 @@ export default function LandingPage() {
                     </div>
 
                     <div className="carousel-dots">
-                        {siteConfig.news.map((_, idx) => {
-                            const length = siteConfig.news.length;
+                        {validNews.map((_, idx) => {
+                            const length = validNews.length;
                             const currentMod = ((newsIndex % length) + length) % length;
                             return (
-                                <button 
-                                    key={idx} 
-                                    className={`dot ${currentMod === idx ? 'active' : ''}`}
-                                    onClick={() => setNewsIndex(newsIndex + (idx - currentMod))}
+                                <button
+                                    key={idx}
+                                    className={`dot ${newsIndex === idx ? 'active' : ''}`}
+                                    onClick={() => setNewsIndex(idx)}
                                 />
                             );
                         })}
@@ -428,35 +440,35 @@ export default function LandingPage() {
             </section>
 
             {/* Achievements Section */}
-            <section className="landing-achievements">
+            <section className="landing-achievements" id="achievements">
                 <div className="section-container">
                     <h2 className="section-title text-center">Achievements</h2>
-                    
+
                     <div className="facilities-carousel-wrapper">
                         <button className="carousel-arrow prev" onClick={prevAchievement}>
                             <ChevronLeft size={24} />
                         </button>
-                        
+
                         <div className="facilities-track-container">
-                            <motion.div 
+                            <motion.div
                                 className="facilities-track achievements-track"
                                 animate={{ x: `-${achievementIndex * (100 / achievementsLooped.length)}%` }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                style={{ 
+                                style={{
                                     display: 'flex',
                                     width: `${(achievementsLooped.length * 100) / itemsToShow}%`
                                 }}
                             >
                                 {achievementsLooped.map((img, idx) => (
                                     <div className="facility-card-item" key={idx} style={{ flex: `0 0 ${100 / achievementsLooped.length}%`, height: '100%' }}>
-                                        <div style={{ 
+                                        <div style={{
                                             height: '100%',
                                             position: 'relative',
                                             overflow: 'hidden'
                                         }}>
-                                            <img 
-                                                src={img} 
-                                                alt="Achievement" 
+                                            <img
+                                                src={img}
+                                                alt="Achievement"
                                                 style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#f8fafc' }}
                                             />
                                         </div>
@@ -475,8 +487,8 @@ export default function LandingPage() {
                             const length = siteConfig.achievements.length;
                             const currentMod = ((achievementIndex % length) + length) % length;
                             return (
-                                <button 
-                                    key={idx} 
+                                <button
+                                    key={idx}
                                     className={`dot ${currentMod === idx ? 'active' : ''}`}
                                     onClick={() => setAchievementIndex(achievementIndex + (idx - currentMod))}
                                 />
@@ -492,7 +504,7 @@ export default function LandingPage() {
                     <div className="section-header-centered">
                         <h2 className="section-title">Testimonials</h2>
                         <div className="title-arrow-icon">
-                            <ArrowUpRight size={20} strokeWidth={2}/>
+                            <ArrowUpRight size={20} strokeWidth={2} />
                         </div>
                     </div>
 
@@ -500,7 +512,7 @@ export default function LandingPage() {
                         <div className="testimonial-card-main">
                             <div className="testimonial-content-box">
                                 <AnimatePresence mode="wait">
-                                    <motion.p 
+                                    <motion.p
                                         key={testimonialIndex}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
@@ -510,7 +522,7 @@ export default function LandingPage() {
                                         "{siteConfig.testimonials[testimonialIndex].text}"
                                     </motion.p>
                                 </AnimatePresence>
-                                                                 <div className="testimonial-footer">
+                                <div className="testimonial-footer">
                                     <div className="testimonial-author">
                                         <div className="author-photo-wrapper">
                                             <img src={siteConfig.testimonials[testimonialIndex].image} alt={siteConfig.testimonials[testimonialIndex].author} />
@@ -521,8 +533,8 @@ export default function LandingPage() {
                                         </div>
                                     </div>
                                     <div className="testimonial-nav">
-                                        <button className="nav-arrow" onClick={prevTestimonial} aria-label="Previous testimonial"><ChevronLeft size={20}/></button>
-                                        <button className="nav-arrow" onClick={nextTestimonial} aria-label="Next testimonial"><ChevronRight size={20}/></button>
+                                        <button className="nav-arrow" onClick={prevTestimonial} aria-label="Previous testimonial"><ChevronLeft size={20} /></button>
+                                        <button className="nav-arrow" onClick={nextTestimonial} aria-label="Next testimonial"><ChevronRight size={20} /></button>
                                     </div>
                                 </div>
 

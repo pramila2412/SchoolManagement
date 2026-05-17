@@ -23,7 +23,15 @@ router.put('/', async (req, res) => {
         if (!admission) {
             admission = await AdmissionPage.create(req.body);
         } else {
-            Object.assign(admission, req.body);
+            const updateData = { ...req.body };
+            delete updateData._id;
+            delete updateData.__v;
+            admission.set(updateData);
+            if (req.body.admissionProcedure) admission.markModified('admissionProcedure');
+            if (req.body.admissionCriteria) admission.markModified('admissionCriteria');
+            if (req.body.requiredDocuments) admission.markModified('requiredDocuments');
+            if (req.body.admissionContact) admission.markModified('admissionContact');
+            if (req.body.classesOffered) admission.markModified('classesOffered');
             await admission.save();
         }
         res.json({ message: 'Admission page updated successfully', data: admission });

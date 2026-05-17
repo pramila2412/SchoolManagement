@@ -23,7 +23,13 @@ router.put('/', async (req, res) => {
         if (!curriculum) {
             curriculum = await CurriculumPage.create(req.body);
         } else {
-            Object.assign(curriculum, req.body);
+            const updateData = { ...req.body };
+            delete updateData._id;
+            delete updateData.__v;
+            curriculum.set(updateData);
+            if (req.body.curriculumImages) curriculum.markModified('curriculumImages');
+            if (req.body.levels) curriculum.markModified('levels');
+            if (req.body.uniformGroups) curriculum.markModified('uniformGroups');
             await curriculum.save();
         }
         res.json({ message: 'Curriculum page updated successfully', data: curriculum });

@@ -992,7 +992,7 @@
 
 .news-carousel-wrapper {
     position: relative;
-    max-width: 850px;
+    max-width: 1150px;
     margin: 40px auto 0;
     padding: 0 60px;
 }
@@ -1006,9 +1006,11 @@
 
 .news-image-container img {
     width: 100%;
-    max-height: 500px;
-    object-fit: cover;
+    height: auto;
+    max-height: 800px;
+    object-fit: contain;
     display: block;
+    pointer-events: none;
 }
 .news-carousel-wrapper .carousel-arrow {
     background: white;

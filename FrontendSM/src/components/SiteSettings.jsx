@@ -11,6 +11,35 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useAuth } from '../context/AuthContext';
 
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new window.Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+        };
+    });
+};
+
 const ABOUT_DEFAULTS = {
     aboutUs: {
         title: 'About Us',
@@ -323,31 +352,27 @@ export default function SiteSettings() {
         }
     };
 
-    const handleFileUpload = (e, section, field, index = null) => {
+    const handleFileUpload = async (e, section, field, index = null) => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result;
-            setConfig(prev => {
-                const newConfig = { ...prev };
-                if (index !== null && Array.isArray(newConfig[section])) {
-                    const newArr = [...newConfig[section]];
-                    if (typeof newArr[index] === 'object') {
-                        newArr[index] = { ...newArr[index], [field]: base64String };
-                    } else {
-                        newArr[index] = base64String;
-                    }
-                    newConfig[section] = newArr;
-                } else if (field) {
-                    newConfig[section] = { ...newConfig[section], [field]: base64String };
+        const base64String = await compressImage(file);
+        setConfig(prev => {
+            const newConfig = { ...prev };
+            if (index !== null && Array.isArray(newConfig[section])) {
+                const newArr = [...newConfig[section]];
+                if (typeof newArr[index] === 'object') {
+                    newArr[index] = { ...newArr[index], [field]: base64String };
                 } else {
-                    newConfig[section] = base64String;
+                    newArr[index] = base64String;
                 }
-                return newConfig;
-            });
-        };
-        reader.readAsDataURL(file);
+                newConfig[section] = newArr;
+            } else if (field) {
+                newConfig[section] = { ...newConfig[section], [field]: base64String };
+            } else {
+                newConfig[section] = base64String;
+            }
+            return newConfig;
+        });
     };
 
 
@@ -366,34 +391,27 @@ export default function SiteSettings() {
         updateAboutNested(section, 'images', newArr);
     };
 
-    const handleAboutFileUpload = (e, section, field, index = null) => {
+    const handleAboutFileUpload = async (e, section, field, index = null) => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result;
-            if (index !== null) {
-                updateAboutArrayItem(section, index, base64String);
-            } else {
-                updateAboutNested(section, field, base64String);
-            }
-        };
-        reader.readAsDataURL(file);
+        const base64String = await compressImage(file);
+        if (index !== null) {
+            updateAboutArrayItem(section, index, base64String);
+        } else {
+            updateAboutNested(section, field, base64String);
+        }
     };
 
     const updateCurriculum = (field, value) => {
         setCurriculumConfig(prev => ({ ...prev, [field]: value }));
     };
-    const updateCurriculumImage = (e, index) => {
+    const updateCurriculumImage = async (e, index) => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const newArr = [...(curriculumConfig.curriculumImages || [])];
-            newArr[index] = reader.result;
-            setCurriculumConfig(prev => ({ ...prev, curriculumImages: newArr }));
-        };
-        reader.readAsDataURL(file);
+        const base64String = await compressImage(file);
+        const newArr = [...(curriculumConfig.curriculumImages || [])];
+        newArr[index] = base64String;
+        setCurriculumConfig(prev => ({ ...prev, curriculumImages: newArr }));
     };
     const updateAdmission = (field, value) => {
         setAdmissionConfig(prev => ({ ...prev, [field]: value }));
@@ -411,30 +429,26 @@ export default function SiteSettings() {
         else if (activeTab === 'gallery-meetings') uploadCategory = 'Meetings';
         else if (activeTab === 'gallery-custom') uploadCategory = customCategory || 'Uncategorized';
 
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const base64String = reader.result;
-            const newImage = {
-                url: base64String,
-                category: uploadCategory,
-                title: newGalleryTitle || 'New Gallery Image'
-            };
-            try {
-                const res = await fetch('/api/gallery', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newImage)
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setPublicGallery(prev => [data.data, ...prev]);
-                    customAlert('Image uploaded to Public Gallery!', 'Success', 'success');
-                }
-            } catch (err) {
-                console.error(err);
-            }
+        const base64String = await compressImage(file);
+        const newImage = {
+            url: base64String,
+            category: uploadCategory,
+            title: newGalleryTitle || 'New Gallery Image'
         };
-        reader.readAsDataURL(file);
+        try {
+            const res = await fetch('/api/gallery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newImage)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPublicGallery(prev => [data.data, ...prev]);
+                customAlert('Image uploaded to Public Gallery!', 'Success', 'success');
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleDeleteGalleryImage = async (id) => {
@@ -659,6 +673,7 @@ export default function SiteSettings() {
                             <div className="form-group">
                                 <label>About Us Image</label>
                                 <div className="upload-btn-wrapper" style={{ marginTop: '5px' }}>
+                                    <input type="text" value={aboutConfig.aboutUs.image || ''} placeholder="Image URL" onChange={e => updateAboutNested('aboutUs', 'image', e.target.value)} style={{ marginBottom: '10px', width: '100%', padding: '10px', border: '1px solid #ccc' }} />
                                     <button className="upload-btn"><Camera size={14} /> Upload Image</button>
                                     <input type="file" accept="image/*" onChange={e => handleAboutFileUpload(e, 'aboutUs', 'image')} />
                                 </div>
@@ -689,6 +704,7 @@ export default function SiteSettings() {
                                 {[0, 1, 2, 3].map(idx => (
                                     <div className="form-group" key={idx}>
                                         <div className="upload-btn-wrapper">
+                                            <input type="text" value={aboutConfig.rules.images[idx] || ''} placeholder="Image URL" onChange={e => updateAboutArrayItem('rules', idx, e.target.value)} style={{ marginBottom: '10px', width: '100%', padding: '10px', border: '1px solid #ccc' }} />
                                             <button className="upload-btn"><Camera size={14} /> Upload Rule {idx + 1}</button>
                                             <input type="file" accept="image/*" onChange={e => handleAboutFileUpload(e, 'rules', null, idx)} />
                                         </div>
@@ -717,6 +733,7 @@ export default function SiteSettings() {
                                 {aboutConfig.team.images.map((img, idx) => (
                                     <div className="form-group" key={idx}>
                                         <div className="upload-btn-wrapper">
+                                            <input type="text" value={img || ''} placeholder="Image URL" onChange={e => updateAboutArrayItem('team', idx, e.target.value)} style={{ marginBottom: '10px', width: '100%', padding: '10px', border: '1px solid #ccc' }} />
                                             <button className="upload-btn"><Camera size={14} /> Upload Team {idx + 1}</button>
                                             <input type="file" accept="image/*" onChange={e => handleAboutFileUpload(e, 'team', null, idx)} />
                                         </div>
@@ -738,6 +755,7 @@ export default function SiteSettings() {
                             <div className="form-group">
                                 <label>Notice Image</label>
                                 <div className="upload-btn-wrapper" style={{ marginTop: '5px' }}>
+                                    <input type="text" value={aboutConfig.notices.image || ''} placeholder="Image URL" onChange={e => updateAboutNested('notices', 'image', e.target.value)} style={{ marginBottom: '10px', width: '100%', padding: '10px', border: '1px solid #ccc' }} />
                                     <button className="upload-btn"><Camera size={14} /> Upload Notice Image</button>
                                     <input type="file" accept="image/*" onChange={e => handleAboutFileUpload(e, 'notices', 'image')} />
                                 </div>
@@ -923,7 +941,7 @@ export default function SiteSettings() {
                                 {config.achievements.map((a, idx) => (
                                     <div key={idx} className="list-item-card">
                                         <div className="item-row">
-                                            <input type="text" value={a} placeholder="Achievement Name" onChange={e => updateArrayItem('achievements', idx, null, e.target.value)} />
+                                            <input type="text" value={a || ''} placeholder="Image URL" onChange={e => updateArrayItem('achievements', idx, null, e.target.value)} />
                                             <div className="upload-btn-wrapper">
                                                 <button className="upload-btn"><Camera size={14} /></button>
                                                 <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'achievements', null, idx)} />
@@ -1017,7 +1035,7 @@ export default function SiteSettings() {
                             <div className="form-group">
                                 <label>About Image</label>
                                 <div className="image-upload-wrapper">
-                                    <input type="text" value={config.about.image} onChange={e => updateNested('about', 'image', e.target.value)} />
+                                    <input type="text" value={config.about.image || ''} placeholder="Image URL" onChange={e => updateNested('about', 'image', e.target.value)} />
                                     <div className="upload-btn-wrapper">
                                         <button className="upload-btn"><Camera size={16} /> Upload</button>
                                         <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'about', 'image')} />
@@ -1031,7 +1049,7 @@ export default function SiteSettings() {
                                 {config.news.map((n, idx) => (
                                     <div key={idx} className="list-item-card">
                                         <div className="item-row">
-                                            <input type="text" value={n} onChange={e => updateArrayItem('news', idx, null, e.target.value)} />
+                                            <input type="text" value={n || ''} placeholder="Image URL" onChange={e => updateArrayItem('news', idx, null, e.target.value)} />
                                             <div className="upload-btn-wrapper">
                                                 <button className="upload-btn"><Camera size={14} /></button>
                                                 <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'news', null, idx)} />

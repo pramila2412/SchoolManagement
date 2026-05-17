@@ -103,13 +103,25 @@ router.put('/', async (req, res) => {
         if (!landing) {
             landing = await LandingPage.create(req.body);
         } else {
-            Object.assign(landing, req.body);
+            const updateData = { ...req.body };
+            delete updateData._id;
+            delete updateData.__v;
+            landing.set(updateData);
+            
             // Explicitly mark nested array fields as modified so Mongoose saves them
             if (req.body.videoGallery) landing.markModified('videoGallery');
             if (req.body.certificates) landing.markModified('certificates');
             if (req.body.testimonials) landing.markModified('testimonials');
             if (req.body.facilities) landing.markModified('facilities');
             if (req.body.gallery) landing.markModified('gallery');
+            if (req.body.news) landing.markModified('news');
+            if (req.body.achievements) landing.markModified('achievements');
+            if (req.body.about) landing.markModified('about');
+            if (req.body.announcements) landing.markModified('announcements');
+            if (req.body.header) landing.markModified('header');
+            if (req.body.hero) landing.markModified('hero');
+            if (req.body.connect) landing.markModified('connect');
+            if (req.body.footer) landing.markModified('footer');
             await landing.save();
         }
         res.json({ message: 'Landing page updated successfully', data: landing });

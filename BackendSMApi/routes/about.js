@@ -24,7 +24,15 @@ router.put('/', async (req, res) => {
         if (!about) {
             about = await AboutPage.create(req.body);
         } else {
-            Object.assign(about, req.body);
+            const updateData = { ...req.body };
+            delete updateData._id;
+            delete updateData.__v;
+            about.set(updateData);
+            if (req.body.aboutUs) about.markModified('aboutUs');
+            if (req.body.rules) about.markModified('rules');
+            if (req.body.team) about.markModified('team');
+            if (req.body.notices) about.markModified('notices');
+            if (req.body.schoolHours) about.markModified('schoolHours');
             await about.save();
         }
         res.json({ message: 'About page updated successfully', data: about });

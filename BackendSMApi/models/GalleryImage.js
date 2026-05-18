@@ -7,8 +7,11 @@ const galleryImageSchema = new mongoose.Schema({
     },
     category: { 
         type: String, 
-        required: true,
-        enum: ['Sports', 'School Tour', 'Programs and Events', 'Annual Day', 'Meetings']
+        required: true
+    },
+    subcategory: {
+        type: String,
+        default: 'General'
     },
     title: { 
         type: String,

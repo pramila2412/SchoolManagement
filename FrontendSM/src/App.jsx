@@ -63,7 +63,6 @@ function AppLayout() {
 
   return (
     <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      <GlobalDialog />
       <Header
         onToggleSidebar={handleToggleSidebar}
       />
@@ -144,6 +143,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ScrollToTop />
+        <GlobalDialog />
         <AppContent />
       </AuthProvider>
     </BrowserRouter>

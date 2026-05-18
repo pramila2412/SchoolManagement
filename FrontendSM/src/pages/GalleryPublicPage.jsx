@@ -10,24 +10,24 @@ import './LandingPage.css';
 
 const API = '/api';
 
-const CATEGORY_MAP = {
+// Start with default map of standard categories/subcategories to ensure they always show up
+const initialCategoryMap = {
     'Sports': ['Basket Ball', 'Cricket', 'Kabadi'],
     'Programs and Events': ['Independence Day', 'Teachers Day', 'Environment Day', 'Childrens Day'],
     'Annual Day': ['Group Dance', 'Group Song', 'Fancy Dress', 'Mono Act', 'Preach'],
     'Meetings': ['PTA', 'Teachers & Staffs', 'Seminars', 'Science Club', 'Arts Club', 'Groups', 'Alumnis'],
-    'Facilities': ['Campus View', 'Library', 'Classrooms', 'Laboratory']
+    'Facility': ['Campus View', 'Library', 'Classrooms', 'Laboratory']
 };
-
-// Video gallery data is now fully managed via CMS (Site Settings -> Video Gallery)
 
 export default function GalleryPublicPage() {
     const [images, setImages] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
-    const [videoGallery, setVideoGallery] = useState(null); // Changed to null for loading state
+    const [videoGallery, setVideoGallery] = useState(null); 
     const [loading, setLoading] = useState(true);
     const [activeVideoIndex, setActiveVideoIndex] = useState(0);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
     const [activeCategoryTitle, setActiveCategoryTitle] = useState('All Images');
+    const [categoryMap, setCategoryMap] = useState(initialCategoryMap);
     
     // For light box
     const [selectedImage, setSelectedImage] = useState(null);
@@ -41,7 +41,7 @@ export default function GalleryPublicPage() {
         if (!isVideoPlaying && currentData.length > 0) {
             interval = setInterval(() => {
                 setActiveVideoIndex((prev) => (prev + 1) % currentData.length);
-            }, 5000); // Change every 5 seconds
+            }, 5000); 
         }
         return () => clearInterval(interval);
     }, [isVideoPlaying, videoGallery?.length]);
@@ -61,7 +61,7 @@ export default function GalleryPublicPage() {
                     const lpData = await resLP.json();
                     setVideoGallery(lpData.videoGallery || []);
                 } else {
-                    setVideoGallery([]); // Fallback to empty if fetch fails
+                    setVideoGallery([]); 
                 }
             } catch (err) {
                 console.error('Error fetching gallery:', err);
@@ -73,17 +73,48 @@ export default function GalleryPublicPage() {
     }, []);
 
     useEffect(() => {
+        if (images.length > 0) {
+            const newMap = { ...initialCategoryMap };
+            images.forEach(img => {
+                let cat = img.category || 'Custom';
+                if (cat === 'Programs & Events') cat = 'Programs and Events';
+                if (cat === 'Facilities') cat = 'Facility';
+                
+                const sub = img.subcategory || 'General';
+                if (!newMap[cat]) {
+                    newMap[cat] = [];
+                }
+                if (sub !== 'General' && !newMap[cat].includes(sub)) {
+                    newMap[cat].push(sub);
+                }
+            });
+            setCategoryMap(newMap);
+        }
+    }, [images]);
+
+    useEffect(() => {
         setCurrentPage(1);
     }, [activeCategory]);
 
     const filteredImages = activeCategory === 'All' 
         ? images 
         : images.filter(img => {
-            const isMainTopic = CATEGORY_MAP[activeCategory];
-            if (isMainTopic) {
-                return CATEGORY_MAP[activeCategory].includes(img.category);
+            if (categoryMap[activeCategory]) {
+                const sublist = categoryMap[activeCategory];
+                return (
+                    img.category === activeCategory || 
+                    (activeCategory === 'Programs and Events' && img.category === 'Programs & Events') ||
+                    (activeCategory === 'Facility' && img.category === 'Facilities') ||
+                    sublist.includes(img.subcategory) ||
+                    sublist.includes(img.category)
+                );
             }
-            return img.category === activeCategory;
+            return (
+                img.subcategory === activeCategory || 
+                img.category === activeCategory ||
+                (activeCategory === 'Facilities' && img.category === 'Facility') ||
+                (activeCategory === 'Facility' && img.category === 'Facilities')
+            );
         });
 
     const activeVideoData = videoGallery || [];
@@ -91,7 +122,6 @@ export default function GalleryPublicPage() {
 
     const getYTThumb = (url) => {
         if (!url) return '';
-        // Handle embed links
         let id = url.match(/(?:embed\/|v=)([^&?]+)/)?.[1];
         if (!id && url.includes('youtu.be/')) {
             id = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
@@ -121,83 +151,32 @@ export default function GalleryPublicPage() {
                     >
                         Browse All <ChevronDown size={14} style={{ marginLeft: '5px' }} />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', marginTop: '20px' }}>
-                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('Sports'); setActiveCategoryTitle('Sports'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'Sports' ? '#1CA7A6' : 'white' }}
-                            >
-                                Sports
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('Basket Ball'); setActiveCategoryTitle('Basket Ball Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Basket Ball' ? '#1CA7A6' : '#e2e8f0' }}>Basket Ball</li>
-                                <li onClick={() => { setActiveCategory('Cricket'); setActiveCategoryTitle('Cricket Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Cricket' ? '#1CA7A6' : '#e2e8f0' }}>Cricket</li>
-                                <li onClick={() => { setActiveCategory('Kabadi'); setActiveCategoryTitle('Kabadi Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Kabadi' ? '#1CA7A6' : '#e2e8f0' }}>Kabadi</li>
-                            </ul>
-                        </div>
-                        <div style={{ flex: '1', minWidth: '200px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('Programs and Events'); setActiveCategoryTitle('Programs & Events'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'Programs and Events' ? '#1CA7A6' : 'white' }}
-                            >
-                                Programs & Events
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('Independence Day'); setActiveCategoryTitle('Independence Day Celebration'); }} style={{ cursor: 'pointer', color: activeCategory === 'Independence Day' ? '#1CA7A6' : '#e2e8f0' }}>Independence Day</li>
-                                <li onClick={() => { setActiveCategory('Teachers Day'); setActiveCategoryTitle('Teachers Day Celebration'); }} style={{ cursor: 'pointer', color: activeCategory === 'Teachers Day' ? '#1CA7A6' : '#e2e8f0' }}>Teachers Day</li>
-                                <li onClick={() => { setActiveCategory('Environment Day'); setActiveCategoryTitle('Environment Day Celebration'); }} style={{ cursor: 'pointer', color: activeCategory === 'Environment Day' ? '#1CA7A6' : '#e2e8f0' }}>Environment Day</li>
-                                <li onClick={() => { setActiveCategory('Childrens Day'); setActiveCategoryTitle('Childrens Day Celebration'); }} style={{ cursor: 'pointer', color: activeCategory === 'Childrens Day' ? '#1CA7A6' : '#e2e8f0' }}>Childrens Day</li>
-                            </ul>
-                        </div>
-                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('Annual Day'); setActiveCategoryTitle('Annual Day'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'Annual Day' ? '#1CA7A6' : 'white' }}
-                            >
-                                Annual Day
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('Group Dance'); setActiveCategoryTitle('Annual Day - Group Dance'); }} style={{ cursor: 'pointer', color: activeCategory === 'Group Dance' ? '#1CA7A6' : '#e2e8f0' }}>Group Dance</li>
-                                <li onClick={() => { setActiveCategory('Group Song'); setActiveCategoryTitle('Annual Day - Group Song'); }} style={{ cursor: 'pointer', color: activeCategory === 'Group Song' ? '#1CA7A6' : '#e2e8f0' }}>Group Song</li>
-                                <li onClick={() => { setActiveCategory('Fancy Dress'); setActiveCategoryTitle('Annual Day - Fancy Dress'); }} style={{ cursor: 'pointer', color: activeCategory === 'Fancy Dress' ? '#1CA7A6' : '#e2e8f0' }}>Fancy Dress</li>
-                                <li onClick={() => { setActiveCategory('Mono Act'); setActiveCategoryTitle('Annual Day - Mono Act'); }} style={{ cursor: 'pointer', color: activeCategory === 'Mono Act' ? '#1CA7A6' : '#e2e8f0' }}>Mono Act</li>
-                                <li onClick={() => { setActiveCategory('Preach'); setActiveCategoryTitle('Annual Day - Preach'); }} style={{ cursor: 'pointer', color: activeCategory === 'Preach' ? '#1CA7A6' : '#e2e8f0' }}>Preach</li>
-                            </ul>
-                        </div>
-                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('Meetings'); setActiveCategoryTitle('Meetings'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'Meetings' ? '#1CA7A6' : 'white' }}
-                            >
-                                Meetings
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('PTA'); setActiveCategoryTitle('PTA Meeting'); }} style={{ cursor: 'pointer', color: activeCategory === 'PTA' ? '#1CA7A6' : '#e2e8f0' }}>PTA</li>
-                                <li onClick={() => { setActiveCategory('Teachers & Staffs'); setActiveCategoryTitle('Teachers & Staffs Meeting'); }} style={{ cursor: 'pointer', color: activeCategory === 'Teachers & Staffs' ? '#1CA7A6' : '#e2e8f0' }}>Teachers & Staffs</li>
-                                <li onClick={() => { setActiveCategory('Seminars'); setActiveCategoryTitle('Seminars'); }} style={{ cursor: 'pointer', color: activeCategory === 'Seminars' ? '#1CA7A6' : '#e2e8f0' }}>Seminars</li>
-                                <li onClick={() => { setActiveCategory('Science Club'); setActiveCategoryTitle('Science Club'); }} style={{ cursor: 'pointer', color: activeCategory === 'Science Club' ? '#1CA7A6' : '#e2e8f0' }}>Science Club</li>
-                                <li onClick={() => { setActiveCategory('Arts Club'); setActiveCategoryTitle('Arts Club'); }} style={{ cursor: 'pointer', color: activeCategory === 'Arts Club' ? '#1CA7A6' : '#e2e8f0' }}>Arts Club</li>
-                                <li onClick={() => { setActiveCategory('Groups'); setActiveCategoryTitle('Groups Meeting'); }} style={{ cursor: 'pointer', color: activeCategory === 'Groups' ? '#1CA7A6' : '#e2e8f0' }}>Groups</li>
-                                <li onClick={() => { setActiveCategory('Alumnis'); setActiveCategoryTitle('Alumnis Meeting'); }} style={{ cursor: 'pointer', color: activeCategory === 'Alumnis' ? '#1CA7A6' : '#e2e8f0' }}>Alumnis</li>
-                            </ul>
-                        </div>
-                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('Facilities'); setActiveCategoryTitle('Campus & Facilities'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'Facilities' ? '#1CA7A6' : 'white' }}
-                            >
-                                Facilities
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('Campus View'); setActiveCategoryTitle('Campus View'); }} style={{ cursor: 'pointer', color: activeCategory === 'Campus View' ? '#1CA7A6' : '#e2e8f0' }}>Campus View</li>
-                                <li onClick={() => { setActiveCategory('Library'); setActiveCategoryTitle('Library'); }} style={{ cursor: 'pointer', color: activeCategory === 'Library' ? '#1CA7A6' : '#e2e8f0' }}>Library</li>
-                                <li onClick={() => { setActiveCategory('Classrooms'); setActiveCategoryTitle('Classrooms'); }} style={{ cursor: 'pointer', color: activeCategory === 'Classrooms' ? '#1CA7A6' : '#e2e8f0' }}>Classrooms</li>
-                                <li onClick={() => { setActiveCategory('Laboratory'); setActiveCategoryTitle('Laboratory'); }} style={{ cursor: 'pointer', color: activeCategory === 'Laboratory' ? '#1CA7A6' : '#e2e8f0' }}>Laboratory</li>
-                            </ul>
-                        </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', marginTop: '20px' }}>
+                        {Object.entries(categoryMap).map(([catKey, subList]) => (
+                            <div key={catKey} style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
+                                <h4 
+                                    onClick={() => { setActiveCategory(catKey); setActiveCategoryTitle(catKey === 'Programs and Events' ? 'Programs & Events' : catKey); }}
+                                    style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === catKey ? '#1CA7A6' : 'white' }}
+                                >
+                                    {catKey === 'Programs and Events' ? 'Programs & Events' : catKey}
+                                </h4>
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
+                                    {subList.map(sub => (
+                                        <li 
+                                            key={sub} 
+                                            onClick={() => { setActiveCategory(sub); setActiveCategoryTitle(`${sub} Gallery`); }} 
+                                            style={{ cursor: 'pointer', color: activeCategory === sub ? '#1CA7A6' : '#e2e8f0' }}
+                                        >
+                                            {sub}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
+
              {/* ===== IMAGE GALLERY SECTION ===== */}
             <section style={{ padding: '60px 0', background: '#fff' }}>
                 <div className="section-container">
@@ -207,23 +186,23 @@ export default function GalleryPublicPage() {
                         {filteredImages.length > 0 ? (
                             filteredImages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((img, i) => (
                                 <div key={img._id || i} style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', background: '#fff', padding: '15px', cursor: 'pointer' }} onClick={() => setSelectedImage(img)}>
-                                    <img src={img.url || `/Gallery${i % 4 + 1}.png`} alt={img.title} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
+                                    <img src={img.url} alt={img.title} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
                                     {img.title && <p style={{ marginTop: '10px', fontSize: '0.9rem', fontWeight: '600', color: '#334155' }}>{img.title}</p>}
                                 </div>
                             ))
                         ) : (
-                            [...Array(CATEGORY_MAP[activeCategory] ? 12 : 6)].slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((_, i) => (
-                                <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #f1f5f9', background: '#fff', padding: '15px' }}>
-                                    <img src={`/Gallery${(i + (currentPage - 1) * itemsPerPage) % 4 + 1}.png`} alt={activeCategoryTitle} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }} />
-                                </div>
-                            ))
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🖼️</div>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#475569' }}>No Images Uploaded</h3>
+                                <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '4px' }}>There are currently no uploaded images under the "{activeCategoryTitle}" category.</p>
+                            </div>
                         )}
                     </div>
                     
                     {/* Pagination */}
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '50px', gap: '15px' }}>
                         {(() => {
-                            const totalItems = filteredImages.length > 0 ? filteredImages.length : (CATEGORY_MAP[activeCategory] ? 12 : 6);
+                            const totalItems = filteredImages.length > 0 ? filteredImages.length : (categoryMap[activeCategory] ? 12 : 6);
                             const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
                             
                             return (

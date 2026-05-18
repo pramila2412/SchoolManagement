@@ -3,9 +3,9 @@ import {
     Save, Layout, Image, MessageSquare, Phone, Mail,
     Globe, Share2, BellRing, Briefcase, Award,
     Users, MapPin, Heart, Plus, Trash2, Camera, Info, LogOut, LogIn,
-    BookOpen, Shirt, Trophy, Bus, FolderOpen, Calendar, Megaphone, Clock, Video
+    BookOpen, Shirt, Trophy, Bus, FolderOpen, Calendar, Megaphone, Clock, Video, Home
 } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import './SiteSettings.css';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -251,6 +251,11 @@ export default function SiteSettings() {
     const [publicGallery, setPublicGallery] = useState([]);
     const [newGalleryTitle, setNewGalleryTitle] = useState('');
     const [customCategory, setCustomCategory] = useState('');
+    const [newSubcategory, setNewSubcategory] = useState('');
+    const [gallerySubcategories, setGallerySubcategories] = useState({});
+    const [activeCustomCategory, setActiveCustomCategory] = useState('');
+    const [userCustomCategories, setUserCustomCategories] = useState([]);
+    const [newCustomCategoryInput, setNewCustomCategoryInput] = useState('');
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -258,6 +263,19 @@ export default function SiteSettings() {
     useEffect(() => {
         fetchConfig();
     }, []);
+
+    const standardCats = ['Sports', 'Programs and Events', 'Annual Day', 'Meetings', 'Facilities', 'Facility'];
+    const dbCustomCats = Array.from(new Set(publicGallery
+        .map(img => img.category)
+        .filter(cat => cat && !standardCats.includes(cat) && cat !== 'Custom')
+    ));
+    const customCategoryList = Array.from(new Set([...dbCustomCats, ...userCustomCategories]));
+
+    useEffect(() => {
+        if (!activeCustomCategory && customCategoryList.length > 0) {
+            setActiveCustomCategory(customCategoryList[0]);
+        }
+    }, [publicGallery, userCustomCategories]);
 
     const safeFetch = async (url) => {
         try {
@@ -470,47 +488,69 @@ export default function SiteSettings() {
         setAdmissionConfig(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleAddGalleryImage = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleAddGalleryImages = async (e, subcategoryName) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
 
         let uploadCategory = 'Uncategorized';
         if (activeTab === 'gallery-sports') uploadCategory = 'Sports';
-        else if (activeTab === 'gallery-events') uploadCategory = 'Programs & Events';
+        else if (activeTab === 'gallery-events') uploadCategory = 'Programs and Events';
         else if (activeTab === 'gallery-annual') uploadCategory = 'Annual Day';
         else if (activeTab === 'gallery-meetings') uploadCategory = 'Meetings';
-        else if (activeTab === 'gallery-custom') uploadCategory = customCategory || 'Uncategorized';
+        else if (activeTab === 'gallery-facility') uploadCategory = 'Facility';
+        else if (activeTab === 'gallery-custom') uploadCategory = activeCustomCategory || 'Custom';
+
+        setSaving(true);
+        let successCount = 0;
+        let failCount = 0;
 
         try {
-            // Upload image via API
-            const imagePath = await uploadImageViaApi(file);
-            const newImage = {
-                url: imagePath,
-                category: uploadCategory,
-                title: newGalleryTitle || 'New Gallery Image'
-            };
-            const res = await fetch('/api/gallery', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newImage)
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setPublicGallery(prev => [data.data, ...prev]);
-                setNewGalleryTitle('');
-                customAlert('Image uploaded to Public Gallery!', 'Success', 'success');
-            } else {
-                const errorData = await res.json();
-                customAlert('Failed to save gallery image: ' + (errorData.error || 'Unknown error'), 'Error', 'error');
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    const imagePath = await uploadImageViaApi(file);
+                    const newImage = {
+                        url: imagePath,
+                        category: uploadCategory,
+                        subcategory: subcategoryName,
+                        title: subcategoryName
+                    };
+                    const res = await fetch('/api/gallery', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newImage)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setPublicGallery(prev => [data.data, ...prev]);
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (singleErr) {
+                    console.error('Failed to upload single image:', singleErr);
+                    failCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                customAlert(`Successfully uploaded ${successCount} image(s) to "${subcategoryName}"!`, 'Success', 'success');
+            }
+            if (failCount > 0) {
+                customAlert(`Failed to upload ${failCount} image(s). Please try again.`, 'Error', 'error');
             }
         } catch (err) {
-            console.error('Gallery upload error:', err);
-            customAlert('Image upload failed: ' + err.message, 'Error', 'error');
+            console.error('Gallery batch upload error:', err);
+            customAlert('Batch image upload failed: ' + err.message, 'Error', 'error');
+        } finally {
+            setSaving(false);
+            e.target.value = '';
         }
     };
 
     const handleDeleteGalleryImage = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this image?')) return;
+        const confirmed = await customConfirm('Are you sure you want to delete this image?', 'Confirm Delete');
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
             if (res.ok) {
@@ -599,7 +639,6 @@ export default function SiteSettings() {
                     <button className={`settings-nav-item ${activeTab === 'hero' ? 'active' : ''}`} onClick={() => setActiveTab('hero')}><Image size={18} /> Hero</button>
                     <button className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`} onClick={() => setActiveTab('about')}><Users size={18} /> About & News</button>
                     <button className={`settings-nav-item ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}><Briefcase size={18} /> Facilities</button>
-                    <button className={`settings-nav-item ${activeTab === 'gallery' ? 'active' : ''}`} onClick={() => setActiveTab('gallery')}><Camera size={18} /> Home Gallery</button>
                     <button className={`settings-nav-item ${activeTab === 'achievements' ? 'active' : ''}`} onClick={() => setActiveTab('achievements')}><Award size={18} /> Achievements</button>
                     <button className={`settings-nav-item ${activeTab === 'testimonials' ? 'active' : ''}`} onClick={() => setActiveTab('testimonials')}><Heart size={18} /> Testimonials</button>
 
@@ -623,6 +662,7 @@ export default function SiteSettings() {
                     <button className={`settings-nav-item ${activeTab === 'gallery-events' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-events')}><Calendar size={18} /> Programs & Events</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-annual' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-annual')}><Award size={18} /> Annual Day</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-meetings' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-meetings')}><Users size={18} /> Meetings</button>
+                    <button className={`settings-nav-item ${activeTab === 'gallery-facility' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-facility')}><Home size={18} /> Facility</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-custom' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-custom')}><FolderOpen size={18} /> Custom Category</button>
                     <button className={`settings-nav-item ${activeTab === 'video-gallery' ? 'active' : ''}`} onClick={() => setActiveTab('video-gallery')}><Video size={18} /> Video Gallery</button>
 
@@ -908,30 +948,6 @@ export default function SiteSettings() {
                         </div>
                     )}
 
-                    {activeTab === 'gallery' && (
-                        <div className="settings-form-section">
-                            <h3>Gallery Items</h3>
-                            <div className="items-list">
-                                {config.gallery.map((item, idx) => (
-                                    <div key={idx} className="list-item-card">
-                                        <div className="item-row">
-                                            <input type="text" placeholder="Title" value={item.title} onChange={e => updateArrayItem('gallery', idx, 'title', e.target.value)} />
-                                            <input type="text" placeholder="Category" value={item.category} onChange={e => updateArrayItem('gallery', idx, 'category', e.target.value)} />
-                                            <div className="upload-btn-wrapper">
-                                                <button className="upload-btn"><Camera size={14} /></button>
-                                                <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'gallery', 'image', idx)} />
-                                            </div>
-                                            <button className="remove-btn" onClick={() => removeFromArray('gallery', idx)}><Trash2 size={16} /></button>
-                                        </div>
-                                        {item.image && <div className="preview-mini"><img src={item.image} alt="Preview" /></div>}
-                                    </div>
-                                ))}
-                                <button className="add-btn" onClick={() => addToArray('gallery', { title: 'New Image', category: 'General', image: '' })}><Plus size={16} /> Add Gallery Item</button>
-                            </div>
-                        </div>
-                    )}
-
-
                     {activeTab === 'academics' && (
                         <div className="cms-section">
                             <h3>Academics (Curriculum) Page</h3>
@@ -1216,47 +1232,232 @@ export default function SiteSettings() {
                         </div>
                     )}
 
-                    {activeTab && activeTab.startsWith('gallery-') && (
-                        <div className="settings-form-section">
-                            <h2>{activeTab === 'gallery-custom' ? 'Custom Category Gallery' : activeTab.replace('gallery-', '').toUpperCase() + ' GALLERY'}</h2>
-                            <div className="form-group" style={{ marginBottom: 20 }}>
-                                <label>Image Title</label>
-                                <input type="text" placeholder="Enter image title..." value={newGalleryTitle} onChange={(e) => setNewGalleryTitle(e.target.value)} />
-                            </div>
-                            {activeTab === 'gallery-custom' && (
-                                <div className="form-group" style={{ marginBottom: 20 }}>
-                                    <label>Custom Category Name</label>
-                                    <input type="text" placeholder="e.g. Science Fair" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} />
-                                </div>
-                            )}
-                            <div className="form-group">
-                                <label>Upload New Gallery Image</label>
-                                <input type="file" accept="image/*" onChange={handleAddGalleryImage} />
-                                <small>Images are uploaded immediately upon selection.</small>
-                            </div>
-                            <div className="gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
-                                {publicGallery
-                                    .filter(img => {
-                                        if (activeTab === 'gallery-sports') return img.category === 'Sports';
-                                        if (activeTab === 'gallery-events') return img.category === 'Programs & Events';
-                                        if (activeTab === 'gallery-annual') return img.category === 'Annual Day';
-                                        if (activeTab === 'gallery-meetings') return img.category === 'Meetings';
-                                        if (activeTab === 'gallery-custom') {
-                                            return !['Sports', 'Programs & Events', 'Annual Day', 'Meetings'].includes(img.category);
-                                        }
-                                        return true;
-                                    })
-                                    .map(img => (
-                                        <div key={img._id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '10px', background: '#fff' }}>
-                                            <img src={img.url} alt={img.title} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} />
-                                            <p style={{ margin: '10px 0 5px', fontWeight: 'bold', fontSize: '0.9rem' }}>{img.title}</p>
-                                            <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: '#666' }}>{img.category}</p>
-                                            <button onClick={() => handleDeleteGalleryImage(img._id)} className="save-btn" style={{ background: '#ef4444', padding: '5px 10px', fontSize: '0.8rem', width: '100%', color: 'white', border: 'none', cursor: 'pointer', borderRadius: 4 }}>Delete</button>
+                    {activeTab && activeTab.startsWith('gallery-') && (() => {
+                        const DEFAULT_SUBCATEGORIES = {
+                            'Sports': ['Basket Ball', 'Cricket', 'Kabadi'],
+                            'Programs and Events': ['Independence Day', 'Teachers Day', 'Environment Day', 'Childrens Day'],
+                            'Annual Day': ['Group Dance', 'Group Song', 'Fancy Dress', 'Mono Act', 'Preach'],
+                            'Meetings': ['PTA', 'Teachers & Staffs', 'Seminars', 'Science Club', 'Arts Club', 'Groups', 'Alumnis'],
+                            'Facility': ['Campus View', 'Library', 'Classrooms', 'Laboratory'],
+                            'Custom': []
+                        };
+
+                        const activeCategoryName = 
+                            activeTab === 'gallery-sports' ? 'Sports' :
+                            activeTab === 'gallery-events' ? 'Programs and Events' :
+                            activeTab === 'gallery-annual' ? 'Annual Day' :
+                            activeTab === 'gallery-meetings' ? 'Meetings' :
+                            activeTab === 'gallery-facility' ? 'Facility' :
+                            activeTab === 'gallery-custom' ? (activeCustomCategory || 'Custom') : 'Uncategorized';
+
+                        const defaultSubs = DEFAULT_SUBCATEGORIES[activeCategoryName] || [];
+                        const dbSubs = publicGallery
+                            .filter(img => 
+                                img.category === activeCategoryName || 
+                                (activeCategoryName === 'Programs and Events' && img.category === 'Programs & Events') ||
+                                (activeCategoryName === 'Facility' && img.category === 'Facilities')
+                            )
+                            .map(img => img.subcategory)
+                            .filter(sub => sub && sub !== 'General');
+                        
+                        const userSubs = gallerySubcategories[activeCategoryName] || [];
+                        const subcategoriesList = Array.from(new Set([...defaultSubs, ...dbSubs, ...userSubs]));
+
+                        return (
+                            <div className="settings-form-section" style={{ maxWidth: '1000px' }}>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', marginBottom: '20px' }}>
+                                    {activeTab === 'gallery-custom' ? `CUSTOM GALLERY: ${(activeCustomCategory || 'Custom').toUpperCase()}` : activeCategoryName.toUpperCase() + ' GALLERY'}
+                                </h2>
+
+                                {activeTab === 'gallery-custom' && (
+                                    <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
+                                        <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', color: '#334155', fontWeight: '700' }}>
+                                            Manage Main Custom Categories
+                                        </h3>
+                                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '15px' }}>
+                                            <div style={{ flex: 1, minWidth: '200px' }}>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '6px' }}>Select Active Custom Category</label>
+                                                <select 
+                                                    value={activeCustomCategory} 
+                                                    onChange={(e) => setActiveCustomCategory(e.target.value)}
+                                                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', background: '#fff', fontWeight: '600', color: '#334155' }}
+                                                >
+                                                    {customCategoryList.length === 0 ? (
+                                                        <option value="Custom">Custom</option>
+                                                    ) : (
+                                                        customCategoryList.map(cat => (
+                                                            <option key={cat} value={cat}>{cat}</option>
+                                                        ))
+                                                    )}
+                                                </select>
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: '250px' }}>
+                                                <label style={{ display: 'block', fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '6px' }}>Create New Main Category</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="e.g. Science Fair, Arts Exhibition..." 
+                                                        value={newCustomCategoryInput} 
+                                                        onChange={(e) => setNewCustomCategoryInput(e.target.value)}
+                                                        style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
+                                                    />
+                                                    <button 
+                                                        onClick={() => {
+                                                            const trimmed = newCustomCategoryInput.trim();
+                                                            if (!trimmed) {
+                                                                customAlert('Please enter a category name', 'Error', 'error');
+                                                                return;
+                                                            }
+                                                            const allExisting = [...standardCats, ...customCategoryList];
+                                                            if (allExisting.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+                                                                customAlert('Category already exists', 'Error', 'error');
+                                                                return;
+                                                            }
+                                                            setUserCustomCategories(prev => [...prev, trimmed]);
+                                                            setActiveCustomCategory(trimmed);
+                                                            setNewCustomCategoryInput('');
+                                                            customAlert(`Main Category "${trimmed}" created! You can now define albums under it.`, 'Success', 'success');
+                                                        }}
+                                                        style={{ background: '#1CA7A6', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                                    >
+                                                        + Create Category
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    ))}
+                                    </div>
+                                )}
+
+                                {/* Create Subcategory Panel */}
+                                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
+                                    <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#334155', fontWeight: '700' }}>
+                                        Create New Subcategory (Album)
+                                    </h3>
+                                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Football, Science Exhibition, Cultural Fest..." 
+                                            value={newSubcategory} 
+                                            onChange={(e) => setNewSubcategory(e.target.value)}
+                                            style={{ flex: 1, minWidth: '250px', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}
+                                        />
+                                        <button 
+                                            onClick={() => {
+                                                const trimmed = newSubcategory.trim();
+                                                if (!trimmed) {
+                                                    customAlert('Please enter a subcategory name', 'Error', 'error');
+                                                    return;
+                                                }
+                                                if (subcategoriesList.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                                                    customAlert('Subcategory already exists', 'Error', 'error');
+                                                    return;
+                                                }
+                                                setGallerySubcategories(prev => ({
+                                                    ...prev,
+                                                    [activeCategoryName]: [...(prev[activeCategoryName] || []), trimmed]
+                                                }));
+                                                setNewSubcategory('');
+                                                customAlert(`Subcategory "${trimmed}" created! You can now upload images under it.`, 'Success', 'success');
+                                            }}
+                                            className="save-btn"
+                                            style={{ background: '#1CA7A6', color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+                                        >
+                                            + Create Album
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* List of Subcategories (Albums) */}
+                                <div>
+                                    {subcategoriesList.map(sub => {
+                                        const subImages = publicGallery.filter(img => 
+                                            (img.category === activeCategoryName || 
+                                             (activeCategoryName === 'Programs and Events' && img.category === 'Programs & Events') ||
+                                             (activeCategoryName === 'Facility' && img.category === 'Facilities')) && 
+                                            (img.subcategory === sub || (sub === 'General' && !img.subcategory))
+                                        );
+
+                                        return (
+                                            <div key={sub} style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '20px', marginBottom: '30px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                                                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        📁 {sub} 
+                                                        <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500', background: '#f1f5f9', padding: '2px 8px', borderRadius: '20px' }}>
+                                                            {subImages.length} images
+                                                        </span>
+                                                    </h4>
+                                                    <button 
+                                                        onClick={async () => {
+                                                            const confirmed = await customConfirm(`Are you sure you want to delete the entire subcategory "${sub}" and all its ${subImages.length} images?`, 'Confirm Delete');
+                                                            if (!confirmed) return;
+                                                            try {
+                                                                const deletePromises = subImages.map(img => 
+                                                                    fetch(`/api/gallery/${img._id}`, { method: 'DELETE' })
+                                                                );
+                                                                await Promise.all(deletePromises);
+                                                                setPublicGallery(prev => prev.filter(img => !((img.category === activeCategoryName || (activeCategoryName === 'Programs and Events' && img.category === 'Programs & Events') || (activeCategoryName === 'Facility' && img.category === 'Facilities')) && img.subcategory === sub)));
+                                                                setGallerySubcategories(prev => ({
+                                                                    ...prev,
+                                                                    [activeCategoryName]: (prev[activeCategoryName] || []).filter(s => s !== sub)
+                                                                }));
+                                                                customAlert(`Subcategory "${sub}" and all its images deleted successfully!`, 'Success', 'success');
+                                                            } catch (err) {
+                                                                customAlert('Failed to delete subcategory: ' + err.message, 'Error', 'error');
+                                                            }
+                                                        }}
+                                                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}
+                                                    >
+                                                        <Trash2 size={14} /> Delete Album
+                                                    </button>
+                                                </div>
+
+                                                {/* Upload Drag & Drop Dropzone */}
+                                                <div style={{ position: 'relative', border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '25px 20px', textAlign: 'center', background: '#f8fafc', marginBottom: '20px', transition: 'border-color 0.2s' }}>
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*" 
+                                                        multiple 
+                                                        onChange={(e) => handleAddGalleryImages(e, sub)}
+                                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                                                    />
+                                                    <Camera size={28} style={{ color: '#64748b', margin: '0 auto 10px' }} />
+                                                    <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '600', color: '#334155' }}>
+                                                        Click or Drag & Drop to Upload Images
+                                                    </p>
+                                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                                                        Select multiple images to upload them simultaneously
+                                                    </p>
+                                                </div>
+
+                                                {/* Image Previews Grid */}
+                                                {subImages.length > 0 ? (
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '15px' }}>
+                                                        {subImages.map(img => (
+                                                            <div key={img._id} style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                                                                <img src={img.url} alt={img.title} style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block' }} />
+                                                                <div style={{ padding: '6px 8px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                    <button 
+                                                                        onClick={() => handleDeleteGalleryImage(img._id)}
+                                                                        style={{ width: '100%', background: '#fee2e2', color: '#ef4444', border: 'none', padding: '4px', fontSize: '0.7rem', fontWeight: '700', borderRadius: '4px', cursor: 'pointer' }}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p style={{ textAlign: 'center', color: '#94a3b8', margin: '15px 0', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                                                        No images in this album yet. Upload some above!
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
  
                  {activeTab === 'video-gallery' && (
                      <div className="settings-form-section">

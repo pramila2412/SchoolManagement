@@ -836,6 +836,7 @@ export default function SiteSettings() {
                                     <div key={idx} className="list-item-card">
                                         <div className="item-row">
                                             <input type="text" placeholder="Title" value={fac.title} onChange={e => updateArrayItem('facilities', idx, 'title', e.target.value)} />
+                                            <input type="text" placeholder="Image URL / Path" value={fac.image || ''} onChange={e => updateArrayItem('facilities', idx, 'image', e.target.value)} />
                                             <div className="upload-btn-wrapper">
                                                 <button className="upload-btn"><Camera size={14} /></button>
                                                 <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'facilities', 'image', idx)} />

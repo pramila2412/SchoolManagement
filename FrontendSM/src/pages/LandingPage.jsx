@@ -296,7 +296,6 @@ export default function LandingPage() {
                                             />
                                             <div className="facility-overlay">
                                                 <h4>{fac.title}</h4>
-                                                <p>Know More</p>
                                             </div>
                                         </div>
                                     </div>
@@ -310,8 +309,8 @@ export default function LandingPage() {
                     </div>
 
                     <div className="carousel-dots">
-                        {siteConfig.facilities.map((_, idx) => {
-                            const length = siteConfig.facilities.length;
+                        {validFacilities.map((_, idx) => {
+                            const length = validFacilities.length;
                             const currentMod = ((facilityIndex % length) + length) % length;
                             return (
                                 <button

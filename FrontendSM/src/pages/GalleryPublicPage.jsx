@@ -12,7 +12,6 @@ const API = '/api';
 
 const CATEGORY_MAP = {
     'Sports': ['Basket Ball', 'Cricket', 'Kabadi'],
-    'School Tour': ['Ooty', 'Kodaikanal', 'Hyderabad Film City'],
     'Programs and Events': ['Independence Day', 'Teachers Day', 'Environment Day', 'Childrens Day'],
     'Annual Day': ['Group Dance', 'Group Song', 'Fancy Dress', 'Mono Act', 'Preach'],
     'Meetings': ['PTA', 'Teachers & Staffs', 'Seminars', 'Science Club', 'Arts Club', 'Groups', 'Alumnis'],
@@ -134,19 +133,6 @@ export default function GalleryPublicPage() {
                                 <li onClick={() => { setActiveCategory('Basket Ball'); setActiveCategoryTitle('Basket Ball Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Basket Ball' ? '#1CA7A6' : '#e2e8f0' }}>Basket Ball</li>
                                 <li onClick={() => { setActiveCategory('Cricket'); setActiveCategoryTitle('Cricket Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Cricket' ? '#1CA7A6' : '#e2e8f0' }}>Cricket</li>
                                 <li onClick={() => { setActiveCategory('Kabadi'); setActiveCategoryTitle('Kabadi Winners'); }} style={{ cursor: 'pointer', color: activeCategory === 'Kabadi' ? '#1CA7A6' : '#e2e8f0' }}>Kabadi</li>
-                            </ul>
-                        </div>
-                        <div style={{ flex: '1', minWidth: '150px', marginBottom: '20px' }}>
-                            <h4 
-                                onClick={() => { setActiveCategory('School Tour'); setActiveCategoryTitle('School Tour'); }}
-                                style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', textTransform: 'uppercase', cursor: 'pointer', color: activeCategory === 'School Tour' ? '#1CA7A6' : 'white' }}
-                            >
-                                School Tours
-                            </h4>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.8' }}>
-                                <li onClick={() => { setActiveCategory('Ooty'); setActiveCategoryTitle('Ooty Tour'); }} style={{ cursor: 'pointer', color: activeCategory === 'Ooty' ? '#1CA7A6' : '#e2e8f0' }}>Ooty</li>
-                                <li onClick={() => { setActiveCategory('Kodaikanal'); setActiveCategoryTitle('Kodaikanal Tour'); }} style={{ cursor: 'pointer', color: activeCategory === 'Kodaikanal' ? '#1CA7A6' : '#e2e8f0' }}>Kodaikanal</li>
-                                <li onClick={() => { setActiveCategory('Hyderabad Film City'); setActiveCategoryTitle('Hyderabad Film City Tour'); }} style={{ cursor: 'pointer', color: activeCategory === 'Hyderabad Film City' ? '#1CA7A6' : '#e2e8f0' }}>Hyderabad Film City</li>
                             </ul>
                         </div>
                         <div style={{ flex: '1', minWidth: '200px', marginBottom: '20px' }}>

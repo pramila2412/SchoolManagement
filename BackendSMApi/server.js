@@ -22,6 +22,7 @@ const curriculumPageRoutes = require('./routes/curriculumPage');
 const galleryRoutes = require('./routes/gallery');
 const contactRoutes = require('./routes/contact');
 const landingPageRoutes = require('./routes/landingPage');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -56,6 +57,11 @@ app.use('/api/curriculum-page', curriculumPageRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/landing-page', landingPageRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serve public uploads directory
+const frontendPublicPath = path.join(__dirname, '..', 'FrontendSM', 'public');
+app.use(express.static(frontendPublicPath));
 
 // Health check
 app.get('/api/health', (req, res) => {

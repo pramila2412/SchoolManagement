@@ -50,7 +50,6 @@ export default function LandingPage() {
         ],
         gallery: [
             { title: 'Sports', category: 'Sports', image: '/Gallery1.png' },
-            { title: 'School Tour', category: 'School Tour', image: '/Gallery2.png' },
             { title: 'Programs & Events', category: 'Programs & Events', image: '/Gallery3.png' },
             { title: 'Annual Day', category: 'Annual Day', image: '/Gallery5.png' },
             { title: 'Meetings', category: 'Meetings', image: '/Gallery4.png' }
@@ -122,6 +121,7 @@ export default function LandingPage() {
     const [achievementIndex, setAchievementIndex] = useState(0);
     const [testimonialIndex, setTestimonialIndex] = useState(0);
     const [portalTab, setPortalTab] = useState('parent');
+    const [uploadedGalleryImages, setUploadedGalleryImages] = useState([]);
 
     const CLONE_COUNT = 3;
     const validFacilities = siteConfig?.facilities?.filter(f => f.image) || [];
@@ -215,6 +215,13 @@ export default function LandingPage() {
                 if (response.ok) {
                     const data = await response.json();
                     setSiteConfig(prev => ({ ...prev, ...data }));
+                }
+                
+                // Fetch uploaded gallery images
+                const galleryRes = await fetch('/api/gallery');
+                if (galleryRes.ok) {
+                    const galleryData = await galleryRes.json();
+                    setUploadedGalleryImages(galleryData);
                 }
             } catch (err) {
                 console.error("Failed to fetch landing page config:", err);
@@ -334,12 +341,16 @@ export default function LandingPage() {
                     </div>
 
                     <div className="gallery-bento">
-                        {siteConfig.gallery.map((item, idx) => (
-                            <div key={idx} className={`gallery-cell gallery-cell-${idx + 1}`}>
-                                <img src={item.image} alt={item.title} />
-                                <div className="gallery-label">{item.category}</div>
-                            </div>
-                        ))}
+                        {uploadedGalleryImages.length > 0 ? (
+                            uploadedGalleryImages.slice(0, 4).map((item, idx) => (
+                                <div key={item._id || idx} className={`gallery-cell gallery-cell-${idx + 1}`}>
+                                    <img src={item.url} alt={item.title} />
+                                    <div className="gallery-label">{item.category}</div>
+                                </div>
+                            ))
+                        ) : (
+                            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#94a3b8', padding: '40px' }}>No gallery images uploaded yet. Please visit the gallery page to see more.</p>
+                        )}
                     </div>
                 </div>
             </section>

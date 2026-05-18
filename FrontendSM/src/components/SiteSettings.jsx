@@ -199,7 +199,6 @@ export default function SiteSettings() {
         ],
         gallery: [
             { title: 'Sports', category: 'Sports', image: '/Gallery1.png' },
-            { title: 'School Tour', category: 'School Tour', image: '/Gallery2.png' },
             { title: 'Programs & Events', category: 'Programs & Events', image: '/Gallery3.png' },
             { title: 'Annual Day', category: 'Annual Day', image: '/Gallery5.png' },
             { title: 'Meetings', category: 'Meetings', image: '/Gallery4.png' }
@@ -331,10 +330,10 @@ export default function SiteSettings() {
             ]);
 
             const results = [
-                { name: 'Landing Page', ok: resLP.ok },
-                { name: 'About Page', ok: resAbout.ok },
-                { name: 'Curriculum', ok: resCur.ok },
-                { name: 'Admission', ok: resAdm.ok }
+                { name: 'Landing Page', ok: resLP.ok, status: resLP.status },
+                { name: 'About Page', ok: resAbout.ok, status: resAbout.status },
+                { name: 'Curriculum', ok: resCur.ok, status: resCur.status },
+                { name: 'Admission', ok: resAdm.ok, status: resAdm.status }
             ];
 
             const failed = results.filter(r => !r.ok);
@@ -342,8 +341,8 @@ export default function SiteSettings() {
             if (failed.length === 0) {
                 customAlert('All configurations updated successfully!', 'Success', 'success');
             } else {
-                const failedNames = failed.map(f => f.name).join(', ');
-                customAlert(`Updated successfully, but failed for: ${failedNames}`, 'Partial Update', 'warning');
+                const failedInfo = failed.map(f => `${f.name} (${f.status})`).join(', ');
+                customAlert(`Updated successfully, but failed for: ${failedInfo}. Try uploading large images separately using the image upload feature.`, 'Partial Update', 'warning');
             }
         } catch (err) {
             customAlert('Server error: ' + err.message, 'Error', 'error');
@@ -352,27 +351,68 @@ export default function SiteSettings() {
         }
     };
 
+    // New function to upload images via multipart/form-data
+    const uploadImageViaApi = async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                return data.imagePath;
+            } else {
+                const error = await res.json();
+                throw new Error(error.error || 'Upload failed');
+            }
+        } catch (err) {
+            console.error('Image upload error:', err);
+            throw err;
+        }
+    };
+
     const handleFileUpload = async (e, section, field, index = null) => {
         const file = e.target.files[0];
         if (!file) return;
-        const base64String = await compressImage(file);
-        setConfig(prev => {
-            const newConfig = { ...prev };
-            if (index !== null && Array.isArray(newConfig[section])) {
-                const newArr = [...newConfig[section]];
-                if (typeof newArr[index] === 'object') {
-                    newArr[index] = { ...newArr[index], [field]: base64String };
-                } else {
-                    newArr[index] = base64String;
-                }
-                newConfig[section] = newArr;
-            } else if (field) {
-                newConfig[section] = { ...newConfig[section], [field]: base64String };
+
+        try {
+            // For facility images, use direct upload API
+            if (section === 'facilities') {
+                const imagePath = await uploadImageViaApi(file);
+                setConfig(prev => {
+                    const newConfig = { ...prev };
+                    const newArr = [...newConfig[section]];
+                    newArr[index] = { ...newArr[index], [field]: imagePath };
+                    newConfig[section] = newArr;
+                    return newConfig;
+                });
+                customAlert('Facility image uploaded successfully!', 'Success', 'success');
             } else {
-                newConfig[section] = base64String;
+                // For other sections, continue using base64 for backwards compatibility
+                const base64String = await compressImage(file);
+                setConfig(prev => {
+                    const newConfig = { ...prev };
+                    if (index !== null && Array.isArray(newConfig[section])) {
+                        const newArr = [...newConfig[section]];
+                        if (typeof newArr[index] === 'object') {
+                            newArr[index] = { ...newArr[index], [field]: base64String };
+                        } else {
+                            newArr[index] = base64String;
+                        }
+                        newConfig[section] = newArr;
+                    } else if (field) {
+                        newConfig[section] = { ...newConfig[section], [field]: base64String };
+                    } else {
+                        newConfig[section] = base64String;
+                    }
+                    return newConfig;
+                });
             }
-            return newConfig;
-        });
+        } catch (err) {
+            customAlert('Image upload failed: ' + err.message, 'Error', 'error');
+        }
     };
 
 
@@ -394,11 +434,18 @@ export default function SiteSettings() {
     const handleAboutFileUpload = async (e, section, field, index = null) => {
         const file = e.target.files[0];
         if (!file) return;
-        const base64String = await compressImage(file);
-        if (index !== null) {
-            updateAboutArrayItem(section, index, base64String);
-        } else {
-            updateAboutNested(section, field, base64String);
+        
+        try {
+            // Use direct upload API for about page images
+            const imagePath = await uploadImageViaApi(file);
+            if (index !== null) {
+                updateAboutArrayItem(section, index, imagePath);
+            } else {
+                updateAboutNested(section, field, imagePath);
+            }
+            customAlert('About image uploaded successfully!', 'Success', 'success');
+        } catch (err) {
+            customAlert('Image upload failed: ' + err.message, 'Error', 'error');
         }
     };
 
@@ -408,10 +455,16 @@ export default function SiteSettings() {
     const updateCurriculumImage = async (e, index) => {
         const file = e.target.files[0];
         if (!file) return;
-        const base64String = await compressImage(file);
-        const newArr = [...(curriculumConfig.curriculumImages || [])];
-        newArr[index] = base64String;
-        setCurriculumConfig(prev => ({ ...prev, curriculumImages: newArr }));
+        
+        try {
+            const imagePath = await uploadImageViaApi(file);
+            const newArr = [...(curriculumConfig.curriculumImages || [])];
+            newArr[index] = imagePath;
+            setCurriculumConfig(prev => ({ ...prev, curriculumImages: newArr }));
+            customAlert('Curriculum image uploaded successfully!', 'Success', 'success');
+        } catch (err) {
+            customAlert('Image upload failed: ' + err.message, 'Error', 'error');
+        }
     };
     const updateAdmission = (field, value) => {
         setAdmissionConfig(prev => ({ ...prev, [field]: value }));
@@ -423,19 +476,19 @@ export default function SiteSettings() {
 
         let uploadCategory = 'Uncategorized';
         if (activeTab === 'gallery-sports') uploadCategory = 'Sports';
-        else if (activeTab === 'gallery-tours') uploadCategory = 'School Tours';
         else if (activeTab === 'gallery-events') uploadCategory = 'Programs & Events';
         else if (activeTab === 'gallery-annual') uploadCategory = 'Annual Day';
         else if (activeTab === 'gallery-meetings') uploadCategory = 'Meetings';
         else if (activeTab === 'gallery-custom') uploadCategory = customCategory || 'Uncategorized';
 
-        const base64String = await compressImage(file);
-        const newImage = {
-            url: base64String,
-            category: uploadCategory,
-            title: newGalleryTitle || 'New Gallery Image'
-        };
         try {
+            // Upload image via API
+            const imagePath = await uploadImageViaApi(file);
+            const newImage = {
+                url: imagePath,
+                category: uploadCategory,
+                title: newGalleryTitle || 'New Gallery Image'
+            };
             const res = await fetch('/api/gallery', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -444,10 +497,15 @@ export default function SiteSettings() {
             if (res.ok) {
                 const data = await res.json();
                 setPublicGallery(prev => [data.data, ...prev]);
+                setNewGalleryTitle('');
                 customAlert('Image uploaded to Public Gallery!', 'Success', 'success');
+            } else {
+                const errorData = await res.json();
+                customAlert('Failed to save gallery image: ' + (errorData.error || 'Unknown error'), 'Error', 'error');
             }
         } catch (err) {
-            console.error(err);
+            console.error('Gallery upload error:', err);
+            customAlert('Image upload failed: ' + err.message, 'Error', 'error');
         }
     };
 
@@ -562,7 +620,6 @@ export default function SiteSettings() {
 
                     <h4 style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '20px 0 8px 12px', fontWeight: 700 }}>Gallery</h4>
                     <button className={`settings-nav-item ${activeTab === 'gallery-sports' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-sports')}><Trophy size={18} /> Sports</button>
-                    <button className={`settings-nav-item ${activeTab === 'gallery-tours' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-tours')}><Bus size={18} /> School Tours</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-events' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-events')}><Calendar size={18} /> Programs & Events</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-annual' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-annual')}><Award size={18} /> Annual Day</button>
                     <button className={`settings-nav-item ${activeTab === 'gallery-meetings' ? 'active' : ''}`} onClick={() => setActiveTab('gallery-meetings')}><Users size={18} /> Meetings</button>
@@ -1181,12 +1238,11 @@ export default function SiteSettings() {
                                 {publicGallery
                                     .filter(img => {
                                         if (activeTab === 'gallery-sports') return img.category === 'Sports';
-                                        if (activeTab === 'gallery-tours') return img.category === 'School Tours';
                                         if (activeTab === 'gallery-events') return img.category === 'Programs & Events';
                                         if (activeTab === 'gallery-annual') return img.category === 'Annual Day';
                                         if (activeTab === 'gallery-meetings') return img.category === 'Meetings';
                                         if (activeTab === 'gallery-custom') {
-                                            return !['Sports', 'School Tours', 'Programs & Events', 'Annual Day', 'Meetings'].includes(img.category);
+                                            return !['Sports', 'Programs & Events', 'Annual Day', 'Meetings'].includes(img.category);
                                         }
                                         return true;
                                     })

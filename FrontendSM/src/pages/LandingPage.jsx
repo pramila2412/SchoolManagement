@@ -235,6 +235,32 @@ export default function LandingPage() {
     const heroImage = siteConfig?.hero?.image || '/mount school.jpeg';
     const socials = siteConfig?.header?.socials || {};
 
+    const categoriesToDisplay = [
+        { key: 'Sports', labels: ['Sports'] },
+        { key: 'Facility', labels: ['Facility', 'Facilities'] },
+        { key: 'Programs & Events', labels: ['Programs & Events', 'Programs and Events'] },
+        { key: 'Annual Day', labels: ['Annual Day'] },
+        { key: 'Meetings', labels: ['Meetings'] }
+    ];
+
+    const displayImages = categoriesToDisplay.map(cat => {
+        const img = uploadedGalleryImages.find(item => 
+            cat.labels.includes(item.category)
+        );
+        if (img) {
+            return {
+                _id: img._id,
+                url: img.url,
+                title: img.title || cat.key,
+                category: cat.key
+            };
+        }
+        return {
+            category: cat.key,
+            url: null
+        };
+    });
+
     return (
         <div className="landing-page">
             <PublicHeader />
@@ -342,9 +368,29 @@ export default function LandingPage() {
 
                     <div className="gallery-bento">
                         {uploadedGalleryImages.length > 0 ? (
-                            uploadedGalleryImages.slice(0, 4).map((item, idx) => (
-                                <div key={item._id || idx} className={`gallery-cell gallery-cell-${idx + 1}`}>
-                                    <img src={item.url} alt={item.title} />
+                            displayImages.map((item, idx) => (
+                                <div key={item._id || idx} className={`gallery-cell gallery-cell-${idx + 1}`} style={{ position: 'relative' }}>
+                                    {item.url ? (
+                                        <img src={item.url} alt={item.title} />
+                                    ) : (
+                                        <div className="empty-bento-content" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%',
+                                            background: '#f8fafc',
+                                            border: '2px dashed #cbd5e1',
+                                            color: '#64748b',
+                                            fontSize: '0.85rem',
+                                            padding: '20px',
+                                            textAlign: 'center',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}>
+                                            <span style={{ fontSize: '1.25rem' }}>📷</span>
+                                            <span style={{ fontWeight: '500' }}>No uploaded images</span>
+                                        </div>
+                                    )}
                                     <div className="gallery-label">{item.category}</div>
                                 </div>
                             ))

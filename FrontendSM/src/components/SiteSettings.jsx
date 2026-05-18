@@ -11,7 +11,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useAuth } from '../context/AuthContext';
 
-const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) => {
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.6) => {
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);

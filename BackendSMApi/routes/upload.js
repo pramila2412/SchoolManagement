@@ -43,6 +43,23 @@ router.post('/', upload.single('image'), (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
+        
+        // Robustness: If the production build folder (dist) exists, copy the uploaded file there too
+        // so that direct Nginx static file serving from the dist directory works seamlessly.
+        const distUploadDir = path.join(__dirname, '..', '..', 'FrontendSM', 'dist', 'uploads');
+        try {
+            const distDir = path.join(__dirname, '..', '..', 'FrontendSM', 'dist');
+            if (fs.existsSync(distDir)) {
+                if (!fs.existsSync(distUploadDir)) {
+                    fs.mkdirSync(distUploadDir, { recursive: true });
+                }
+                fs.copyFileSync(req.file.path, path.join(distUploadDir, req.file.filename));
+            }
+        } catch (copyErr) {
+            console.error('Failed to copy uploaded image to dist directory:', copyErr);
+            // Non-blocking: don't fail the upload just because dist copy failed
+        }
+
         // Return the relative path that can be served by the frontend
         const imagePath = `/uploads/${req.file.filename}`;
         res.json({

@@ -559,9 +559,6 @@ export default function LandingPage() {
                 <div className="section-container">
                     <div className="section-header-centered">
                         <h2 className="section-title">Testimonials</h2>
-                        <div className="title-arrow-icon">
-                            <ArrowUpRight size={20} strokeWidth={2} />
-                        </div>
                     </div>
 
                     <div className="testimonials-grid">

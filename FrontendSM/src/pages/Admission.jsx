@@ -478,15 +478,15 @@ function IDCardTab() {
         </svg>`;
 
         card.innerHTML = `
-            <div style="background:#57C4E5;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
+            <div style="background:#002549;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
                 <div style="width:80px;height:80px;flex-shrink:0;margin-right:12px;">
-                    <img src="/logo.png" style="width:80px;height:80px;object-fit:contain;" crossorigin="anonymous" />
+                    <img src="/logo-transparent.png" style="width:80px;height:80px;object-fit:contain;" crossorigin="anonymous" />
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div style="font-size:24px;font-weight:900;color:#E31E24;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
-                    <div style="font-size:12px;color:#111;font-weight:700;margin-top:3px;">(Affiliated to CBSE up to 10+2 Level)</div>
+                    <div style="font-size:24px;font-weight:900;color:#ffffff;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
+                    <div style="font-size:12px;color:#ffffff;font-weight:700;margin-top:3px;">(Affiliated to CBSE up to 10+2 Level)</div>
                     <div style="font-size:12px;color:#ffffff;font-weight:700;">Sion Nagar, Purnea - 854301</div>
-                    <div style="font-size:11px;color:#111;font-weight:600;margin-top:3px;">Affiliation No. 330241 &nbsp;&nbsp;&nbsp; School No. 65235</div>
+                    <div style="font-size:11px;color:#ffffff;font-weight:600;margin-top:3px;">Affiliation No. 330241 &nbsp;&nbsp;&nbsp; School No. 65235</div>
                 </div>
             </div>
 

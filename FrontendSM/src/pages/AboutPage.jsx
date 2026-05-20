@@ -125,7 +125,7 @@ export default function AboutPage() {
             {/* ===== RULES & REGULATIONS ===== */}
             <section className="about-rules-section" id="rules">
                 <div className="section-container">
-                    <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000' }}>{aboutData.rules.title}</h2>
+                    <h2 className="section-title" style={{ fontSize: '2.5rem', marginBottom: '10px', fontWeight: '900', color: '#000', marginLeft: '-15px' }}>{aboutData.rules.title}</h2>
                     <h3 className="about-subheading" style={{ color: '#94a3b8', fontSize: '1.4rem', fontWeight: '600', marginBottom: '40px' }}>{aboutData.rules.subtitle}</h3>
 
                     <div className="rules-content-wrapper" style={{ display: 'flex', gap: '60px', alignItems: 'stretch' }}>

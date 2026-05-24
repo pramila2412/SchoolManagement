@@ -168,6 +168,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Student Information', path: '/students' },
             { name: 'Add Student', path: '/students/add' },
             { name: 'Student Attendance', path: '/attendance' },
+            { name: 'Reports & Analytics', path: '/student-reports' },
             { name: 'Certificates', path: '/certificates' },
             { name: 'Announcement', path: '/announcements' },
             { name: 'TC', path: '/tc' },

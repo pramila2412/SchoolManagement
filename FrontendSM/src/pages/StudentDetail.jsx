@@ -4,13 +4,130 @@ import {
     ArrowLeft, Phone, Mail, MapPin, Calendar,
     BookOpen, IndianRupee, CalendarCheck, User,
     Edit, Trash2, Award, FileText, GraduationCap,
-    Users,
+    Users, ChevronLeft, ChevronRight, Download
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { getInitials, getAvatarColor, formatCurrency, formatDate } from '../utils/helpers';
+import { customAlert } from '../utils/dialogs';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { FormalCertificate } from './Certificates';
 import './StudentDetail.css';
+import './Certificates.css'; // needed for FormalCertificate styles
 
 const API = '/api';
+
+/* ─── Helper for stable mock data ─── */
+const getStableMockAttendance = (studentId, year, month) => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const data = {};
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(year, month, i);
+        if (date.getDay() === 0) {
+            data[i] = 'Holiday';
+        } else if (date > new Date()) {
+            data[i] = null; // Future date
+        } else {
+            const hash = (i * 17 + month * 31 + (studentId?.length || 5) * 11) % 100;
+            if (hash < 8) data[i] = 'Absent';
+            else if (hash < 12) data[i] = 'Leave';
+            else data[i] = 'Present';
+        }
+    }
+    return data;
+};
+
+/* ─── Attendance Tab Component ─── */
+function AttendanceTabContent({ student, globalSummary }) {
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [monthlyData, setMonthlyData] = useState({});
+
+    useEffect(() => {
+        setMonthlyData(getStableMockAttendance(student.id, currentMonth.getFullYear(), currentMonth.getMonth()));
+    }, [currentMonth, student.id]);
+
+    const handlePrevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    const handleNextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    let present = 0, absent = 0, leave = 0, totalDays = 0;
+    for (let i = 1; i <= daysInMonth; i++) {
+        if (monthlyData[i] === 'Present') { present++; totalDays++; }
+        else if (monthlyData[i] === 'Absent') { absent++; totalDays++; }
+        else if (monthlyData[i] === 'Leave') { leave++; totalDays++; }
+    }
+    const percentage = totalDays > 0 ? Math.round((present / totalDays) * 100) : 0;
+
+    return (
+        <div className="attendance-tab-container">
+            <div className="attendance-header-actions">
+                <h3 className="detail-section-title"><CalendarCheck size={18} /> Monthly Attendance</h3>
+                <div className="month-selector">
+                    <button className="btn-icon" onClick={handlePrevMonth}><ChevronLeft size={18} /></button>
+                    <span className="month-display">{monthNames[month]} {year}</span>
+                    <button className="btn-icon" onClick={handleNextMonth} disabled={new Date(year, month + 1, 1) > new Date()}><ChevronRight size={18} /></button>
+                </div>
+            </div>
+
+            <div className="attendance-overview">
+                <div className="attendance-circle">
+                    <svg viewBox="0 0 100 100" className="attendance-svg">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg)" strokeWidth="8" />
+                        <circle cx="50" cy="50" r="42" fill="none"
+                            stroke={percentage >= 90 ? 'var(--success)' : percentage >= 75 ? 'var(--warning)' : 'var(--danger)'}
+                            strokeWidth="8" strokeLinecap="round"
+                            strokeDasharray={`${percentage * 2.64} 264`}
+                            transform="rotate(-90 50 50)" />
+                    </svg>
+                    <span className="attendance-value">{percentage}%</span>
+                </div>
+                <div className="attendance-stats-grid">
+                    <div className="att-stat"><span className="att-stat-count">{totalDays}</span><span>Total Days</span></div>
+                    <div className="att-stat" style={{color:'var(--success)'}}><span className="att-stat-count">{present}</span><span>Present</span></div>
+                    <div className="att-stat" style={{color:'var(--danger)'}}><span className="att-stat-count">{absent}</span><span>Absent</span></div>
+                    <div className="att-stat" style={{color:'var(--warning)'}}><span className="att-stat-count">{leave}</span><span>Leave</span></div>
+                </div>
+            </div>
+
+            <div className="calendar-container">
+                <div className="calendar-grid-header">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="cal-header-day">{d}</div>)}
+                </div>
+                <div className="calendar-grid">
+                    {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`empty-${i}`} className="cal-cell empty"></div>)}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const status = monthlyData[day];
+                        let statusClass = '';
+                        if (status === 'Present') statusClass = 'status-present';
+                        else if (status === 'Absent') statusClass = 'status-absent';
+                        else if (status === 'Leave') statusClass = 'status-leave';
+                        else if (status === 'Holiday') statusClass = 'status-holiday';
+
+                        return (
+                            <div key={day} className={`cal-cell ${statusClass}`}>
+                                <span className="cal-day-num">{day}</span>
+                                {status && status !== 'Holiday' && <span className="cal-status-dot"></span>}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="calendar-legend">
+                    <div className="legend-item"><span className="legend-dot present"></span> Present</div>
+                    <div className="legend-item"><span className="legend-dot absent"></span> Absent</div>
+                    <div className="legend-item"><span className="legend-dot leave"></span> Leave</div>
+                    <div className="legend-item"><span className="legend-dot holiday"></span> Holiday</div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function StudentDetail() {
     const { id } = useParams();
@@ -20,6 +137,7 @@ export default function StudentDetail() {
     const [certificates, setCertificates] = useState([]);
     const [attendanceSummary, setAttendanceSummary] = useState(null);
     const [portalAuth, setPortalAuth] = useState(null);
+    const [downloadingCert, setDownloadingCert] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,6 +184,47 @@ export default function StudentDetail() {
         };
         fetchData();
     }, [id]);
+
+    const handleDownloadCert = async (cert) => {
+        // Merge missing details from the current student profile so blanks are filled if they were updated later
+        const mergedCert = {
+            ...cert,
+            fatherName: cert.fatherName || student.fatherName || '',
+            motherName: cert.motherName || student.motherName || '',
+            parentName: cert.parentName || cert.fatherName || student.fatherName || student.motherName || '',
+            dateOfBirth: cert.dateOfBirth || student.dateOfBirth || student.dob || '',
+            gender: cert.gender || student.gender || '',
+            studentName: cert.studentName || `${student.firstName} ${student.lastName}`
+        };
+        
+        setDownloadingCert(mergedCert);
+        try {
+            await new Promise(resolve => setTimeout(resolve, 300)); // wait for DOM render
+            const element = document.getElementById('printable-certificate');
+            if (!element) throw new Error("Could not find printable element");
+
+            const originalStyle = element.style.cssText;
+            element.style.padding = '18mm 20mm';
+            element.style.width = '210mm';
+            element.style.background = '#fff';
+
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+            element.style.cssText = originalStyle;
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`${cert.type}-Certificate-${cert.certificateNo.replace(/\//g, '-')}.pdf`);
+        } catch (err) {
+            console.error("Download failed", err);
+            customAlert("Failed to download PDF.");
+        } finally {
+            setDownloadingCert(null);
+        }
+    };
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading student profile...</div>;
 
@@ -244,49 +403,8 @@ export default function StudentDetail() {
                 )}
 
                 {activeTab === 'attendance' && (
-                    <div className="detail-grid">
-                        <div className="card detail-section">
-                            <h3 className="detail-section-title"><CalendarCheck size={18} /> Attendance Summary</h3>
-                            {attendanceSummary ? (
-                                <div className="attendance-overview">
-                                    <div className="attendance-circle">
-                                        <svg viewBox="0 0 100 100" className="attendance-svg">
-                                            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg)" strokeWidth="8" />
-                                            <circle cx="50" cy="50" r="42" fill="none"
-                                                stroke={attendanceSummary.percentage >= 90 ? 'var(--success)' : attendanceSummary.percentage >= 75 ? 'var(--warning)' : 'var(--danger)'}
-                                                strokeWidth="8" strokeLinecap="round"
-                                                strokeDasharray={`${attendanceSummary.percentage * 2.64} 264`}
-                                                transform="rotate(-90 50 50)" />
-                                        </svg>
-                                        <span className="attendance-value">{attendanceSummary.percentage}%</span>
-                                    </div>
-                                    <div className="attendance-stats-grid">
-                                        <div className="att-stat"><span className="att-stat-count">{attendanceSummary.totalDays}</span><span>Total Days</span></div>
-                                        <div className="att-stat" style={{color:'var(--success)'}}><span className="att-stat-count">{attendanceSummary.present}</span><span>Present</span></div>
-                                        <div className="att-stat" style={{color:'var(--danger)'}}><span className="att-stat-count">{attendanceSummary.absent}</span><span>Absent</span></div>
-                                        <div className="att-stat" style={{color:'var(--warning)'}}><span className="att-stat-count">{attendanceSummary.late}</span><span>Late</span></div>
-                                        <div className="att-stat"><span className="att-stat-count">{attendanceSummary.leave}</span><span>Leave</span></div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="attendance-overview">
-                                    <div className="attendance-circle">
-                                        <svg viewBox="0 0 100 100" className="attendance-svg">
-                                            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg)" strokeWidth="8" />
-                                            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--success)" strokeWidth="8" strokeLinecap="round"
-                                                strokeDasharray={`${(student.attendance||100) * 2.64} 264`} transform="rotate(-90 50 50)" />
-                                        </svg>
-                                        <span className="attendance-value">{student.attendance || 100}%</span>
-                                    </div>
-                                    <div className="attendance-info">
-                                        <span>Overall Attendance</span>
-                                        <span className={`badge ${(student.attendance||100) >= 90 ? 'badge-success' : (student.attendance||100) >= 75 ? 'badge-warning' : 'badge-danger'}`}>
-                                            {(student.attendance||100) >= 90 ? 'Excellent' : (student.attendance||100) >= 75 ? 'Good' : 'Needs Improvement'}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                    <div className="card detail-section">
+                        <AttendanceTabContent student={student} />
                     </div>
                 )}
 
@@ -340,7 +458,7 @@ export default function StudentDetail() {
                         {certificates.length > 0 ? (
                             <div className="table-responsive">
                                 <table className="data-table">
-                                    <thead><tr><th>Certificate No</th><th>Type</th><th>Issue Date</th><th>Purpose</th></tr></thead>
+                                    <thead><tr><th>Certificate No</th><th>Type</th><th>Issue Date</th><th>Purpose</th><th style={{textAlign: 'right'}}>Action</th></tr></thead>
                                     <tbody>
                                         {certificates.map(c => (
                                             <tr key={c._id}>
@@ -348,6 +466,11 @@ export default function StudentDetail() {
                                                 <td><span className="badge badge-info">{c.type}</span></td>
                                                 <td>{new Date(c.issueDate).toLocaleDateString('en-IN')}</td>
                                                 <td>{c.purpose || '—'}</td>
+                                                <td style={{textAlign: 'right'}}>
+                                                    <button onClick={() => handleDownloadCert(c)} className="btn btn-outline" style={{padding: '4px 8px', fontSize: '0.8rem'}} disabled={downloadingCert && downloadingCert._id === c._id}>
+                                                        <Download size={14} style={{marginRight: 4}}/> {downloadingCert && downloadingCert._id === c._id ? 'Generating...' : 'Download'}
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -363,6 +486,13 @@ export default function StudentDetail() {
                     </div>
                 )}
             </div>
+
+            {/* Hidden container for rendering the certificate PDF */}
+            {downloadingCert && (
+                <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+                    <FormalCertificate cert={downloadingCert} />
+                </div>
+            )}
         </div>
     );
 }

@@ -117,7 +117,19 @@ export default function EditStudent() {
                 : formData.facility.filter(f => f !== value);
             setFormData({ ...formData, facility: newFacilities });
         } else {
-            setFormData({ ...formData, [name]: value });
+            // Filter out numbers from firstName and lastName
+            let finalValue = value;
+            if ((name === 'firstName' || name === 'lastName') && value) {
+                finalValue = value.replace(/[0-9]/g, '');
+            }
+            // Limit year to 4 digits for date fields
+            if ((name === 'admissionDate' || name === 'dateOfBirth' || name === 'feesStartDate') && value) {
+                const parts = value.split('-');
+                if (parts[0] && parts[0].length > 4) {
+                    finalValue = parts[0].substring(0, 4) + (parts[1] ? '-' + parts[1] : '') + (parts[2] ? '-' + parts[2] : '');
+                }
+            }
+            setFormData({ ...formData, [name]: finalValue });
             if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
         }
     };
@@ -155,6 +167,18 @@ export default function EditStudent() {
             setFormError('');
         }
 
+        // Validate firstName - only letters, spaces, and hyphens
+        if (formData.firstName && !/^[a-zA-Z\s'-]+$/.test(formData.firstName.trim())) {
+            newErrors.firstNameMsg = 'First name can only contain letters, spaces, and hyphens';
+            if (!newErrors.firstName) newErrors.firstName = true;
+        }
+
+        // Validate lastName - only letters, spaces, and hyphens
+        if (formData.lastName && !/^[a-zA-Z\s'-]+$/.test(formData.lastName.trim())) {
+            newErrors.lastNameMsg = 'Last name can only contain letters, spaces, and hyphens';
+            if (!newErrors.lastName) newErrors.lastName = true;
+        }
+
         if (formData.contactNo && formData.contactNo.length !== 10) {
             newErrors.contactNoMsg = 'Please enter valid mobile number';
         }
@@ -164,7 +188,7 @@ export default function EditStudent() {
         }
 
         setErrors(newErrors);
-        return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg;
+        return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg && !newErrors.firstNameMsg && !newErrors.lastNameMsg;
     };
 
     const convertToBase64 = (file) => {
@@ -240,18 +264,38 @@ export default function EditStudent() {
             delete studentUpdate.existingBirthCertificateUrl;
             delete studentUpdate.existingPreviousTcUrl;
 
-            // Sync parentPassword to mzs_students localStorage
-            if (formData.parentPassword) {
-                const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-                const existingIdx = globalStudents.findIndex(s => s.parentEmail === formData.email || s.admissionNo === formData.admissionNo);
-                if (existingIdx >= 0) {
+            // ALWAYS Sync all edited fields to mzs_students localStorage
+            const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const existingIdx = globalStudents.findIndex(s => s.id === id || s.admissionNo === formData.admissionNo || s.parentEmail === formData.email);
+            if (existingIdx >= 0) {
+                globalStudents[existingIdx] = {
+                    ...globalStudents[existingIdx],
+                    name: `${formData.firstName} ${formData.lastName}`,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    class: `${formData.class}-${formData.section}`,
+                    section: formData.section,
+                    admissionNo: formData.admissionNo,
+                    rollNo: formData.rollNo,
+                    dateOfBirth: formData.dateOfBirth,
+                    gender: formData.gender,
+                    bloodGroup: formData.bloodGroup,
+                    parentEmail: formData.email,
+                    parentName: formData.fatherName,
+                    fatherName: formData.fatherName,
+                    motherName: formData.motherName,
+                    phone: formData.contactNo,
+                    contactNo: formData.contactNo,
+                    guardianPhone: formData.guardianPhone,
+                    address: formData.address,
+                    admissionDate: formData.admissionDate,
+                    feesStartDate: formData.feesStartDate,
+                    photoUrl: photoUrl || formData.existingPhotoUrl || globalStudents[existingIdx].photoUrl
+                };
+                if (formData.parentPassword) {
                     globalStudents[existingIdx].parentPassword = formData.parentPassword;
-                    globalStudents[existingIdx].parentEmail = formData.email;
-                    globalStudents[existingIdx].parentName = formData.fatherName;
-                    globalStudents[existingIdx].name = `${formData.firstName} ${formData.lastName}`;
-                    globalStudents[existingIdx].class = `${formData.class}-${formData.section}`;
-                    localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
                 }
+                localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
             }
 
             try {
@@ -306,10 +350,12 @@ export default function EditStudent() {
                             <div className="form-group">
                                 <label className="form-label">First Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.firstName ? 'error' : ''}`} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" />
+                                {errors.firstNameMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.firstNameMsg}</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Last Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.lastName ? 'error' : ''}`} name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Enter last name" />
+                                {errors.lastNameMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.lastNameMsg}</span>}
                             </div>
                         </div>
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
 import { classes, sections, getBatches, categories } from '../data/mockData';
@@ -7,12 +7,23 @@ import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
+// Helper function to get active academic year
+const getActiveBatch = () => {
+    try {
+        const academicYears = JSON.parse(localStorage.getItem('academic_years') || '[]');
+        const activeYear = academicYears.find(y => y.active === true);
+        return activeYear ? activeYear.label : '2024-2025';
+    } catch (e) {
+        return '2024-2025';
+    }
+};
+
 export default function AddStudent() {
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState('');
     const [formData, setFormData] = useState({
-        batch: '2024-2025',
+        batch: getActiveBatch(),
         class: '',
         section: '',
         firstName: '',
@@ -87,7 +98,19 @@ export default function AddStudent() {
                 : formData.facility.filter(f => f !== value);
             setFormData({ ...formData, facility: newFacilities });
         } else {
-            setFormData({ ...formData, [name]: value });
+            // Filter out numbers from firstName and lastName
+            let finalValue = value;
+            if ((name === 'firstName' || name === 'lastName') && value) {
+                finalValue = value.replace(/[0-9]/g, '');
+            }
+            // Limit year to 4 digits for date fields
+            if ((name === 'admissionDate' || name === 'dateOfBirth' || name === 'feesStartDate') && value) {
+                const parts = value.split('-');
+                if (parts[0] && parts[0].length > 4) {
+                    finalValue = parts[0].substring(0, 4) + (parts[1] ? '-' + parts[1] : '') + (parts[2] ? '-' + parts[2] : '');
+                }
+            }
+            setFormData({ ...formData, [name]: finalValue });
             if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
         }
     };
@@ -147,6 +170,18 @@ export default function AddStudent() {
             setFormError('');
         }
 
+        // Validate firstName - only letters, spaces, and hyphens
+        if (formData.firstName && !/^[a-zA-Z\s'-]+$/.test(formData.firstName.trim())) {
+            newErrors.firstNameMsg = 'First name can only contain letters, spaces, and hyphens';
+            if (!newErrors.firstName) newErrors.firstName = true;
+        }
+
+        // Validate lastName - only letters, spaces, and hyphens
+        if (formData.lastName && !/^[a-zA-Z\s'-]+$/.test(formData.lastName.trim())) {
+            newErrors.lastNameMsg = 'Last name can only contain letters, spaces, and hyphens';
+            if (!newErrors.lastName) newErrors.lastName = true;
+        }
+
         if (formData.contactNo && formData.contactNo.length !== 10) {
             newErrors.contactNoMsg = 'Please enter exact 10 digits mobile number';
         }
@@ -156,7 +191,7 @@ export default function AddStudent() {
         }
 
         setErrors(newErrors);
-        return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg;
+        return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg && !newErrors.firstNameMsg && !newErrors.lastNameMsg;
     };
 
     const convertToBase64 = (file) => {
@@ -254,6 +289,7 @@ export default function AddStudent() {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 class: `${formData.class}-${formData.section}`,
+                section: formData.section,
                 admissionNo: formData.admissionNo,
                 rollNo: formData.rollNo,
                 dateOfBirth: formData.dateOfBirth,
@@ -263,12 +299,16 @@ export default function AddStudent() {
                 parentEmail: formData.email,
                 parentPassword: parentPassword,
                 parentName: formData.fatherName,
+                fatherName: formData.fatherName,
                 motherName: formData.motherName,
                 phone: formData.contactNo,
+                contactNo: formData.contactNo,
                 guardianPhone: formData.guardianPhone,
                 address: formData.address,
                 photoUrl: photoUrl,
                 status: 'Active',
+                admissionDate: formData.admissionDate,
+                feesStartDate: formData.feesStartDate,
                 firstLogin: true
             };
             localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
@@ -332,10 +372,12 @@ export default function AddStudent() {
                             <div className="form-group">
                                 <label className="form-label">First Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.firstName ? 'error' : ''}`} name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" />
+                                {errors.firstNameMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.firstNameMsg}</span>}
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Last Name <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.lastName ? 'error' : ''}`} name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Enter last name" />
+                                {errors.lastNameMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.lastNameMsg}</span>}
                             </div>
                         </div>
 

@@ -377,17 +377,46 @@ function ConfirmationTab() {
                 for (let i = 0; i < 8; i++) parentPassword += chars.charAt(Math.floor(Math.random() * chars.length));
             }
 
+            const nameParts = (student.name || '').trim().split(/\s+/);
+            const firstName = nameParts[0] || 'Unknown';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            let cls = student.class || '';
+            let sec = 'A';
+            if (cls.includes('-')) {
+                const parts = cls.split('-');
+                cls = parts[0].trim();
+                sec = parts[1]?.trim() || 'A';
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const admissionDate = student.admissionDate || student.date || todayStr;
+            const feesStartDate = student.feesStartDate || student.date || todayStr;
+            const fatherName = student.fatherName || student.parentName || (existingSibling ? (existingSibling.fatherName || existingSibling.parentName) : 'Parent / Guardian');
+            const contactNo = student.contactNo || student.phone || student.guardianPhone || (existingSibling ? (existingSibling.contactNo || existingSibling.phone) : '');
+
             const portalStudent = {
                 id: admNo,
                 name: student.name,
-                class: student.class,
+                firstName: firstName,
+                lastName: lastName,
+                class: `${cls}-${sec}`,
+                section: sec,
                 admissionNo: admNo,
                 parentId: parentId,
                 parentEmail: student.parentEmail,
                 parentPassword: parentPassword,
-                parentName: student.parentName || 'Parent / Guardian',
+                parentName: fatherName,
+                fatherName: fatherName,
+                motherName: student.motherName || '',
+                phone: contactNo,
+                contactNo: contactNo,
+                guardianPhone: student.guardianPhone || contactNo,
+                address: student.address || '',
                 status: 'Active',
-                firstLogin: !existingSibling // Only force password change if it's the first child
+                admissionDate: admissionDate,
+                feesStartDate: feesStartDate,
+                firstLogin: !existingSibling
             };
             localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
 

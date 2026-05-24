@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Plus, Phone } from 'lucide-react';
+import { Search, Filter, Plus, Phone, Trash2 } from 'lucide-react';
 import { api } from '../utils/api';
 import { getInitials, getAvatarColor } from '../utils/helpers';
+import { customConfirm, customAlert } from '../utils/dialogs';
 import './Students.css';
 
 export default function StudentsPage() {
@@ -53,6 +54,38 @@ export default function StudentsPage() {
         };
         fetchStudents();
     }, []);
+
+    const handleDelete = async (e, student) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (await customConfirm('Are you sure you want to remove this student?')) {
+            try {
+                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const studentId = student.id || student._id || student.admissionNo;
+                const studentIndex = localData.findIndex(s => (s.id || s._id || s.admissionNo) === studentId);
+                
+                if (studentIndex >= 0) {
+                    localData[studentIndex].status = 'Inactive';
+                    localStorage.setItem('mzs_students', JSON.stringify(localData));
+                } else {
+                    const override = { ...student, status: 'Inactive' };
+                    localData.push(override);
+                    localStorage.setItem('mzs_students', JSON.stringify(localData));
+                }
+                
+                setStudents(prev => prev.map(s => {
+                    if ((s.id || s._id || s.admissionNo) === studentId) {
+                        return { ...s, status: 'Inactive' };
+                    }
+                    return s;
+                }));
+            } catch (err) {
+                console.error("Delete failed", err);
+                customAlert('Failed to remove student.');
+            }
+        }
+    };
 
     const filteredStudents = students.filter(s => {
         const matchSearch = `${s.firstName || ''} ${s.lastName || ''} ${s.admissionNo || ''} ${s.rollNo || ''}`
@@ -127,7 +160,15 @@ export default function StudentsPage() {
             ) : (
                 <div className="students-grid">
                     {filteredStudents.map(s => (
-                        <Link to={`/students/${s.id}`} className="student-card card" key={s._id || s.id}>
+                        <Link to={`/students/${s.id || s.admissionNo}`} className="student-card card" key={s._id || s.id || s.admissionNo}>
+                            <button 
+                                className="btn-icon text-danger" 
+                                onClick={(e) => handleDelete(e, s)}
+                                title="Delete Student"
+                                style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10, background: 'rgba(255,0,0,0.05)' }}
+                            >
+                                <Trash2 size={16} />
+                            </button>
                             <div className="student-card-header">
                                 <div className="student-avatar" style={!s.photoUrl ? { background: getAvatarColor((s.firstName || '') + (s.lastName || '')) } : {}}>
                                     {s.photoUrl ? (

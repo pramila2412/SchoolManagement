@@ -31,3 +31,345 @@
     color: #2980b9;
     background: var(--info-light);
 }
+
+/* ══════ GENERATE TC FORM ══════ */
+.tc-generate-card {
+    padding: 30px;
+    margin-top: 20px;
+}
+
+.tc-gen-title {
+    margin-bottom: 24px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+
+.tc-student-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+    background: var(--bg);
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+.tc-student-summary span {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.tc-student-summary p {
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+}
+
+.tc-fieldset {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+    background: #fff;
+}
+
+.tc-fieldset legend {
+    padding: 0 12px;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.05rem;
+}
+
+.tc-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.tc-form-grid .span-2 {
+    grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+    .tc-form-grid .span-2 {
+        grid-column: span 1;
+    }
+}
+
+.tc-gen-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+/* ══════ MODAL STYLES ══════ */
+.tc-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.tc-modal-container {
+    background: #e8e8e8;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh;
+}
+
+.tc-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.tc-modal-header h2 {
+    font-size: 1.2rem;
+    color: var(--text);
+    margin: 0;
+}
+
+.tc-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.tc-modal-body {
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+}
+
+
+/* ══════ FORMAL TC PREVIEW FORMAT (Screen) ══════ */
+.tc-formal-page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm; /* A4 aspect */
+    padding: 18mm 20mm 14mm 20mm;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    font-family: 'Times New Roman', Georgia, serif;
+    color: #333;
+    position: relative;
+    box-sizing: border-box;
+    /* Scale down slightly to fit on normal screens inside modal */
+    transform-origin: top center;
+    transform: scale(0.9);
+    margin-bottom: -10%; /* Compensate for scale */
+}
+
+/* Header */
+.tc-formal-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.tc-header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+.tc-formal-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.tc-header-text {
+    text-align: center;
+}
+
+.tc-school-name-formal {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0B3C5D; /* Deep Blue */
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.tc-affil-line, .tc-addr-line {
+    font-size: 13px;
+    color: #0B3C5D;
+    margin: 2px 0 0 0;
+    font-weight: 600;
+}
+
+.tc-affil-nos {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #333;
+}
+
+/* Title Box */
+.tc-formal-title {
+    background: #c0392b; /* Red */
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 9px;
+    margin: 12px auto 10px;
+    width: 70%;
+}
+
+/* Meta */
+.tc-formal-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+/* Fields list */
+.tc-formal-fields {
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: #333;
+}
+
+.tc-formal-field {
+    display: flex;
+    margin-bottom: 1px;
+}
+
+.tc-f-no {
+    min-width: 28px;
+    font-weight: 600;
+}
+
+.tc-f-label {
+    min-width: 320px;
+}
+
+.tc-formal-sub .tc-f-label {
+    padding-left: 28px;
+    min-width: 348px; /* 320 + 28 */
+}
+
+.tc-f-value {
+    flex: 1;
+    border-bottom: 1px dotted #999;
+    padding-left: 6px;
+    min-height: 22px;
+}
+
+.tc-dob-boxes {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.tc-dob-box {
+    display: inline-block;
+    width: 24px;
+    border: 1px solid #333;
+    margin-right: 2px;
+    text-align: center;
+    font-size: 13px;
+    padding-top: 1px;
+    padding-bottom: 6px;
+    vertical-align: -2px;
+}
+
+/* Footer */
+.tc-formal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 30px;
+    padding-top: 10px;
+}
+
+.tc-sig-block {
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    width: 180px;
+}
+
+.tc-sig-rule {
+    border-top: 1px solid #333;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.tc-sig-right {
+    text-align: center;
+}
+
+.tc-sig-block em {
+    font-style: italic;
+}
+
+
+/* ══════ PRINT STYLES ══════ */
+@media print {
+    body * { visibility: hidden; }
+    
+    .tc-modal-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        background: none;
+        padding: 0;
+    }
+    
+    .tc-modal-container {
+        box-shadow: none;
+        background: none;
+        max-width: none;
+    }
+    
+    #printable-tc, #printable-tc * { 
+        visibility: visible; 
+    }
+    
+    #printable-tc {
+        position: fixed; 
+        left: 0; 
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 8mm 15mm 8mm 15mm;
+        transform: none; /* Remove modal scale */
+        box-shadow: none;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    @page { 
+        size: A4 portrait; 
+        margin: 0; 
+    }
+}

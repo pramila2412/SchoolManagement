@@ -20,6 +20,7 @@ import StudentsPage from './pages/Students';
 import AddStudent from './pages/AddStudent';
 import EditStudent from './pages/EditStudent';
 import StudentDetail from './pages/StudentDetail';
+import StudentReports from './pages/StudentReports';
 import PlaceholderPage from './pages/PlaceholderPage';
 import Academics from './pages/Academics';
 import Admission from './pages/Admission';
@@ -78,6 +79,7 @@ function AppLayout() {
             <Route path="/students/edit/:id" element={<EditStudent />} />
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/attendance" element={<Attendance />} />
+            <Route path="/student-reports" element={<StudentReports />} />
             
             {/* Academics */}
             <Route path="/academics" element={<Academics />} />
@@ -114,7 +116,9 @@ function AppContent() {
       {/* If not logged in, show public admission page. If logged in, let it fall through to /* AppLayout */}
       {!user && <Route path="/admission" element={<AdmissionPublicPage />} />}
       
-      <Route path="/academics" element={<CurriculumPage />} />
+      {/* If not logged in, show public academics page. If logged in, use admin academics in AppLayout */}
+      {!user && <Route path="/academics" element={<CurriculumPage />} />}
+      
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/gallery" element={<GalleryPublicPage />} />

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import GlobalDialog from './components/GlobalDialog';
+import { RouteRoleGuard } from './components/RoleGuard';
 import LoginPage from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
@@ -21,6 +22,7 @@ import AddStudent from './pages/AddStudent';
 import EditStudent from './pages/EditStudent';
 import StudentDetail from './pages/StudentDetail';
 import StudentReports from './pages/StudentReports';
+import StudentSettings from './pages/StudentSettings';
 import PlaceholderPage from './pages/PlaceholderPage';
 import Academics from './pages/Academics';
 import Admission from './pages/Admission';
@@ -75,8 +77,16 @@ function AppLayout() {
               user.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
             } />
             <Route path="/students" element={<StudentsPage />} />
-            <Route path="/students/add" element={<AddStudent />} />
-            <Route path="/students/edit/:id" element={<EditStudent />} />
+            <Route path="/students/add" element={
+              <RouteRoleGuard allowedRoles={['Super Admin', 'Admin', 'Staff']}>
+                <AddStudent />
+              </RouteRoleGuard>
+            } />
+            <Route path="/students/edit/:id" element={
+              <RouteRoleGuard allowedRoles={['Super Admin', 'Admin', 'Staff']}>
+                <EditStudent />
+              </RouteRoleGuard>
+            } />
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/student-reports" element={<StudentReports />} />
@@ -97,7 +107,16 @@ function AppLayout() {
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/announcements" element={<Announcements />} />
-            <Route path="/tc" element={<TC />} />
+            <Route path="/tc" element={
+              <RouteRoleGuard allowedRoles={['Super Admin', 'Admin', 'Staff']}>
+                <TC />
+              </RouteRoleGuard>
+            } />
+            <Route path="/students/settings" element={
+              <RouteRoleGuard allowedRoles={['Super Admin', 'Admin']}>
+                <StudentSettings />
+              </RouteRoleGuard>
+            } />
           </Routes>
         </div>
       </main>
@@ -130,7 +149,9 @@ function AppContent() {
       } />
       <Route path="/settings" element={
         <ProtectedRoute>
-          <SiteSettings />
+          <RouteRoleGuard allowedRoles={['Super Admin', 'Admin']}>
+            <SiteSettings />
+          </RouteRoleGuard>
         </ProtectedRoute>
       } />
       <Route path="/*" element={

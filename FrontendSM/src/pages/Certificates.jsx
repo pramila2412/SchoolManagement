@@ -233,144 +233,6 @@ export function FormalCertificate({ cert }) {
     );
 }
 
-/* ──────────────────────── Download HTML Generator ──────────────────────── */
-
-function buildDownloadHTML(cert) {
-    const todayFormatted = formatDate(cert.issueDate || new Date().toISOString());
-    const title = cert.type === 'Custom' ? 'Certificate' : `${cert.type} Certificate`;
-    const p = pronouns(cert.gender);
-
-    let bodyHtml = '';
-    switch (cert.type) {
-        case 'Bonafide':
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> ${p.SoDo}.
-                Mr/Mrs. <span class="fv">${cert.fatherName || cert.parentName || '____________'}</span> is a bonafide
-                student of our school. ${p.hisher} Date of Birth is <span class="fv">${formatDOBFigures(cert.dateOfBirth)}</span> (in figures)
-                <span class="fv">${dateToWords(cert.dateOfBirth)}</span> (in words)
-                as per our Admission Register.</p>
-                <p>${p.heshe} is studying in Class - <span class="fv">${cert.class}</span> in the academic year <span class="fv">${cert.academicYear || new Date().getFullYear()}</span>.</p>
-                ${cert.purpose ? `<p>This certificate is issued on request for the purpose of <span class="fv">${cert.purpose}</span>.</p>` : ''}
-            `;
-            break;
-        case 'Fee': {
-            const monthly = Number(cert.monthlyFee) || 0;
-            const months = Number(cert.feeMonths) || 12;
-            const total = monthly * months;
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> ${p.SoDo}. <span class="fv">${cert.fatherName || cert.parentName || '____________'}</span>
-                is studying in Class / Std. <span class="fv">${cert.class}</span> in this school.</p>
-                <p>${p.hisher} school fees of the year from April <span class="fv">${cert.feeYearStart || '____'}</span> to March <span class="fv">${cert.feeYearEnd || '____'}</span> is as follows.</p>
-                <p>Tuition Fee: - <span class="fv">₹${monthly.toLocaleString('en-IN')}</span> x <span class="fv">${months}</span> = Rs. <span class="fv">${total.toLocaleString('en-IN')}/-</span></p>
-                <p>[Rupees <span class="fv">${total ? numberToWords(total) : '____________'}</span>]</p>
-            `;
-            break;
-        }
-        case 'Character':
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> ${p.SoDo}.
-                Mr/Mrs. <span class="fv">${cert.fatherName || cert.parentName || '____________'}</span> has been a student of our school.</p>
-                <p>${p.heshe} was studying in Class <span class="fv">${cert.class}</span> during the academic year <span class="fv">${cert.academicYear || new Date().getFullYear()}</span>.</p>
-                <p>During ${p.hisher.toLowerCase()} stay in this school, ${p.hisher.toLowerCase()} character and conduct has been found to be <span class="fv">${cert.remarks || 'Good'}</span>.</p>
-                <p>We wish ${p.himher} all the best in future endeavours.</p>
-            `;
-            break;
-        case 'Study':
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> ${p.SoDo}.
-                Mr/Mrs. <span class="fv">${cert.fatherName || cert.parentName || '____________'}</span> is/was a student of our school.</p>
-                <p>${p.heshe} has studied in Class <span class="fv">${cert.class}</span> during the academic year <span class="fv">${cert.academicYear || new Date().getFullYear()}</span>.</p>
-                <p>This certificate is issued for the purpose of <span class="fv">${cert.purpose || 'general reference'}</span>.</p>
-            `;
-            break;
-        case 'Migration':
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> ${p.SoDo}.
-                Mr/Mrs. <span class="fv">${cert.fatherName || cert.parentName || '____________'}</span> bearing Admission No. <span class="fv">${cert.admissionNo || 'N/A'}</span> was a student of our school.</p>
-                <p>${p.heshe} has studied in Class <span class="fv">${cert.class}</span> during the academic year <span class="fv">${cert.academicYear || new Date().getFullYear()}</span>.</p>
-                <p>${p.heshe} is hereby granted migration from this school. ${p.hisher} conduct and character during the stay was <span class="fv">${cert.remarks || 'Good'}</span>.</p>
-                <p>This certificate is issued on ${p.hisher.toLowerCase()} request for the purpose of <span class="fv">${cert.purpose || 'further studies'}</span>.</p>
-            `;
-            break;
-        default:
-            bodyHtml = `
-                <p>This is to certify that <span class="fv">${cert.studentName}</span> is/was a student of
-                Class <span class="fv">${cert.class}</span>, Section <span class="fv">${cert.section}</span> of our school.</p>
-                ${cert.purpose ? `<p>This certificate is issued for the purpose of <span class="fv">${cert.purpose}</span>.</p>` : ''}
-                ${cert.remarks ? `<p>${cert.remarks}</p>` : ''}
-            `;
-    }
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${cert.studentName} - ${title}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Times New Roman', Georgia, serif; background: #eee; }
-        .page {
-            width: 210mm; min-height: 297mm; margin: 10mm auto;
-            background: #fff; padding: 18mm 20mm 15mm 20mm;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-            display: flex; flex-direction: column; position: relative;
-        }
-        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 4px; }
-        .header img { width: 64px; height: 64px; object-fit: contain; }
-        .header-info { flex: 1; text-align: center; }
-        .school-name { font-size: 26px; font-weight: 700; color: #0B3C5D; text-transform: uppercase; letter-spacing: 2px; }
-        .address { font-size: 13px; color: #333; font-weight: 600; }
-        .affiliation { font-size: 12px; color: #555; font-style: italic; }
-        .aff-nos { font-size: 11.5px; color: #555; }
-        hr.divider { border: none; border-top: 2.5px solid #0B3C5D; margin: 10px 0 14px; }
-        .ref-row { display: flex; justify-content: space-between; font-size: 13px; color: #444; margin-bottom: 24px; }
-        .title { text-align: center; font-size: 20px; font-weight: 700; color: #0B3C5D; text-decoration: underline; margin-bottom: 6px; letter-spacing: 1px; }
-        .subtitle { text-align: center; font-size: 16px; font-weight: 600; color: #0B3C5D; margin-bottom: 24px; }
-        .body { font-size: 15px; line-height: 2.1; color: #333; text-align: justify; flex: none; margin-bottom: 40px; }
-        .body p { margin: 0 0 12px; }
-        .fv { font-weight: 700; color: #0B3C5D; text-decoration: underline dotted #999; text-underline-offset: 2px; text-decoration-thickness: 1.5px; padding: 0 4px; }
-        .sig-block { text-align: center; min-width: 180px; float: right; margin-top: 60px; }
-        .sig-block .line { border-bottom: 1.5px solid #333; height: 40px; margin-bottom: 4px; }
-        .sig-block .label { font-size: 14px; font-weight: 700; }
-        .footer { display: flex; justify-content: space-between; margin-top: auto; padding-top: 16px; font-size: 12px; color: #888; clear: both; }
-        @media print {
-            body { background: #fff; }
-            .page { margin: 0; box-shadow: none; width: 100%; }
-            @page { size: A4 portrait; margin: 0; }
-            .page { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-    </style>
-</head>
-<body>
-    <div class="page">
-        <div class="header">
-            <img src="/logo.png" alt="Mount Zion School" />
-            <div class="header-info">
-                <div class="school-name">Mount Zion School</div>
-                <div class="address">SION NAGAR, PURNEA - 854 301 (BIHAR)</div>
-                <div class="affiliation">(Affiliated to C.B.S.E., New Delhi)</div>
-                <div class="aff-nos">Affiliation No.: 330241 &amp; School No.: 65235</div>
-            </div>
-        </div>
-        <hr class="divider" />
-        <div class="ref-row">
-            <span>Ref. No. MZS Purnea / ${cert.certificateNo}</span>
-            <span>Date: ${todayFormatted}</span>
-        </div>
-        <div class="title">TO WHOM IT MAY CONCERN</div>
-        <div class="subtitle">— ${title} —</div>
-        <div class="body">${bodyHtml}</div>
-        <div class="sig-block"><div class="line"></div><span class="label">Principal</span></div>
-        <div class="footer">
-            <span>Date of Issue: ${todayFormatted}</span>
-            <span>Ref: ${cert.certificateNo}</span>
-        </div>
-    </div>
-    <script>window.addEventListener('load', function(){ window.print(); });</script>
-</body>
-</html>`;
-}
-
 /* ──────────────────────── Main Component ──────────────────────── */
 
 export default function Certificates() {
@@ -386,6 +248,7 @@ export default function Certificates() {
     const [apiCertificates, setApiCertificates] = useState([]);
     const [generating, setGenerating] = useState(false);
     const [previewCert, setPreviewCert] = useState(null);
+    const [printCert, setPrintCert] = useState(null);
 
     // Fee-specific state
     const [feeYearStart, setFeeYearStart] = useState('');
@@ -398,10 +261,10 @@ export default function Certificates() {
         new Date(b.issueDate || b.createdAt) - new Date(a.issueDate || a.createdAt)
     );
 
-    // Helper to normalize class names
+    /* ── Normalize class name helper ── */
     const normalizeClass = (cls) => {
         if (!cls) return '';
-        return cls.replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
+        return String(cls).replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
     };
 
     useEffect(() => {
@@ -420,7 +283,8 @@ export default function Certificates() {
                 if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
                 if (formData.section) url += `&section=${formData.section}`;
                 const res = await fetch(url);
-                apiStudents = await res.json();
+                const jsonRes = await res.json();
+                if (Array.isArray(jsonRes)) apiStudents = jsonRes;
             } catch (err) { console.error("API search failed", err); }
 
             const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
@@ -435,7 +299,9 @@ export default function Certificates() {
                 };
             }).filter(s => {
                 const searchClass = normalizeClass(formData.class);
-                const studentClass = normalizeClass(s.class);
+                let studentClass = normalizeClass(s.class);
+                if (studentClass.includes('-')) studentClass = studentClass.split('-')[0].trim();
+                
                 if (searchClass && studentClass !== searchClass) return false;
                 if (formData.section && s.section !== formData.section) return false;
                 if (s.status === 'Inactive') return false;
@@ -549,11 +415,11 @@ export default function Certificates() {
 
     const handlePrint = (cert) => {
         const mergedCert = getMergedCert(cert);
-        const certHtml = buildDownloadHTML(mergedCert);
-        const blob = new Blob([certHtml], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        setPrintCert(mergedCert);
+        setTimeout(() => {
+            window.print();
+            window.addEventListener('afterprint', () => setPrintCert(null), { once: true });
+        }, 150);
     };
 
     const handleDownload = async (cert) => {
@@ -804,10 +670,12 @@ export default function Certificates() {
                                             <td>{new Date(c.issueDate).toLocaleDateString('en-IN')}</td>
                                             <td>{c.purpose || '—'}</td>
                                             <td>
-                                                <button className="btn-icon text-primary" title="View Certificate" onClick={() => setPreviewCert(getMergedCert(c))}><Eye size={16} /></button>
-                                                <button className="btn-icon" style={{ color: 'var(--text)' }} title="Print Certificate" onClick={() => handlePrint(c)}><Printer size={16} /></button>
-                                                <button className="btn-icon text-success" title="Download Certificate" onClick={() => handleDownload(c)}><Download size={16} /></button>
-                                                <button className="btn-icon text-danger" title="Delete" onClick={() => handleDelete(c._id || c.certificateNo)}><Trash2 size={16} /></button>
+                                                <div className="action-buttons-center">
+                                                    <button className="btn-icon text-primary" title="View Certificate" onClick={() => setPreviewCert(getMergedCert(c))}><Eye size={16} /></button>
+                                                    <button className="btn-icon" title="Print Certificate" onClick={() => handlePrint(c)}><Printer size={16} /></button>
+                                                    <button className="btn-icon text-success" title="Download Certificate" onClick={() => handleDownload(c)}><Download size={16} /></button>
+                                                    <button className="btn-icon text-danger" title="Delete" onClick={() => handleDelete(c._id || c.certificateNo)}><Trash2 size={16} /></button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -838,6 +706,13 @@ export default function Certificates() {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {/* ───── Hidden Print Container ───── */}
+            {printCert && (
+                <div style={{ position: 'absolute', top: -9999, left: -9999, opacity: 0, pointerEvents: 'none' }}>
+                    <FormalCertificate cert={printCert} />
+                </div>
             )}
         </div>
     );

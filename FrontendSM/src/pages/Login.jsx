@@ -140,10 +140,10 @@ export default function LoginPage() {
 
             // Fallback: local credential check when backend is offline
             const mockUsers = [
-                { email: 'admin@mountzion.edu', password: 'admin123', name: 'Super Admin', role: 'Super Admin' },
-                { email: 'principal@mountzion.edu', password: 'admin123', name: 'Dr. Sarah', role: 'Admin / Principal' },
-                { email: 'teacher@mountzion.edu', password: 'teacher123', name: 'Rajesh Kumar', role: 'Staff / Teacher' },
-                { email: 'accountant@mountzion.edu', password: 'finance123', name: 'Vijay Singh', role: 'Accountant' }
+                { email: 'superadmin@mountzion.edu', password: 'admin123', name: 'Super Admin', role: 'Super Admin' },
+                { email: 'admin@mountzion.edu', password: 'admin123', name: 'Dr. Sarah (Admin)', role: 'Admin' },
+                { email: 'teacher@mountzion.edu', password: 'teacher123', name: 'Rajesh (Teacher)', role: 'Teacher' },
+                { email: 'staff@mountzion.edu', password: 'staff123', name: 'Vijay (Staff)', role: 'Staff' }
             ];
 
             const found = mockUsers.find(u => u.email === email && u.password === password);

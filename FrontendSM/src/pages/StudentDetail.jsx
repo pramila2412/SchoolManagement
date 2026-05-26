@@ -12,6 +12,7 @@ import { customAlert } from '../utils/dialogs';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { FormalCertificate } from './Certificates';
+import RoleGuard from '../components/RoleGuard';
 import './StudentDetail.css';
 import './Certificates.css'; // needed for FormalCertificate styles
 
@@ -270,7 +271,9 @@ export default function StudentDetail() {
                     <h1>Student Profile</h1>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                    <Link to={`/students/edit/${student.id}`} className="btn btn-outline"><Edit size={16} /> Edit</Link>
+                    <RoleGuard allowedRoles={['Super Admin', 'Admin', 'Staff']}>
+                        <Link to={`/students/edit/${student.id}`} className="btn btn-outline"><Edit size={16} /> Edit</Link>
+                    </RoleGuard>
                     <Link to="/students" className="btn btn-outline"><ArrowLeft size={16} /> Back</Link>
                 </div>
             </div>
@@ -289,6 +292,7 @@ export default function StudentDetail() {
                         <h2>{student.firstName} {student.lastName}</h2>
                         <span className="profile-class">Class {student.class} - Section {student.section} | Roll No: {student.rollNo}</span>
                         <div className="profile-badges">
+                            {student.studentId && <span className="badge badge-primary">ID: {student.studentId}</span>}
                             <span className="badge badge-info">Adm: {student.admissionNo}</span>
                             <span className="badge badge-success">Batch: {student.batch}</span>
                             {student.status && student.status !== 'Active' && <span className="badge badge-danger">{student.status}</span>}
@@ -345,6 +349,7 @@ export default function StudentDetail() {
                                 <div className="detail-item"><span className="detail-label">Class</span><span className="detail-value">{student.class}</span></div>
                                 <div className="detail-item"><span className="detail-label">Section</span><span className="detail-value">{student.section}</span></div>
                                 <div className="detail-item"><span className="detail-label">Roll No</span><span className="detail-value">{student.rollNo}</span></div>
+                                <div className="detail-item"><span className="detail-label">Student ID</span><span className="detail-value">{student.studentId || '—'}</span></div>
                                 <div className="detail-item"><span className="detail-label">Admission No</span><span className="detail-value">{student.admissionNo}</span></div>
                                 <div className="detail-item"><span className="detail-label">Admission Date</span><span className="detail-value">{student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-IN') : '—'}</span></div>
                                 <div className="detail-item"><span className="detail-label">Academic Year</span><span className="detail-value">{student.batch}</span></div>

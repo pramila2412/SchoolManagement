@@ -214,7 +214,8 @@ export const getBatches = () => {
     try {
         const saved = localStorage.getItem('academic_years');
         if (saved) {
-            return JSON.parse(saved).map(y => y.label);
+            const labels = JSON.parse(saved).map(y => y.label);
+            return Array.from(new Set(labels));
         }
     } catch(e) {
         console.error('Failed to parse academic_years from localStorage', e);

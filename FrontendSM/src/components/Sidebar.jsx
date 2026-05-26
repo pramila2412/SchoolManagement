@@ -27,6 +27,7 @@ const subIconMap = {
         'Certificates': Award,
         'Announcement': Megaphone,
         'TC': FileCheck,
+        'Settings': Settings,
     },
     finance: {
         'Dashboard': PieChart,
@@ -166,12 +167,13 @@ export const SIDEBAR_MODULES = [
         id: 'student', name: 'Student', icon: 'Users', path: '/students',
         subModules: [
             { name: 'Student Information', path: '/students' },
-            { name: 'Add Student', path: '/students/add' },
+            { name: 'Add Student', path: '/students/add', allowedRoles: ['Super Admin', 'Admin', 'Staff'] },
             { name: 'Student Attendance', path: '/attendance' },
             { name: 'Reports & Analytics', path: '/student-reports' },
             { name: 'Certificates', path: '/certificates' },
             { name: 'Announcement', path: '/announcements' },
-            { name: 'TC', path: '/tc' },
+            { name: 'TC', path: '/tc', allowedRoles: ['Super Admin', 'Admin', 'Staff'] },
+            { name: 'Settings', path: '/students/settings', allowedRoles: ['Super Admin', 'Admin'] },
         ]
     },
     {
@@ -189,7 +191,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Asset Management', path: '/finance?tab=assets' },
             { name: 'Inventory (Linked)', path: '/finance?tab=inventory' },
             { name: 'Financial Reports', path: '/finance?tab=reports' },
-            { name: 'Settings & Config', path: '/finance?tab=settings' },
+            { name: 'Settings & Config', path: '/finance?tab=settings', allowedRoles: ['Super Admin', 'Admin'] },
         ]
     },
     {
@@ -208,7 +210,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Study Materials', path: '/academics?tab=materials' },
             { name: 'Promotion', path: '/academics?tab=promotion' },
             { name: 'Reports', path: '/academics?tab=reports' },
-            { name: 'Settings', path: '/academics?tab=settings' },
+            { name: 'Settings', path: '/academics?tab=settings', allowedRoles: ['Super Admin', 'Admin'] },
         ]
     },
     {
@@ -222,7 +224,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Confirmation', path: '/admission?tab=confirm' },
             { name: 'ID Card', path: '/admission?tab=id-card' },
             { name: 'Admission Reports', path: '/admission?tab=reports' },
-            { name: 'Admission Settings', path: '/admission?tab=settings' },
+            { name: 'Admission Settings', path: '/admission?tab=settings', allowedRoles: ['Super Admin', 'Admin'] },
         ]
     },
     {
@@ -239,7 +241,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Registration', path: '/addons?tab=registration' },
             { name: 'Reports', path: '/addons?tab=reports' },
             { name: 'Analytics', path: '/addons?tab=analytics' },
-            { name: 'Settings', path: '/addons?tab=settings' },
+            { name: 'Settings', path: '/addons?tab=settings', allowedRoles: ['Super Admin', 'Admin'] },
         ]
     },
     {
@@ -255,8 +257,8 @@ export const SIDEBAR_MODULES = [
             { name: 'Performance', path: '/hr?tab=performance' },
             { name: 'Shifts & Timetable', path: '/hr?tab=shifts' },
             { name: 'HR Reports', path: '/hr?tab=reports' },
-            { name: 'HR Settings', path: '/hr?tab=settings' },
-            { name: 'Login Access', path: '/hr?tab=login-management', superAdminOnly: true },
+            { name: 'HR Settings', path: '/hr?tab=settings', allowedRoles: ['Super Admin', 'Admin'] },
+            { name: 'Login Access', path: '/hr?tab=login-management', allowedRoles: ['Super Admin'] },
         ]
     },
     {
@@ -437,7 +439,11 @@ export default function Sidebar({ open, onClose }) {
                                     <div className={`nav-sub-container ${isExpanded ? 'expanded' : ''}`}>
                                         <div className="nav-sub-items">
                                             {mod.subModules
-                                                .filter(sub => !sub.superAdminOnly || user?.role === 'Super Admin')
+                                                .filter(sub => {
+                                                    if (sub.superAdminOnly && user?.role !== 'Super Admin') return false;
+                                                    if (sub.allowedRoles && (!user || !sub.allowedRoles.includes(user.role))) return false;
+                                                    return true;
+                                                })
                                                 .map((sub) => {
                                                     const SubIcon = subIconMap[mod.id]?.[sub.name] || FileText;
                                                     return (

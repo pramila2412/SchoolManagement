@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Plus, Edit, Trash2, Copy, Megaphone, Eye, Calendar } from 'lucide-react';
+import { Send, Plus, Edit, Trash2, Copy, Megaphone, Eye, Calendar, Bold, Italic, Underline, Link2, List, AlignLeft, Paperclip, X, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import './Announcements.css';
@@ -15,8 +15,13 @@ export default function Announcements() {
         targetGroup: 'All Students',
         publishDate: new Date().toISOString().split('T')[0],
         status: 'Published',
+        attachment: null,
     });
     const [editingId, setEditingId] = useState(null);
+    const [filterDate, setFilterDate] = useState('');
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [filterTarget, setFilterTarget] = useState('All');
+    const [historyModalData, setHistoryModalData] = useState(null);
 
     // Permission check
     const isStaff = user?.role?.includes('Admin') || user?.role?.includes('Staff') || user?.role?.includes('Teacher');
@@ -55,13 +60,13 @@ export default function Announcements() {
         } else {
             save([{ id: Date.now().toString(), ...formData, createdAt: new Date().toISOString() }, ...announcements]);
         }
-        setFormData({ title: '', message: '', targetGroup: 'All Students', publishDate: new Date().toISOString().split('T')[0], status: 'Published' });
+        setFormData({ title: '', message: '', targetGroup: 'All Students', publishDate: new Date().toISOString().split('T')[0], status: 'Published', attachment: null });
         setActiveTab('list');
     };
 
     const handleEdit = (a) => {
         if (!isStaff) return;
-        setFormData({ title: a.title, message: a.message, targetGroup: a.targetGroup, publishDate: a.publishDate, status: a.status });
+        setFormData({ title: a.title, message: a.message, targetGroup: a.targetGroup, publishDate: a.publishDate, status: a.status, attachment: a.attachment || null });
         setEditingId(a.id);
         setActiveTab('create');
     };
@@ -74,8 +79,20 @@ export default function Announcements() {
 
     const handleDuplicate = (a) => {
         if (!isStaff) return;
-        save([{ ...a, id: Date.now().toString(), title: `${a.title} (Copy)`, createdAt: new Date().toISOString() }, ...announcements]);
+        save([{ ...a, id: Date.now().toString(), title: `${a.title} (Copy)`, status: 'Draft', createdAt: new Date().toISOString() }, ...announcements]);
+        customAlert('Announcement duplicated as Draft');
     };
+
+    const handleViewHistory = (a) => {
+        setHistoryModalData(a);
+    };
+
+    const filteredAnnouncements = announcements.filter(a => {
+        const matchDate = !filterDate || a.publishDate === filterDate;
+        const matchStatus = filterStatus === 'All' || a.status === filterStatus;
+        const matchTarget = filterTarget === 'All' || a.targetGroup === filterTarget;
+        return matchDate && matchStatus && matchTarget;
+    });
 
     return (
         <div className="announcements-page animate-fade-in">
@@ -94,10 +111,35 @@ export default function Announcements() {
             </div>
 
             {activeTab === 'list' && (
-                <div className="announcements-list-container">
-                    {announcements.length > 0 ? (
-                        <div className="announcements-list" style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-                            {announcements.map(a => (
+                <>
+                    <div className="filters-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                        <div className="search-wrapper" style={{ flex: 1, minWidth: '200px', display: 'flex', alignItems: 'center', background: '#fff', padding: '0 12px', borderRadius: '8px', border: '1px solid #eaedf1' }}>
+                            <Filter size={18} style={{ color: '#9ca3af', marginRight: '8px' }} />
+                            <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Filters:</span>
+                        </div>
+                        <input type="date" className="form-input" style={{ width: 'auto' }} value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+                        <select className="form-select" style={{ width: 'auto' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                            <option value="All">All Statuses</option>
+                            <option value="Published">Published</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Scheduled">Scheduled</option>
+                        </select>
+                        <select className="form-select" style={{ width: 'auto' }} value={filterTarget} onChange={e => setFilterTarget(e.target.value)}>
+                            <option value="All">All Targets</option>
+                            <option value="All Students">All Students</option>
+                            <option value="Specific Class">Specific Class</option>
+                            <option value="Specific Section">Specific Section</option>
+                            <option value="Individual Students">Individual Students</option>
+                            <option value="Teachers">Teachers</option>
+                            <option value="Parents">Parents</option>
+                        </select>
+                        <button className="btn btn-outline" onClick={() => { setFilterDate(''); setFilterStatus('All'); setFilterTarget('All'); }}>Clear</button>
+                    </div>
+
+                    <div className="announcements-list-container">
+                        {filteredAnnouncements.length > 0 ? (
+                            <div className="announcements-list" style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+                                {filteredAnnouncements.map(a => (
                                 <div key={a.id} className="announcement-item" style={{
                                     backgroundColor: '#fff', 
                                     border: '1px solid #eaedf1', 
@@ -117,6 +159,7 @@ export default function Announcements() {
                                         </div>
                                         {isStaff && (
                                             <div style={{display:'flex',gap:8,flexShrink:0}}>
+                                                <button className="btn-icon" style={{background: '#f0fdf4', border: '1px solid #dcfce7', color: '#16a34a'}} title="View History" onClick={()=>handleViewHistory(a)}><Eye size={16}/></button>
                                                 <button className="btn-icon" style={{background: '#f9fafb', border: '1px solid #e5e7eb', color: '#4b5563'}} title="Edit" onClick={()=>handleEdit(a)}><Edit size={16}/></button>
                                                 <button className="btn-icon" style={{background: '#f9fafb', border: '1px solid #e5e7eb', color: '#4b5563'}} title="Duplicate" onClick={()=>handleDuplicate(a)}><Copy size={16}/></button>
                                                 <button className="btn-icon" style={{background: '#fef2f2', border: '1px solid #fde8e8', color: '#ef4444'}} title="Delete" onClick={()=>handleDelete(a.id)}><Trash2 size={16}/></button>
@@ -136,6 +179,7 @@ export default function Announcements() {
                         </div>
                     )}
                 </div>
+                </>
             )}
 
             {isStaff && activeTab === 'create' && (
@@ -148,19 +192,29 @@ export default function Announcements() {
                         </div>
                         <div className="form-group" style={{marginTop:16}}>
                             <label className="form-label">Message <span className="required">*</span></label>
-                            <textarea className="form-textarea" value={formData.message} onChange={e=>setFormData({...formData,message:e.target.value})} placeholder="Write your announcement..." rows="6" style={{width:'100%',padding:'12px 14px',border:'1px solid var(--border-light)',borderRadius:'var(--radius)',fontFamily:'inherit',fontSize:'0.9rem',resize:'vertical'}}></textarea>
+                            <div style={{border:'1px solid var(--border-light)',borderRadius:'var(--radius)', overflow: 'hidden'}}>
+                                <div style={{display:'flex',gap:8,padding:'8px 12px',background:'#f9fafb',borderBottom:'1px solid var(--border-light)'}}>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><Bold size={14}/></button>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><Italic size={14}/></button>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><Underline size={14}/></button>
+                                    <div style={{width:1,height:16,background:'var(--border-light)',margin:'auto 4px'}}></div>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><List size={14}/></button>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><AlignLeft size={14}/></button>
+                                    <div style={{width:1,height:16,background:'var(--border-light)',margin:'auto 4px'}}></div>
+                                    <button type="button" className="btn-icon" style={{width:28,height:28}}><Link2 size={14}/></button>
+                                </div>
+                                <textarea className="form-textarea" value={formData.message} onChange={e=>setFormData({...formData,message:e.target.value})} placeholder="Write your announcement..." rows="6" style={{width:'100%',padding:'12px 14px',border:'none',fontFamily:'inherit',fontSize:'0.9rem',resize:'vertical', outline:'none'}}></textarea>
+                            </div>
                             <div style={{fontSize:'0.8rem',textAlign:'right',color:'var(--text-light)',marginTop:4}}>{formData.message.length} characters</div>
                         </div>
                         <div className="form-row" style={{marginTop:16,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
                             <div className="form-group">
                                 <label className="form-label">Target Group</label>
-                                <select className="form-select" value={formData.targetGroup} onChange={e=>setFormData({...formData,targetGroup:e.target.value})}>
+                                <select className="form-select" value={formData.targetGroup} onChange={e=>setFormData({...formData,targetGroup:e.target.value})} disabled={editingId && announcements.find(a=>a.id===editingId)?.status === 'Published'}>
                                     <option value="All Students">All Students</option>
-                                    <option value="Class I">Class I</option>
-                                    <option value="Class II">Class II</option>
-                                    <option value="Class III">Class III</option>
-                                    <option value="Class IV">Class IV</option>
-                                    <option value="Class V">Class V</option>
+                                    <option value="Specific Class">Specific Class (e.g. Class I)</option>
+                                    <option value="Specific Section">Specific Section (e.g. Class I-A)</option>
+                                    <option value="Individual Students">Individual Students</option>
                                     <option value="Teachers">Teachers</option>
                                     <option value="Parents">Parents</option>
                                 </select>
@@ -178,11 +232,53 @@ export default function Announcements() {
                                 </select>
                             </div>
                         </div>
+                        <div className="form-group" style={{marginTop:16}}>
+                            <label className="form-label">Attachment <span style={{color: 'var(--text-light)', fontWeight: 'normal'}}>(Optional)</span></label>
+                            <div style={{display:'flex',alignItems:'center',gap:12}}>
+                                <label className="btn btn-outline" style={{cursor:'pointer', margin:0}}>
+                                    <Paperclip size={16}/> Choose File
+                                    <input type="file" style={{display:'none'}} onChange={e=>setFormData({...formData, attachment: e.target.files[0]})} />
+                                </label>
+                                {formData.attachment && <span style={{fontSize:'0.9rem',color:'var(--text-secondary)'}}>{formData.attachment.name}</span>}
+                            </div>
+                        </div>
                         <div style={{display:'flex',gap:12,justifyContent:'flex-end',marginTop:24}}>
                             <button type="button" className="btn btn-outline" onClick={()=>{setActiveTab('list');setEditingId(null);}}>Cancel</button>
                             <button type="submit" className="btn btn-primary"><Send size={16}/> {editingId ? 'Update' : 'Publish'}</button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {historyModalData && (
+                <div className="global-dialog-overlay" onClick={() => setHistoryModalData(null)}>
+                    <div className="global-dialog" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+                        <div className="dialog-header">
+                            <h3>Read Receipts: {historyModalData.title}</h3>
+                            <button className="close-btn" onClick={() => setHistoryModalData(null)}><X size={20} /></button>
+                        </div>
+                        <div className="dialog-content" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>Showing users who have viewed this announcement.</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {/* Mocked History Data */}
+                                {[
+                                    { name: 'John Doe', role: 'Student', time: '10 mins ago' },
+                                    { name: 'Jane Smith', role: 'Teacher', time: '1 hour ago' },
+                                    { name: 'Michael Brown', role: 'Parent', time: '2 hours ago' },
+                                ].map((h, i) => (
+                                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #eaedf1' }}>
+                                        <div>
+                                            <div style={{ fontWeight: '600', color: '#111827' }}>{h.name}</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>{h.role}</div>
+                                        </div>
+                                        <div style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Eye size={14} /> Viewed {h.time}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

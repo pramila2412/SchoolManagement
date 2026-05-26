@@ -1,18 +1,36 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Eye, Check, X, Clock, Save, RotateCcw, BarChart2, Calendar } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { customAlert } from '../utils/dialogs';
 import './Attendance.css';
 
 const API = '/api';
 
 export default function Attendance() {
+    const { user } = useAuth();
+    const isTeacher = user?.role === 'Teacher';
+
     const [activeTab, setActiveTab] = useState('mark');
     const [formData, setFormData] = useState({ class: '', section: '', period: 'Period 1', date: new Date().toISOString().split('T')[0] });
     const [showListing, setShowListing] = useState(false);
     const [students, setStudents] = useState([]);
     const [saving, setSaving] = useState(false);
     const [reportData, setReportData] = useState([]);
+
+    // Calculate 2-day restriction for Teachers
+    let isReadOnly = false;
+    if (isTeacher && formData.date) {
+        const selectedDate = new Date(formData.date);
+        selectedDate.setHours(0,0,0,0);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const diffTime = today.getTime() - selectedDate.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 2) {
+            isReadOnly = true;
+        }
+    }
 
     const handleView = async (e) => {
         e.preventDefault();
@@ -137,8 +155,8 @@ export default function Attendance() {
                                             <span style={{fontSize:'0.85rem',color:'var(--text-grey)'}}>{formData.period} • {new Date(formData.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>
                                         </div>
                                         <div style={{display:'flex',gap:12}}>
-                                            <button className="btn btn-outline btn-sm action-btn" onClick={markAllPresent}><Check size={16}/> Mark All Present</button>
-                                            <button className="btn btn-outline btn-sm action-btn" onClick={resetAttendance}><RotateCcw size={16}/> Reset</button>
+                                            <button className="btn btn-outline btn-sm action-btn" onClick={markAllPresent} disabled={isReadOnly}><Check size={16}/> Mark All Present</button>
+                                            <button className="btn btn-outline btn-sm action-btn" onClick={resetAttendance} disabled={isReadOnly}><RotateCcw size={16}/> Reset</button>
                                         </div>
                                     </div>
                                     <div className="table-wrapper">
@@ -153,10 +171,10 @@ export default function Attendance() {
                                                         <td><span className={`status-pill pill-${student.status.toLowerCase()}`}>{student.status}</span></td>
                                                         <td>
                                                             <div className="attendance-action-group">
-                                                                <button className={`att-btn btn-present ${student.status==='Present'?'active':''}`} onClick={()=>updateStatus(student.studentId,'Present')} title="Present"><Check size={14}/> P</button>
-                                                                <button className={`att-btn btn-absent ${student.status==='Absent'?'active':''}`} onClick={()=>updateStatus(student.studentId,'Absent')} title="Absent"><X size={14}/> A</button>
-                                                                <button className={`att-btn btn-late ${student.status==='Late'?'active':''}`} onClick={()=>updateStatus(student.studentId,'Late')} title="Late"><Clock size={14}/> L</button>
-                                                                <button className={`att-btn btn-leave ${student.status==='Leave'?'active':''}`} onClick={()=>updateStatus(student.studentId,'Leave')} title="Leave">Lv</button>
+                                                                <button className={`att-btn btn-present ${student.status==='Present'?'active':''}`} onClick={()=>!isReadOnly && updateStatus(student.studentId,'Present')} disabled={isReadOnly} title="Present"><Check size={14}/> P</button>
+                                                                <button className={`att-btn btn-absent ${student.status==='Absent'?'active':''}`} onClick={()=>!isReadOnly && updateStatus(student.studentId,'Absent')} disabled={isReadOnly} title="Absent"><X size={14}/> A</button>
+                                                                <button className={`att-btn btn-late ${student.status==='Late'?'active':''}`} onClick={()=>!isReadOnly && updateStatus(student.studentId,'Late')} disabled={isReadOnly} title="Late"><Clock size={14}/> L</button>
+                                                                <button className={`att-btn btn-leave ${student.status==='Leave'?'active':''}`} onClick={()=>!isReadOnly && updateStatus(student.studentId,'Leave')} disabled={isReadOnly} title="Leave">Lv</button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -168,8 +186,11 @@ export default function Attendance() {
                                 </div>
 
                                 {students.length>0 && (
-                                    <div style={{display:'flex',justifyContent:'flex-end',marginTop:24}}>
-                                        <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{display:'flex',alignItems:'center',gap:8,padding:'12px 24px'}}>
+                                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:24}}>
+                                        <div>
+                                            {isReadOnly && <span style={{color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 500}}>Teachers can only edit attendance within the last 2 days.</span>}
+                                        </div>
+                                        <button className="btn btn-primary" onClick={handleSave} disabled={saving || isReadOnly} style={{display:'flex',alignItems:'center',gap:8,padding:'12px 24px'}}>
                                             <Save size={18}/> {saving?'Saving...':'Save Attendance'}
                                         </button>
                                     </div>

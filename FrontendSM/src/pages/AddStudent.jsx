@@ -40,6 +40,7 @@ export default function AddStudent() {
         email: '',
         address: '',
         rollNo: '',
+        studentId: '',
         admissionNo: '',
         admissionDate: '',
         feesStartDate: '',
@@ -61,6 +62,32 @@ export default function AddStudent() {
     const uniqueParents = useMemo(() => {
         const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
         return Array.from(new Map(globalStudents.filter(s => s.parentId).map(s => [s.parentId, s])).values());
+    }, []);
+
+    // Generate Student ID in STU-YYYY-NNN format
+    useEffect(() => {
+        const generateStudentId = () => {
+            const year = new Date().getFullYear();
+            const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+            const pattern = `STU-${year}-`;
+            const matchingIds = globalStudents
+                .map(s => s.studentId || s.id)
+                .filter(id => id && String(id).startsWith(pattern));
+                
+            let seq = matchingIds.length + 1;
+            let newId;
+            do {
+                newId = `${pattern}${String(seq).padStart(3, '0')}`;
+                seq++;
+            } while (matchingIds.includes(newId) || globalStudents.some(s => s.studentId === newId));
+            
+            return newId;
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            studentId: prev.studentId || generateStudentId()
+        }));
     }, []);
 
     const handleParentSelect = (e) => {
@@ -150,7 +177,7 @@ export default function AddStudent() {
         const requiredStrFields = [
             'firstName', 'lastName', 'dateOfBirth', 'gender', 'bloodGroup', 
             'address', 'contactNo', 'email', 'fatherName', 'motherName', 
-            'batch', 'class', 'section', 'rollNo', 'admissionDate', 'admissionNo'
+            'batch', 'class', 'section', 'rollNo', 'admissionDate', 'admissionNo', 'studentId'
         ];
         
         let hasMissing = false;
@@ -521,14 +548,18 @@ export default function AddStudent() {
                             </div>
                         </div>
 
-                        <div className="form-row two-cols">
+                        <div className="form-row three-cols">
                             <div className="form-group">
-                                <label className="form-label">Roll No <span className="required">*</span></label>
-                                <input type="text" className={`form-input ${errors.rollNo ? 'error' : ''}`} name="rollNo" value={formData.rollNo} onChange={handleChange} placeholder="Enter Roll No" />
+                                <label className="form-label">Student ID <span className="required">*</span></label>
+                                <input type="text" className="form-input" name="studentId" value={formData.studentId} readOnly style={{ backgroundColor: '#f5f5f5', color: '#666' }} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Admission No <span className="required">*</span></label>
                                 <input type="text" className={`form-input ${errors.admissionNo ? 'error' : ''}`} name="admissionNo" value={formData.admissionNo} onChange={handleChange} placeholder="Enter Admission No" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Roll No <span className="required">*</span></label>
+                                <input type="text" className={`form-input ${errors.rollNo ? 'error' : ''}`} name="rollNo" value={formData.rollNo} onChange={handleChange} placeholder="Enter Roll No" />
                             </div>
                         </div>
 

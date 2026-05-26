@@ -29,6 +29,7 @@ const DEFAULT_TC_FORM = {
     medium: 'English',
     nationality: 'Indian',
     scSt: '',
+    penNo: '',
     dateOfFirstAdmission: '',
     firstAdmissionClass: '',
     dobInWords: '',
@@ -52,158 +53,7 @@ const DEFAULT_TC_FORM = {
     otherRemarks: ''
 };
 
-/* ───────── helper: build the printable TC HTML (opened in new window) ───────── */
-function buildTcHtml(tc) {
-    const dobDate = tc.dateOfBirth ? new Date(tc.dateOfBirth) : null;
-    const dobFormatted = dobDate ? dobDate.toLocaleDateString('en-IN') : '...............';
-    const dobDay = dobDate ? String(dobDate.getDate()).padStart(2, '0') : '..';
-    const dobMonth = dobDate ? String(dobDate.getMonth() + 1).padStart(2, '0') : '..';
-    const dobYear = dobDate ? String(dobDate.getFullYear()) : '....';
 
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>${tc.studentName} - Transfer Certificate</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Times New Roman', Georgia, serif; background: #e8e8e8; }
-.tc-page {
-    width: 210mm; min-height: 297mm; margin: 10mm auto; background: #fff;
-    padding: 18mm 20mm 14mm 20mm; box-shadow: 0 4px 24px rgba(0,0,0,.12);
-    position: relative;
-}
-/* header */
-.tc-header { text-align: center; margin-bottom: 10px; }
-.tc-header-top { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.tc-logo { width: 72px; height: 72px; object-fit: contain; }
-.tc-school-info { text-align: center; }
-.tc-school-name { font-size: 28px; font-weight: 700; color: #0B3C5D; letter-spacing: 2px; text-transform: uppercase; }
-.tc-school-affil { font-size: 13px; color: #0B3C5D; margin-top: 2px; }
-.tc-school-addr { font-size: 13px; color: #0B3C5D; }
-.tc-affil-row { display: flex; justify-content: center; gap: 40px; margin-top: 4px; font-size: 12px; color: #333; }
-/* title */
-.tc-formal-title { background: #c0392b; color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; text-align: center; padding-top: 5px; padding-bottom: 9px; margin: 12px auto 10px; width: 70%; }
-.tc-meta-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 14px; }
-/* fields */
-.tc-fields { font-size: 13.5px; line-height: 1.8; color: #333; }
-.tc-field { display: flex; margin-bottom: 1px; }
-.tc-field-no { min-width: 28px; font-weight: 600; }
-.tc-field-label { min-width: 320px; }
-.tc-field-value { flex: 1; border-bottom: 1px dotted #999; padding-left: 6px; min-height: 22px; }
-.tc-field-sub { padding-left: 28px; display: flex; }
-.tc-field-inline { display: flex; gap: 20px; padding-left: 28px; }
-.tc-field-inline .tc-field-label { min-width: 200px; }
-.tc-dob-boxes { display: inline-block; margin-left: 4px; }
-.tc-dob-box { display: inline-block; width: 24px; border: 1px solid #333; margin-right: 2px; text-align: center; font-size: 13px; padding-top: 1px; padding-bottom: 6px; vertical-align: -2px; }
-/* footer */
-.tc-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 10px; }
-.tc-sig-block { text-align: center; font-size: 12px; color: #333; width: 180px; }
-.tc-sig-block.right-block { text-align: center; }
-.tc-sig-block em { font-style: italic; }
-@media print {
-    body { background: #fff; }
-    .tc-page { margin: 0; box-shadow: none; width: 100%; min-height: 100vh; padding: 8mm 15mm 8mm 15mm; }
-    @page { size: A4 portrait; margin: 0; }
-    .tc-page { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-}
-</style>
-</head>
-<body>
-<div class="tc-page">
-    <div class="tc-header">
-        <div class="tc-header-top">
-            <img src="/logo.png" class="tc-logo" alt="Logo" onerror="this.style.display='none'" />
-            <div class="tc-school-info">
-                <div class="tc-school-name">MOUNT ZION SCHOOL</div>
-                <div class="tc-school-affil">AFFILIATED TO C.B.S.E., NEW DELHI</div>
-                <div class="tc-school-addr">SION NAGAR, PURNEA – 854 301 (BIHAR)</div>
-            </div>
-        </div>
-        <div class="tc-affil-row">
-            <span>Affiliation No.: <strong>330241</strong></span>
-            <span>School No.: <strong>65235</strong></span>
-        </div>
-    </div>
-
-    <div class="tc-formal-title">TRANSFER CERTIFICATE</div>
-
-    <div class="tc-meta-row">
-        <span>TC No: <strong>${tc.tcNo || '...............'}</strong></span>
-        <span>Admission No: <strong>${tc.admissionNo || '...............'}</strong></span>
-    </div>
-
-    <div class="tc-fields">
-        <div class="tc-field"><span class="tc-field-no">1.</span><span class="tc-field-label">Name of the Pupil</span><span class="tc-field-value">${tc.studentName || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">2.</span><span class="tc-field-label">Father's / Guardian's Name</span><span class="tc-field-value">${tc.fatherName || ''}</span></div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">Mother's Name</span><span class="tc-field-value">${tc.motherName || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">3.</span><span class="tc-field-label">Nationality</span><span class="tc-field-value">${tc.nationality || 'Indian'}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">4.</span><span class="tc-field-label">Whether S.C. or S.T.</span><span class="tc-field-value">${tc.scSt || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">5.</span><span class="tc-field-label">Date of first admission in the School</span><span class="tc-field-value">${tc.dateOfFirstAdmission || (tc.admissionDate ? new Date(tc.admissionDate).toLocaleDateString('en-IN') : '')}</span></div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">In Class</span><span class="tc-field-value">${tc.firstAdmissionClass || ''}</span></div>
-
-        <div class="tc-field">
-            <span class="tc-field-no">6.</span>
-            <span class="tc-field-label">Date of Birth (in figures)</span>
-            <span class="tc-field-value">
-                ${dobFormatted}
-                <span class="tc-dob-boxes">
-                    ${dobDigits.map(d => `<span class="tc-dob-box">${d}</span>`).join('')}
-                </span>
-            </span>
-        </div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">(in words)</span><span class="tc-field-value">${tc.dobInWords || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">7.</span><span class="tc-field-label">Class in which the pupil studied last</span><span class="tc-field-value">${tc.classLastStudied || tc.class || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">8.</span><span class="tc-field-label">School/Board Annual Exam last taken with result</span><span class="tc-field-value">${tc.boardExamResult || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">9.</span><span class="tc-field-label">Whether failed, if so, once/twice in the same class</span><span class="tc-field-value">${tc.whetherFailed || 'No'}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">10.</span><span class="tc-field-label">Subjects studied – Compulsory</span><span class="tc-field-value">${tc.subjectsCompulsory || ''}</span></div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">Elective</span><span class="tc-field-value">${tc.subjectsElective || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">11.</span><span class="tc-field-label">Whether qualified for promotion to higher class</span><span class="tc-field-value">${tc.qualifiedForPromotion || ''}</span></div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">If so, to which class (in figures)</span><span class="tc-field-value">${tc.promotionClass || ''}</span></div>
-        <div class="tc-field-sub"><span class="tc-field-label" style="min-width:320px;padding-left:28px">(in words)</span><span class="tc-field-value">${tc.promotionClassWords || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">12.</span><span class="tc-field-label">Month up to which the pupil has paid school fees</span><span class="tc-field-value">${tc.monthFeesPaid || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">13.</span><span class="tc-field-label">Any fee concession availed of; nature of concession</span><span class="tc-field-value">${tc.feeConcession || 'None'}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">14.</span><span class="tc-field-label">Total No. of School working days</span><span class="tc-field-value">${tc.totalWorkingDays || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">15.</span><span class="tc-field-label">Total No. of days she/he was present</span><span class="tc-field-value">${tc.totalDaysPresent || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">16.</span><span class="tc-field-label">Whether NCC Cadet/Boy Scout/Girl Guide (details may be given)</span><span class="tc-field-value">${tc.ncc || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">17.</span><span class="tc-field-label">Games played or extra-curricular activities in which the pupil usually took part</span><span class="tc-field-value">${tc.gamesPlayed || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">18.</span><span class="tc-field-label">General Conduct</span><span class="tc-field-value">${tc.generalConduct || tc.conduct || 'Good'}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">19.</span><span class="tc-field-label">Date of application for Certificate</span><span class="tc-field-value">${tc.dateOfApplication ? new Date(tc.dateOfApplication).toLocaleDateString('en-IN') : ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">20.</span><span class="tc-field-label">Date of issue of Certificate</span><span class="tc-field-value">${tc.dateOfIssue ? new Date(tc.dateOfIssue).toLocaleDateString('en-IN') : ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">21.</span><span class="tc-field-label">Reasons for leaving the School</span><span class="tc-field-value">${tc.reasonForLeaving || ''}</span></div>
-
-        <div class="tc-field"><span class="tc-field-no">22.</span><span class="tc-field-label">Any other remarks</span><span class="tc-field-value">${tc.otherRemarks || ''}</span></div>
-    </div>
-
-    <div class="tc-footer">
-        <div class="tc-sig-block"><em>Sig. of Class Teacher</em></div>
-        <div class="tc-sig-block"><strong>Checked by</strong><br />(Full name &amp; Designation)</div>
-        <div class="tc-sig-block right-block"><strong>Principal</strong></div>
-    </div>
-</div>
-<script>window.addEventListener('load',function(){window.print();});</script>
-</body>
-</html>`;
-}
 
 /* ───────── helper: TC Preview content (rendered inside portal) ───────── */
 function TcPreviewContent({ tc }) {
@@ -277,14 +127,15 @@ function TcPreviewContent({ tc }) {
                 <Field no="12" label="Month up to which the pupil has paid school fees" value={tc.monthFeesPaid} />
                 <Field no="13" label="Any fee concession availed of; nature of concession" value={tc.feeConcession || 'None'} />
                 <Field no="14" label="Total No. of School working days" value={tc.totalWorkingDays} />
-                <Field no="15" label="Total No. of days she/he was present" value={tc.totalDaysPresent} />
-                <Field no="16" label="Whether NCC Cadet/Boy Scout/Girl Guide (details may be given)" value={tc.ncc} />
-                <Field no="17" label="Games played or extra-curricular activities in which the pupil usually took part" value={tc.gamesPlayed} />
-                <Field no="18" label="General Conduct" value={tc.generalConduct || tc.conduct || 'Good'} />
-                <Field no="19" label="Date of application for Certificate" value={tc.dateOfApplication ? new Date(tc.dateOfApplication).toLocaleDateString('en-IN') : ''} />
-                <Field no="20" label="Date of issue of Certificate" value={tc.dateOfIssue ? new Date(tc.dateOfIssue).toLocaleDateString('en-IN') : ''} />
-                <Field no="21" label="Reasons for leaving the School" value={tc.reasonForLeaving} />
-                <Field no="22" label="Any other remarks" value={tc.otherRemarks} />
+                <Field no="15" label="PEN No" value={tc.penNo} />
+                <Field no="16" label="Total No. of days she/he was present" value={tc.totalDaysPresent} />
+                <Field no="17" label="Whether NCC Cadet/Boy Scout/Girl Guide (details may be given)" value={tc.ncc} />
+                <Field no="18" label="Games played or extra-curricular activities in which the pupil usually took part" value={tc.gamesPlayed} />
+                <Field no="19" label="General Conduct" value={tc.generalConduct || tc.conduct || 'Good'} />
+                <Field no="20" label="Date of application for Certificate" value={tc.dateOfApplication ? new Date(tc.dateOfApplication).toLocaleDateString('en-IN') : ''} />
+                <Field no="21" label="Date of issue of Certificate" value={tc.dateOfIssue ? new Date(tc.dateOfIssue).toLocaleDateString('en-IN') : ''} />
+                <Field no="22" label="Reasons for leaving the School" value={tc.reasonForLeaving} />
+                <Field no="23" label="Any other remarks" value={tc.otherRemarks} />
             </div>
 
             {/* ──── Footer ──── */}
@@ -327,7 +178,7 @@ function SubField({ label, value }) {
 /* ═══════════════════════════════ MAIN COMPONENT ═══════════════════════════════ */
 export default function TC() {
     const [activeView, setActiveView] = useState('search');
-    const [formData, setFormData] = useState({ batch: getActiveBatch(), class: '', section: '', keyword: '' });
+    const [formData, setFormData] = useState({ batch: '', class: '', section: '', keyword: '' });
     const [results, setResults] = useState([]);
     const [hasSearched, setHasSearched] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -336,6 +187,7 @@ export default function TC() {
     const [tcList, setTcList] = useLocalStorage('issued_tcs', []);
     const [academicSubjects] = useLocalStorage('academic_subjects', []);
     const [previewTc, setPreviewTc] = useState(null);
+    const [printTc, setPrintTc] = useState(null);
 
     /* ── Delete TC ── */
     const handleDeleteTc = async (id) => {
@@ -352,11 +204,11 @@ export default function TC() {
 
     /* ── Print TC (new window) ── */
     const handlePrintTc = (tc) => {
-        const html = buildTcHtml(tc);
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 200);
+        setPrintTc(tc);
+        setTimeout(() => {
+            window.print();
+            window.addEventListener('afterprint', () => setPrintTc(null), { once: true });
+        }, 150);
     };
 
     /* ── Download TC as PDF ── */
@@ -406,7 +258,7 @@ export default function TC() {
     /* ── Normalize class name helper ── */
     const normalizeClass = (cls) => {
         if (!cls) return '';
-        return cls.replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
+        return String(cls).replace(/Grade\s+/i, '').replace(/Class\s+/i, '').trim();
     };
 
     /* ── Search students ── */
@@ -419,7 +271,8 @@ export default function TC() {
                 if (formData.class) url += `&class=${encodeURIComponent(formData.class)}`;
                 if (formData.section) url += `&section=${formData.section}`;
                 const res = await fetch(url);
-                apiStudents = await res.json();
+                const jsonRes = await res.json();
+                if (Array.isArray(jsonRes)) apiStudents = jsonRes;
             } catch (err) { console.error("API search failed", err); }
 
             const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
@@ -434,7 +287,9 @@ export default function TC() {
                 };
             }).filter(s => {
                 const searchClass = normalizeClass(formData.class);
-                const studentClass = normalizeClass(s.class);
+                let studentClass = normalizeClass(s.class);
+                if (studentClass.includes('-')) studentClass = studentClass.split('-')[0].trim();
+                
                 if (searchClass && studentClass !== searchClass) return false;
                 if (formData.section && s.section !== formData.section) return false;
                 if (s.status === 'Inactive') return false;
@@ -537,6 +392,7 @@ export default function TC() {
                                 <div className="form-group">
                                     <label className="form-label">Batch</label>
                                     <select className="form-select" value={formData.batch} onChange={e => setFormData({ ...formData, batch: e.target.value })}>
+                                        <option value="">All Batches</option>
                                         {getBatches().map(b => <option key={b} value={b}>{b}</option>)}
                                     </select>
                                 </div>
@@ -650,6 +506,10 @@ export default function TC() {
                             <div className="form-group">
                                 <label className="form-label">Whether S.C. or S.T.</label>
                                 <input type="text" className="form-input" value={tcForm.scSt} onChange={u('scSt')} placeholder="e.g. General, SC, ST, OBC" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">PEN No</label>
+                                <input type="text" className="form-input" value={tcForm.penNo} onChange={u('penNo')} placeholder="e.g. 123456789" />
                             </div>
                             <div className="form-group span-2">
                                 <label className="form-label">Date of Birth (in words)</label>
@@ -853,6 +713,13 @@ export default function TC() {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {/* ───── Hidden Print Container ───── */}
+            {printTc && (
+                <div style={{ position: 'absolute', top: -9999, left: -9999, opacity: 0, pointerEvents: 'none' }}>
+                    <TcPreviewContent tc={printTc} />
+                </div>
             )}
         </div>
     );

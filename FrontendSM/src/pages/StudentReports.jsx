@@ -93,6 +93,9 @@ export default function StudentReports() {
         endDate: ''
     });
     const [viewType, setViewType] = useState('summary'); // summary, table, charts
+    const [reportType, setReportType] = useState('student'); // student, attendance
+    const [attendanceData, setAttendanceData] = useState([]);
+    const [loadingAttendance, setLoadingAttendance] = useState(false);
 
     // Load students from API and localStorage
     useEffect(() => {
@@ -244,9 +247,28 @@ export default function StudentReports() {
 
     // Export to CSV
     const handleExportCSV = () => {
-        const headers = ['Admission No', 'First Name', 'Last Name', 'Class', 'Section', 'Gender', 'Father Name', 'Contact No', 'Status', 'Admission Date', 'Fees Start Date'];
-        const rows = filteredStudents.map(s => {
-            return [
+        let headers = [];
+        let rows = [];
+
+        if (reportType === 'attendance') {
+            headers = ['Date', 'Total Students', 'Present', 'Absent', 'Late', 'Leave'];
+            rows = attendanceData.map(r => {
+                const p = r.entries.filter(e => e.status === 'Present').length;
+                const a = r.entries.filter(e => e.status === 'Absent').length;
+                const l = r.entries.filter(e => e.status === 'Late').length;
+                const lv = r.entries.filter(e => e.status === 'Leave').length;
+                return [
+                    new Date(r.date).toLocaleDateString('en-IN'),
+                    String(r.entries.length),
+                    String(p),
+                    String(a),
+                    String(l),
+                    String(lv)
+                ];
+            });
+        } else {
+            headers = ['Admission No', 'First Name', 'Last Name', 'Class', 'Section', 'Gender', 'Father Name', 'Contact No', 'Status', 'Admission Date', 'Fees Start Date'];
+            rows = filteredStudents.map(s => [
                 s.admissionNo || '',
                 s.firstName || '',
                 s.lastName || '',
@@ -258,8 +280,8 @@ export default function StudentReports() {
                 s.status || 'Active',
                 formatDate(s.admissionDate),
                 formatDate(s.feesStartDate)
-            ];
-        });
+            ]);
+        }
 
         let csv = headers.join(',') + '\n';
         rows.forEach(row => {
@@ -277,11 +299,50 @@ export default function StudentReports() {
         URL.revokeObjectURL(url);
     };
 
+    // Fetch Attendance Data
+    const fetchAttendanceReport = async () => {
+        if (!filters.class) return customAlert('Please select a Class to fetch Attendance Report');
+        setLoadingAttendance(true);
+        try {
+            const m = filters.startDate ? new Date(filters.startDate).getMonth() + 1 : new Date().getMonth() + 1;
+            const y = filters.startDate ? new Date(filters.startDate).getFullYear() : new Date().getFullYear();
+            const res = await fetch(`/api/attendance/report/monthly?class=${encodeURIComponent(filters.class)}&section=${filters.section}&month=${m}&year=${y}`);
+            if (!res.ok) throw new Error('Failed to fetch');
+            const data = await res.json();
+            setAttendanceData(data);
+        } catch (err) {
+            console.error(err);
+            customAlert('Failed to load attendance report or no data available.');
+            setAttendanceData([]);
+        } finally {
+            setLoadingAttendance(false);
+        }
+    };
+
     // Export to Excel (using CSV format with .xlsx extension for basic compatibility)
     const handleExportExcel = () => {
-        const headers = ['Admission No', 'First Name', 'Last Name', 'Class', 'Section', 'Gender', 'Father Name', 'Contact No', 'Status', 'Admission Date', 'Fees Start Date'];
-        const rows = filteredStudents.map(s => {
-            return [
+        let headers = [];
+        let rows = [];
+
+        if (reportType === 'attendance') {
+            headers = ['Date', 'Total Students', 'Present', 'Absent', 'Late', 'Leave'];
+            rows = attendanceData.map(r => {
+                const p = r.entries.filter(e => e.status === 'Present').length;
+                const a = r.entries.filter(e => e.status === 'Absent').length;
+                const l = r.entries.filter(e => e.status === 'Late').length;
+                const lv = r.entries.filter(e => e.status === 'Leave').length;
+                return [
+                    new Date(r.date).toLocaleDateString('en-IN'),
+                    String(r.entries.length),
+                    String(p),
+                    String(a),
+                    String(l),
+                    String(lv)
+                ];
+            });
+        } else {
+            headers = ['Admission No', 'First Name', 'Last Name', 'Class', 'Section', 'Gender', 'Father Name', 'Contact No', 'Status', 'Admission Date', 'Fees Start Date'];
+            rows = filteredStudents.map(s => [
                 s.admissionNo || '',
                 s.firstName || '',
                 s.lastName || '',
@@ -293,8 +354,8 @@ export default function StudentReports() {
                 s.status || 'Active',
                 formatDate(s.admissionDate),
                 formatDate(s.feesStartDate)
-            ];
-        });
+            ]);
+        }
 
         let html = '<table border="1"><tr>';
         headers.forEach(h => html += `<th>${h}</th>`);
@@ -396,8 +457,62 @@ export default function StudentReports() {
             </html>
         `;
 
+        let attendancePdfContent = `
+            <html>
+            <head>
+                <title>Attendance Report</title>
+                <style>
+                    * { margin: 0; padding: 0; }
+                    body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+                    h1 { color: #0B3C5D; border-bottom: 3px solid #0B3C5D; padding-bottom: 10px; margin-bottom: 20px; }
+                    h2 { color: #0B3C5D; margin-top: 20px; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
+                    th { background: #0B3C5D; color: white; padding: 12px; text-align: left; font-weight: bold; }
+                    td { padding: 10px; border-bottom: 1px solid #ddd; }
+                    tr:nth-child(even) { background: #f9f9f9; }
+                    @media print { body { padding: 0; margin: 0; } }
+                </style>
+            </head>
+            <body>
+                <h1>Attendance Report - Class ${filters.class || 'All'} - Section ${filters.section || 'All'}</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Total Students</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Leave</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${attendanceData.map(r => {
+                            const p = r.entries.filter(e => e.status === 'Present').length;
+                            const a = r.entries.filter(e => e.status === 'Absent').length;
+                            const l = r.entries.filter(e => e.status === 'Late').length;
+                            const lv = r.entries.filter(e => e.status === 'Leave').length;
+                            return `
+                            <tr>
+                                <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
+                                <td>${r.entries.length}</td>
+                                <td>${p}</td>
+                                <td>${a}</td>
+                                <td>${l}</td>
+                                <td>${lv}</td>
+                            </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const finalContent = reportType === 'attendance' ? attendancePdfContent : pdfContent;
+
         const newWindow = window.open('', '_blank');
-        newWindow.document.write(pdfContent);
+        newWindow.document.write(finalContent);
         newWindow.document.close();
         setTimeout(() => {
             newWindow.print();
@@ -424,6 +539,17 @@ export default function StudentReports() {
                 <Link to="/students" className="btn btn-outline">
                     <ArrowLeft size={16} /> Back to Students
                 </Link>
+            </div>
+
+            {/* Report Type Selector */}
+            <div className="card filters-card" style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <h3 className="section-title" style={{ margin: 0, padding: 0, border: 'none' }}>Report Type:</h3>
+                    <select className="form-select" value={reportType} onChange={e => setReportType(e.target.value)} style={{ width: '250px' }}>
+                        <option value="student">Student Details Report</option>
+                        <option value="attendance">Attendance Report</option>
+                    </select>
+                </div>
             </div>
 
             {/* Filters */}
@@ -469,6 +595,13 @@ export default function StudentReports() {
                         <input type="date" className="form-input" value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} />
                     </div>
                 </div>
+                {reportType === 'attendance' && (
+                    <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                        <button className="btn btn-primary" onClick={fetchAttendanceReport} disabled={loadingAttendance}>
+                            {loadingAttendance ? 'Loading...' : 'Fetch Attendance'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Export Buttons */}
@@ -536,7 +669,7 @@ export default function StudentReports() {
             )}
 
             {/* Detailed Table View */}
-            {viewType === 'table' && (
+            {viewType === 'table' && reportType === 'student' && (
                 <div className="card table-card">
                     <div className="table-responsive">
                         <table className="data-table">
@@ -574,6 +707,47 @@ export default function StudentReports() {
                                     })
                                 ) : (
                                     <tr><td colSpan="10" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-light)' }}>No students found matching the filters</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {viewType === 'table' && reportType === 'attendance' && (
+                <div className="card table-card">
+                    <div className="table-responsive">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Total Students</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Late</th>
+                                    <th>Leave</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {attendanceData.length > 0 ? (
+                                    attendanceData.map(r => {
+                                        const p = r.entries.filter(e => e.status === 'Present').length;
+                                        const a = r.entries.filter(e => e.status === 'Absent').length;
+                                        const l = r.entries.filter(e => e.status === 'Late').length;
+                                        const lv = r.entries.filter(e => e.status === 'Leave').length;
+                                        return (
+                                            <tr key={r._id || r.date}>
+                                                <td className="fw-600">{new Date(r.date).toLocaleDateString('en-IN')}</td>
+                                                <td>{r.entries.length}</td>
+                                                <td style={{color: 'var(--success)', fontWeight: 600}}>{p}</td>
+                                                <td style={{color: 'var(--danger)', fontWeight: 600}}>{a}</td>
+                                                <td style={{color: 'var(--warning)', fontWeight: 600}}>{l}</td>
+                                                <td>{lv}</td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-light)' }}>No attendance data fetched. Select a class and click Fetch Attendance.</td></tr>
                                 )}
                             </tbody>
                         </table>

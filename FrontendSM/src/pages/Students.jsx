@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Plus, Phone, Trash2 } from 'lucide-react';
+import { Search, Filter, Plus, Phone, Trash2, Download, Upload } from 'lucide-react';
 import { api } from '../utils/api';
 import { getInitials, getAvatarColor } from '../utils/helpers';
 import { customConfirm, customAlert } from '../utils/dialogs';
+import RoleGuard, { useRole } from '../components/RoleGuard';
 import './Students.css';
 
 export default function StudentsPage() {
@@ -14,6 +15,7 @@ export default function StudentsPage() {
     const [statusFilter, setStatusFilter] = useState('Active');
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { canAddStudent, canDeleteStudent, canHardDeleteStudent } = useRole();
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -59,30 +61,46 @@ export default function StudentsPage() {
         e.preventDefault();
         e.stopPropagation();
         
-        if (await customConfirm('Are you sure you want to remove this student?')) {
-            try {
-                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-                const studentId = student.id || student._id || student.admissionNo;
-                const studentIndex = localData.findIndex(s => (s.id || s._id || s.admissionNo) === studentId);
-                
-                if (studentIndex >= 0) {
-                    localData[studentIndex].status = 'Inactive';
-                    localStorage.setItem('mzs_students', JSON.stringify(localData));
-                } else {
-                    const override = { ...student, status: 'Inactive' };
-                    localData.push(override);
-                    localStorage.setItem('mzs_students', JSON.stringify(localData));
+        if (canHardDeleteStudent) {
+            if (await customConfirm('SUPER ADMIN ACTION: Are you sure you want to PERMANENTLY delete this student record? This cannot be undone.')) {
+                try {
+                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                    const studentId = student.id || student._id || student.admissionNo;
+                    const filteredData = localData.filter(s => (s.id || s._id || s.admissionNo) !== studentId);
+                    localStorage.setItem('mzs_students', JSON.stringify(filteredData));
+                    
+                    setStudents(prev => prev.filter(s => (s.id || s._id || s.admissionNo) !== studentId));
+                    customAlert('Student permanently deleted.');
+                } catch (err) {
+                    customAlert('Failed to hard delete student.');
                 }
-                
-                setStudents(prev => prev.map(s => {
-                    if ((s.id || s._id || s.admissionNo) === studentId) {
-                        return { ...s, status: 'Inactive' };
+            }
+        } else if (canDeleteStudent) {
+            if (await customConfirm('Are you sure you want to soft remove this student? They will be marked as Inactive.')) {
+                try {
+                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                    const studentId = student.id || student._id || student.admissionNo;
+                    const studentIndex = localData.findIndex(s => (s.id || s._id || s.admissionNo) === studentId);
+                    
+                    if (studentIndex >= 0) {
+                        localData[studentIndex].status = 'Inactive';
+                        localStorage.setItem('mzs_students', JSON.stringify(localData));
+                    } else {
+                        const override = { ...student, status: 'Inactive' };
+                        localData.push(override);
+                        localStorage.setItem('mzs_students', JSON.stringify(localData));
                     }
-                    return s;
-                }));
-            } catch (err) {
-                console.error("Delete failed", err);
-                customAlert('Failed to remove student.');
+                    
+                    setStudents(prev => prev.map(s => {
+                        if ((s.id || s._id || s.admissionNo) === studentId) {
+                            return { ...s, status: 'Inactive' };
+                        }
+                        return s;
+                    }));
+                } catch (err) {
+                    console.error("Delete failed", err);
+                    customAlert('Failed to remove student.');
+                }
             }
         }
     };
@@ -98,6 +116,83 @@ export default function StudentsPage() {
         return matchSearch && matchClass && matchSection && matchGender && matchStatus;
     });
 
+    const handleExportCSV = () => {
+        const headers = ['Student ID', 'Admission No', 'Roll No', 'First Name', 'Last Name', 'Class', 'Section', 'Gender', 'Phone', 'Email', 'Status'];
+        const csvRows = [headers.join(',')];
+        
+        filteredStudents.forEach(s => {
+            const values = [
+                s.studentId || s.id || '',
+                s.admissionNo || '',
+                s.rollNo || '',
+                s.firstName || '',
+                s.lastName || '',
+                s.class || '',
+                s.section || '',
+                s.gender || '',
+                s.contactNo || '',
+                s.email || '',
+                s.status || 'Active'
+            ];
+            csvRows.push(values.map(v => `"${v}"`).join(','));
+        });
+        
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `Students_Export_${new Date().toISOString().split('T')[0]}.csv`);
+        a.click();
+    };
+
+    const handleImportCSV = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const text = event.target.result;
+                const rows = text.split('\n').map(row => row.trim()).filter(row => row);
+                if (rows.length <= 1) throw new Error("File is empty or only contains headers.");
+                
+                const headers = rows[0].split(',').map(h => h.replace(/"/g, '').trim());
+                
+                const newStudents = rows.slice(1).map(row => {
+                    const values = row.split(',').map(v => v.replace(/^"|"$/g, '').trim());
+                    const s = {};
+                    headers.forEach((h, i) => { s[h] = values[i] || ''; });
+                    return {
+                        id: s['Student ID'] || `STU-IMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        studentId: s['Student ID'] || `STU-IMP-${Math.floor(Math.random() * 10000)}`,
+                        admissionNo: s['Admission No'] || '',
+                        rollNo: s['Roll No'] || '',
+                        firstName: s['First Name'] || 'Unknown',
+                        lastName: s['Last Name'] || '',
+                        class: s['Class'] || '',
+                        section: s['Section'] || '',
+                        gender: s['Gender'] || '',
+                        contactNo: s['Phone'] || '',
+                        email: s['Email'] || '',
+                        status: s['Status'] || 'Active',
+                        newStudent: true
+                    };
+                });
+                
+                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                const combined = [...localData, ...newStudents];
+                localStorage.setItem('mzs_students', JSON.stringify(combined));
+                setStudents(prev => [...prev, ...newStudents]);
+                customAlert(`Successfully imported ${newStudents.length} students.`);
+            } catch (err) {
+                console.error(err);
+                customAlert('Failed to parse CSV file. Please ensure it matches the export format.');
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = null;
+    };
+
     return (
         <div className="students-page animate-fade-in">
             <div className="page-header">
@@ -109,9 +204,22 @@ export default function StudentsPage() {
                     </div>
                     <h1>Student Information</h1>
                 </div>
-                <Link to="/students/add" className="btn btn-primary">
-                    <Plus size={16} /> Add Student
-                </Link>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn btn-outline" onClick={handleExportCSV}>
+                        <Download size={16} /> Export
+                    </button>
+                    {canAddStudent && (
+                        <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
+                            <Upload size={16} /> Import
+                            <input type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImportCSV} />
+                        </label>
+                    )}
+                    {canAddStudent && (
+                        <Link to="/students/add" className="btn btn-primary">
+                            <Plus size={16} /> Add Student
+                        </Link>
+                    )}
+                </div>
             </div>
 
             <div className="filters-bar">
@@ -161,14 +269,16 @@ export default function StudentsPage() {
                 <div className="students-grid">
                     {filteredStudents.map(s => (
                         <Link to={`/students/${s.id || s.admissionNo}`} className="student-card card" key={s._id || s.id || s.admissionNo}>
-                            <button 
-                                className="btn-icon text-danger" 
-                                onClick={(e) => handleDelete(e, s)}
-                                title="Delete Student"
-                                style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10, background: 'rgba(255,0,0,0.05)' }}
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            {canDeleteStudent && (
+                                <button 
+                                    className="btn-icon text-danger" 
+                                    onClick={(e) => handleDelete(e, s)}
+                                    title={canHardDeleteStudent ? "Permanently Delete Student" : "Soft Delete Student"}
+                                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10, background: 'rgba(255,0,0,0.05)' }}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
                             <div className="student-card-header">
                                 <div className="student-avatar" style={!s.photoUrl ? { background: getAvatarColor((s.firstName || '') + (s.lastName || '')) } : {}}>
                                     {s.photoUrl ? (
@@ -187,6 +297,11 @@ export default function StudentsPage() {
                                     <div className="meta-item">
                                         <span className="meta-label">Roll No</span>
                                         <span className="meta-value">{s.rollNo}</span>
+                                    </div>
+                                    <div className="meta-divider" />
+                                    <div className="meta-item">
+                                        <span className="meta-label">Student ID</span>
+                                        <span className="meta-value">{s.studentId || 'N/A'}</span>
                                     </div>
                                     <div className="meta-divider" />
                                     <div className="meta-item">

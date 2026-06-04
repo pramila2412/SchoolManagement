@@ -187,9 +187,26 @@ export default function LoginPage() {
                         <p className="text-sm text-gray-500 font-medium">Mount Zion School, Purnea</p>
                     </div>
 
+                    <div className="flex justify-center mb-4 px-8">
+                        <div className="flex w-full bg-gray-100 rounded-lg p-1">
+                            <button
+                                type="button"
+                                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${loginType === 'admin' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setLoginType('admin')}
+                            >
+                                Admin / Staff
+                            </button>
+                            <button
+                                type="button"
+                                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${loginType === 'parent' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setLoginType('parent')}
+                            >
+                                Parent
+                            </button>
+                        </div>
+                    </div>
 
-
-                    <div className="p-8">
+                    <div className="p-8 pt-0">
                         <AnimatePresence mode="wait">
                             {error && (
                                 <motion.div 

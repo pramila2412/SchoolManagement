@@ -191,6 +191,24 @@ export default function EditStudent() {
         return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg && !newErrors.firstNameMsg && !newErrors.lastNameMsg;
     };
 
+    const generateParentId = () => {
+        const year = new Date().getFullYear();
+        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+        const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
+        let seq = 1;
+        let parentId;
+        do {
+            parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
+            seq++;
+        } while (existingParIds.includes(parentId));
+        return parentId;
+    };
+
+    const handleGenerateParentId = () => {
+        const newId = generateParentId();
+        setFormData({ ...formData, parentId: newId, parentPassword: 'password123' });
+    };
+
     const convertToBase64 = (file) => {
         return new Promise((resolve, reject) => {
             if (!file) return resolve(null);
@@ -295,6 +313,39 @@ export default function EditStudent() {
                 if (formData.parentPassword) {
                     globalStudents[existingIdx].parentPassword = formData.parentPassword;
                 }
+                if (formData.parentId) {
+                    globalStudents[existingIdx].parentId = formData.parentId;
+                }
+                localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
+            } else {
+                const newStudent = {
+                    id: id,
+                    name: `${formData.firstName} ${formData.lastName}`,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    class: `${formData.class}-${formData.section}`,
+                    section: formData.section,
+                    admissionNo: formData.admissionNo,
+                    rollNo: formData.rollNo,
+                    dateOfBirth: formData.dateOfBirth,
+                    gender: formData.gender,
+                    bloodGroup: formData.bloodGroup,
+                    parentEmail: formData.email,
+                    parentName: formData.fatherName,
+                    fatherName: formData.fatherName,
+                    motherName: formData.motherName,
+                    phone: formData.contactNo,
+                    contactNo: formData.contactNo,
+                    guardianPhone: formData.guardianPhone,
+                    address: formData.address,
+                    admissionDate: formData.admissionDate,
+                    feesStartDate: formData.feesStartDate,
+                    photoUrl: photoUrl || formData.existingPhotoUrl,
+                    parentId: formData.parentId || '',
+                    parentPassword: formData.parentPassword || 'password123',
+                    firstLogin: true
+                };
+                globalStudents.push(newStudent);
                 localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
             }
 
@@ -438,7 +489,14 @@ export default function EditStudent() {
                             <div className="form-row two-cols" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ color: 'var(--text-light)' }}>Parent ID (Username)</label>
-                                    <input type="text" className="form-input" value={formData.parentId || 'Not Generated'} readOnly style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }} />
+                                    {formData.parentId ? (
+                                        <input type="text" className="form-input" value={formData.parentId} readOnly style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }} />
+                                    ) : (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input type="text" className="form-input" value="Not Generated" readOnly style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }} />
+                                            <button type="button" className="btn btn-primary" onClick={handleGenerateParentId} style={{ whiteSpace: 'nowrap' }}>Generate</button>
+                                        </div>
+                                    )}
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Used by parent to login</span>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>

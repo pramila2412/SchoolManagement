@@ -169,7 +169,7 @@
 .contact-subtext {
     color: #64748b;
     margin-bottom: 12px; /* Further reduced from 20px */
-    fontSize: 1.05rem;
+    font-size: 1.05rem;
 }
 
 .error-text {

@@ -3,6 +3,7 @@ import { Facebook, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './AboutPage.css';
 import './LandingPage.css';
 
@@ -91,6 +92,12 @@ export default function AboutPage() {
 
     return (
         <div className="landing-page about-page">
+            <SEO 
+                title="About Us" 
+                description="Learn more about Mount Zion School, our mission, vision, team, and the history behind our educational excellence."
+                keywords="about mount zion, mission, vision, school history, our team"
+                url="https://mountzionschool.in/about"
+            />
             <PublicHeader />
 
             {/* ===== ABOUT US ===== */}

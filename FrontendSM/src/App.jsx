@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
@@ -92,18 +93,18 @@ function AppLayout() {
             <Route path="/student-reports" element={<StudentReports />} />
             
             {/* Academics */}
-            <Route path="/academics" element={<Academics />} />
-            <Route path="/admission" element={<Admission />} />
-            <Route path="/addons" element={<Addons />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/hr" element={<HR />} />
+            <Route path="/academics/*" element={<Academics />} />
+            <Route path="/admission/*" element={<Admission />} />
+            <Route path="/addons/*" element={<Addons />} />
+            <Route path="/finance/*" element={<Finance />} />
+            <Route path="/hr/*" element={<HR />} />
             <Route path="/parent-portal" element={<ParentPortal />} />
             <Route path="/admin-parent-portal" element={<AdminParentPortal />} />
 
-            <Route path="/transport" element={<Transport />} />
-            <Route path="/examination" element={<Examination />} />
-            <Route path="/front-office" element={<FrontOffice />} />
-            <Route path="/collaborate" element={<Collaborate />} />
+            <Route path="/transport/*" element={<Transport />} />
+            <Route path="/exam/*" element={<Examination />} />
+            <Route path="/frontoffice/*" element={<FrontOffice />} />
+            <Route path="/collaborate/*" element={<Collaborate />} />
             <Route path="/certificates" element={<Certificates />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/announcements" element={<Announcements />} />
@@ -149,7 +150,7 @@ function AppContent() {
       } />
       <Route path="/settings" element={
         <ProtectedRoute>
-          <RouteRoleGuard allowedRoles={['Super Admin', 'Admin']}>
+          <RouteRoleGuard allowedRoles={['Super Admin', 'Admin', 'CMS Admin']}>
             <SiteSettings />
           </RouteRoleGuard>
         </ProtectedRoute>
@@ -165,12 +166,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ScrollToTop />
-        <GlobalDialog />
-        <AppContent />
-      </AuthProvider>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ScrollToTop />
+          <GlobalDialog />
+          <AppContent />
+        </AuthProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }

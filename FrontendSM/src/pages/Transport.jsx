@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     LayoutDashboard, Truck, Users as UsersIcon, Map, UserCheck, MapPin,
     ClipboardCheck, IndianRupee, Save, FileEdit, Trash2, PlusCircle,
@@ -952,32 +952,35 @@ function FeesTab() {
 }
 
 // ======================== MAIN COMPONENT ========================
-const TABS = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'vehicles', label: 'Vehicles', icon: Truck },
-    { id: 'drivers', label: 'Drivers', icon: UsersIcon },
-    { id: 'routes', label: 'Routes', icon: Map },
-    { id: 'students', label: 'Students', icon: UserCheck },
-    { id: 'tracking', label: 'Tracking', icon: Navigation },
-    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
-    { id: 'fees', label: 'Fees', icon: IndianRupee },
+const TABS_MAP = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: 'dashboard' },
+    { id: 'vehicles', label: 'Vehicles', icon: Truck, path: 'vehicles' },
+    { id: 'drivers', label: 'Drivers', icon: UsersIcon, path: 'drivers' },
+    { id: 'routes', label: 'Routes', icon: Map, path: 'routes' },
+    { id: 'students', label: 'Students', icon: UserCheck, path: 'students' },
+    { id: 'tracking', label: 'Tracking', icon: Navigation, path: 'tracking' },
+    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck, path: 'attendance' },
+    { id: 'fees', label: 'Fees', icon: IndianRupee, path: 'fees' },
+    { id: 'reports', label: 'Reports', icon: FileEdit, path: 'reports' },
+    { id: 'notifications', label: 'Notifications', icon: AlertTriangle, path: 'notifications' },
 ];
 
 export default function Transport() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const handleNavigate = (tab) => {
-        setActiveTab(tab);
-        setSearchParams({ tab });
-    };
+    let activeTab = 'dashboard';
+    if (location.pathname.includes('/vehicles')) activeTab = 'vehicles';
+    else if (location.pathname.includes('/drivers')) activeTab = 'drivers';
+    else if (location.pathname.includes('/routes')) activeTab = 'routes';
+    else if (location.pathname.includes('/students')) activeTab = 'students';
+    else if (location.pathname.includes('/tracking')) activeTab = 'tracking';
+    else if (location.pathname.includes('/attendance')) activeTab = 'attendance';
+    else if (location.pathname.includes('/fees')) activeTab = 'fees';
+    else if (location.pathname.includes('/reports')) activeTab = 'reports';
+    else if (location.pathname.includes('/notifications')) activeTab = 'notifications';
 
-    useEffect(() => {
-        if (tabFromUrl && tabFromUrl !== activeTab) {
-            setActiveTab(tabFromUrl);
-        }
-    }, [tabFromUrl]);
+    const handleNavigate = (path) => navigate(`/transport/${path}`);
 
     return (
         <div className="transport-page animate-fade-in">
@@ -990,7 +993,7 @@ export default function Transport() {
                         {activeTab !== 'dashboard' && (
                             <>
                                 <span className="separator">/</span>
-                                <span style={{ textTransform: 'capitalize' }}>{activeTab}</span>
+                                <span style={{ textTransform: 'capitalize' }}>{TABS_MAP.find(t=>t.id===activeTab)?.label}</span>
                             </>
                         )}
                     </div>
@@ -1000,13 +1003,13 @@ export default function Transport() {
 
             <div className="card transport-card">
                 <div className="tabs-header">
-                    {TABS.map(tab => {
+                    {TABS_MAP.map(tab => {
                         const Icon = tab.icon;
                         return (
                             <button
                                 key={tab.id}
                                 className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-                                onClick={() => handleNavigate(tab.id)}
+                                onClick={() => handleNavigate(tab.path)}
                             >
                                 <Icon size={16} /> {tab.label}
                             </button>
@@ -1015,14 +1018,19 @@ export default function Transport() {
                 </div>
 
                 <div className="tabs-content">
-                    {activeTab === 'dashboard' && <DashboardTab onNavigate={handleNavigate} />}
-                    {activeTab === 'vehicles' && <VehiclesTab />}
-                    {activeTab === 'drivers' && <DriversTab />}
-                    {activeTab === 'routes' && <RoutesTab />}
-                    {activeTab === 'students' && <StudentsTab />}
-                    {activeTab === 'tracking' && <TrackingTab />}
-                    {activeTab === 'attendance' && <AttendanceTab />}
-                    {activeTab === 'fees' && <FeesTab />}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<DashboardTab onNavigate={handleNavigate} />} />
+                        <Route path="vehicles" element={<VehiclesTab />} />
+                        <Route path="drivers" element={<DriversTab />} />
+                        <Route path="routes" element={<RoutesTab />} />
+                        <Route path="students" element={<StudentsTab />} />
+                        <Route path="tracking" element={<TrackingTab />} />
+                        <Route path="attendance" element={<AttendanceTab />} />
+                        <Route path="fees" element={<FeesTab />} />
+                        <Route path="reports" element={<div className="animate-fade-in"><h3>Reports</h3><p className="text-muted">Transport Reports module coming soon.</p></div>} />
+                        <Route path="notifications" element={<div className="animate-fade-in"><h3>Notifications</h3><p className="text-muted">Transport Notifications module coming soon.</p></div>} />
+                    </Routes>
                 </div>
             </div>
         </div>

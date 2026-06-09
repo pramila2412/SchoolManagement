@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import './AdmissionPublicPage.css';
 import './LandingPage.css';
@@ -169,6 +170,12 @@ export default function AdmissionPublicPage() {
 
     return (
         <div className="landing-page admission-public-page">
+            <SEO 
+                title="Admissions" 
+                description="Join the Mount Zion Family. Information on admission procedures, criteria, required documents, and fee structures."
+                keywords="admission, mount zion admission, nursery admission, school admission"
+                url="https://mountzionschool.in/admission"
+            />
             <PublicHeader />
 
             {/* ===== ADMISSION PROCEDURE ===== */}

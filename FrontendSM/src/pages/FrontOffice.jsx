@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Users, PhoneCall, BookOpen, Send, AlertTriangle, Save, Plus,
     LayoutDashboard, Package, CalendarClock, FileText, BarChart3,
@@ -33,44 +33,35 @@ export default function FrontOffice() {
 
     return (
         <div className="frontoffice-page animate-fade-in">
-            <div className="page-header">
-                <div>
-                    <div className="page-breadcrumb">
-                        <Link to="/">Dashboard</Link><span className="separator">/</span><span>Front Office</span>
-                    </div>
-                    <h1>Front Office Management</h1>
+            <div className="page-header"><div>
+                <div className="page-breadcrumb"><Link to="/">Dashboard</Link><span className="separator">/</span><span>Front Office</span>
+                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS_MAP.find(t => t.id === activeTab)?.label}</span></>}</div>
+                <h1>Front Office & Reception</h1>
+            </div></div>
+            
+            <div className="card frontoffice-card">
+                <div className="tabs-header">{TABS_MAP.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.path)}><Icon size={16}/> {tab.label}</button>; })}</div>
+                <div className="tabs-content">
+                    <Routes>
+                        <Route path="/" element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<FODashboard onNavigate={handleNavigate} />} />
+                        <Route path="visitors" element={<VisitorTab />} />
+                        <Route path="calls" element={<CallLogTab />} />
+                        <Route path="enquiries" element={<EnquiryTab />} />
+                        <Route path="complaints" element={<ComplaintTab />} />
+                        <Route path="postal" element={<PostalTab />} />
+                        <Route path="appointments" element={<AppointmentTab />} />
+                        <Route path="documents" element={<DocumentsPlaceholder />} />
+                        <Route path="reports" element={<ReportsPlaceholder />} />
+                    </Routes>
                 </div>
-            </div>
-
-            <div className="fo-tabs" style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
-                {[
-                    ['dashboard','Dashboard',LayoutDashboard],['visitors','Visitors',Users],['calls','Call Logs',Phone],
-                    ['enquiries','Enquiries',HelpCircle],['complaints','Complaints',AlertTriangle],['postal','Postal',Package],
-                    ['appointments','Appointments',CalendarClock],['documents','Documents',FileText],['reports','Reports',BarChart3],
-                ].map(([key,label,Icon])=>(
-                    <button key={key} className={`tab-btn ${activeTab===key?'active':''}`} onClick={()=>switchTab(key)}>
-                        <Icon size={16}/> {label}
-                    </button>
-                ))}
-            </div>
-
-            <div className="fo-content">
-                {activeTab === 'dashboard' && <FODashboard switchTab={switchTab} />}
-                {activeTab === 'visitors' && <VisitorTab />}
-                {activeTab === 'calls' && <CallLogTab />}
-                {activeTab === 'enquiries' && <EnquiryTab />}
-                {activeTab === 'complaints' && <ComplaintTab />}
-                {activeTab === 'postal' && <PostalTab />}
-                {activeTab === 'appointments' && <AppointmentTab />}
-                {activeTab === 'documents' && <DocumentsPlaceholder />}
-                {activeTab === 'reports' && <ReportsPlaceholder />}
             </div>
         </div>
     );
 }
 
 /* ═══════════════════  DASHBOARD  ═══════════════════ */
-function FODashboard({ switchTab }) {
+function FODashboard({ onNavigate }) {
     const [visitors] = useLocalStorage('fo_visitors', []);
     const [calls] = useLocalStorage('fo_calls', []);
     const [enquiries] = useLocalStorage('fo_enquiries', []);
@@ -118,7 +109,7 @@ function FODashboard({ switchTab }) {
             <h3 style={{margin:'28px 0 16px',fontSize:'1rem',fontWeight:600}}>Quick Actions</h3>
             <div className="fo-quick-actions">
                 {actions.map((a, i) => (
-                    <button key={i} className="fo-action-btn card" onClick={() => switchTab(a.tab)}>
+                    <button key={i} className="fo-action-btn card" onClick={() => onNavigate(a.tab)}>
                         <a.icon size={22}/>
                         <span>{a.label}</span>
                     </button>

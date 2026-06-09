@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './LandingPage.css';
 
 export default function PrivacyPolicy() {
@@ -10,6 +11,11 @@ export default function PrivacyPolicy() {
 
     return (
         <div className="landing-page">
+            <SEO 
+                title="Privacy Policy" 
+                description="Mount Zion School Privacy Policy. Read about how we collect, use, and protect your personal information."
+                url="https://mountzionschool.in/privacy-policy"
+            />
             <PublicHeader />
 
             {/* ===== CONTENT SECTION ===== */}

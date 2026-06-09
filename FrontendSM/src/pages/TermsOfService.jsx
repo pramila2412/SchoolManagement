@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './LandingPage.css';
 
 export default function TermsOfService() {
@@ -10,6 +11,11 @@ export default function TermsOfService() {
 
     return (
         <div className="landing-page">
+            <SEO 
+                title="Terms of Service" 
+                description="Mount Zion School Terms of Service. Please read the rules and regulations governing the use of our website."
+                url="https://mountzionschool.in/terms-of-service"
+            />
             <PublicHeader />
 
             {/* ===== CONTENT SECTION ===== */}

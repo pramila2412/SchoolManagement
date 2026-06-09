@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     BarChart3, IndianRupee, SlidersHorizontal, AlertTriangle, FileText,
     TrendingDown, RotateCcw, BookOpen, Monitor, Package,
@@ -945,9 +945,6 @@ const TABS = [
 ];
 
 export default function Finance() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'dashboard');
     const [invoices, setInvoices] = useLocalStorage('finance_invoices', [
         { id: 1, invoiceNo: 'INV-2026-001', billedTo: 'Ajay Transport', type: 'Vendor', issueDate: '2026-03-20', dueDate: '2026-04-05', amount: 45000, status: 'Sent' },
         { id: 2, invoiceNo: 'INV-2026-002', billedTo: 'Ritika Singh', type: 'Student', issueDate: '2026-03-22', dueDate: '2026-03-30', amount: 2500, status: 'Paid' },
@@ -958,20 +955,16 @@ export default function Finance() {
         { _id: '3', classGroup: 'STD. 3 to 4', classes: ['III', 'IV'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 3000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 2400 }], total: 7400 },
         { _id: '4', classGroup: 'STD. 5 to 7', classes: ['V', 'VI', 'VII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3050 }, { name: 'Monthly Fee', amount: 2700 }], total: 21200 },
         { _id: '5', classGroup: 'STD. 8', classes: ['VIII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3650 }, { name: 'Monthly Fee', amount: 3300 }], total: 22400 },
-        { _id: '6', classGroup: 'STD. 9', classes: ['IX'], fees: [{ name: 'Admission Fee', amount: 8000 }, { name: 'Annual Fee', amount: 9150 }, { name: 'Examination Fee', amount: 4250 }, { name: 'Monthly Fee', amount: 3300 }], total: 24700 },
-        { _id: '7', classGroup: 'STD. 11', classes: ['XI'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 8550 }, { name: 'Examination Fee', amount: 4000 }, { name: 'Monthly Fee', amount: 3300 }], total: 15850 },
+        { _id: '6', classGroup: 'STD. 9 & 10', classes: ['IX', 'X'], fees: [{ name: 'Admission Fee', amount: 8000 }, { name: 'Annual Fee', amount: 9150 }, { name: 'Examination Fee', amount: 4250 }, { name: 'Monthly Fee', amount: 3300 }], total: 24700 },
+        { _id: '7', classGroup: 'STD. 11 & 12', classes: ['XI', 'XII'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 8550 }, { name: 'Examination Fee', amount: 4000 }, { name: 'Monthly Fee', amount: 3300 }], total: 15850 },
     ]);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
-    const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    
-    useEffect(() => { 
-        if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); 
-    }, [tabFromUrl]);
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const handleGenerateInvoice = () => {
-        setIsInvoiceModalOpen(true);
-    };
+    const handleGenerateInvoice = () => setIsInvoiceModalOpen(true);
+    const handleNavigate = (path) => navigate(`/finance/${path}`);
 
     const handleSaveInvoice = (newInv) => {
         setInvoices([newInv, ...invoices]);
@@ -985,31 +978,64 @@ export default function Finance() {
         }
     };
 
+    let activeTab = 'dashboard';
+    if (location.pathname.includes('/fee/structure')) activeTab = 'structure';
+    else if (location.pathname.includes('/fee/collection')) activeTab = 'collection';
+    else if (location.pathname.includes('/payments/online')) activeTab = 'online-payments';
+    else if (location.pathname.includes('/fee/defaulters')) activeTab = 'defaulters';
+    else if (location.pathname.includes('/expenses')) activeTab = 'expenses';
+    else if (location.pathname.includes('/invoices')) activeTab = 'invoices';
+    else if (location.pathname.includes('/refunds')) activeTab = 'refunds';
+    else if (location.pathname.includes('/accounting')) activeTab = 'accounting';
+    else if (location.pathname.includes('/assets')) activeTab = 'assets';
+    else if (location.pathname.includes('/inventory')) activeTab = 'inventory';
+    else if (location.pathname.includes('/reports')) activeTab = 'reports';
+    else if (location.pathname.includes('/settings')) activeTab = 'settings';
+
+    const TABS_MAP = [
+        { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: 'dashboard' },
+        { id: 'structure', label: 'Fee Structure', icon: SlidersHorizontal, path: 'fee/structure' },
+        { id: 'collection', label: 'Fee Collection', icon: IndianRupee, path: 'fee/collection' },
+        { id: 'online-payments', label: 'Online Payments', icon: Globe, path: 'payments/online' },
+        { id: 'defaulters', label: 'Defaulters', icon: AlertTriangle, path: 'fee/defaulters' },
+        { id: 'expenses', label: 'Expenses', icon: TrendingDown, path: 'expenses' },
+        { id: 'invoices', label: 'Invoices', icon: FileText, path: 'invoices' },
+        { id: 'refunds', label: 'Refunds', icon: RotateCcw, path: 'refunds' },
+        { id: 'accounting', label: 'Accounting', icon: BookOpen, path: 'accounting' },
+        { id: 'assets', label: 'Assets', icon: Monitor, path: 'assets' },
+        { id: 'inventory', label: 'Inventory', icon: Package, path: 'inventory' },
+        { id: 'reports', label: 'Reports', icon: Download, path: 'reports' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: 'settings' },
+    ];
+
     return (
         <div className="finance-page animate-fade-in">
             <div className="page-header"><div>
                 <div className="page-breadcrumb">
                     <Link to="/">Dashboard</Link><span className="separator">/</span><span>Finance</span>
-                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}
+                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS_MAP.find(t => t.id === activeTab)?.label}</span></>}
                 </div>
                 <h1>Finance & Accounting Management</h1>
             </div></div>
             <div className="card finance-card">
-                <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
+                <div className="tabs-header">{TABS_MAP.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.path)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
-                    {activeTab === 'dashboard' && <DashboardTab onGenerateInvoice={handleGenerateInvoice}/>}
-                    {activeTab === 'structure' && <FeeStructureTab structures={feeStructures} setStructures={setFeeStructures}/>}
-                    {activeTab === 'collection' && <FeeCollectionTab/>}
-                    {activeTab === 'online-payments' && <OnlinePaymentsTab/>}
-                    {activeTab === 'defaulters' && <DefaultersTab/>}
-                    {activeTab === 'expenses' && <ExpensesTab/>}
-                    {activeTab === 'invoices' && <InvoicesTab invoices={invoices} onGenerateInvoice={handleGenerateInvoice} onDeleteInvoice={handleDeleteInvoice}/>}
-                    {activeTab === 'refunds' && <RefundsTab/>}
-                    {activeTab === 'accounting' && <AccountingTab/>}
-                    {activeTab === 'assets' && <AssetsTab/>}
-                    {activeTab === 'inventory' && <InventoryTab/>}
-                    {activeTab === 'reports' && <ReportsTab/>}
-                    {activeTab === 'settings' && <SettingsTab/>}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<DashboardTab onGenerateInvoice={handleGenerateInvoice}/>} />
+                        <Route path="fee/structure" element={<FeeStructureTab structures={feeStructures} setStructures={setFeeStructures}/>} />
+                        <Route path="fee/collection" element={<FeeCollectionTab/>} />
+                        <Route path="payments/online" element={<OnlinePaymentsTab/>} />
+                        <Route path="fee/defaulters" element={<DefaultersTab/>} />
+                        <Route path="expenses" element={<ExpensesTab/>} />
+                        <Route path="invoices" element={<InvoicesTab invoices={invoices} onGenerateInvoice={handleGenerateInvoice} onDeleteInvoice={handleDeleteInvoice}/>} />
+                        <Route path="refunds" element={<RefundsTab/>} />
+                        <Route path="accounting" element={<AccountingTab/>} />
+                        <Route path="assets" element={<AssetsTab/>} />
+                        <Route path="inventory" element={<InventoryTab/>} />
+                        <Route path="reports" element={<ReportsTab/>} />
+                        <Route path="settings" element={<SettingsTab/>} />
+                    </Routes>
                 </div>
             </div>
 

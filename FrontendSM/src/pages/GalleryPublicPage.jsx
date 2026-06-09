@@ -5,6 +5,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './GalleryPublicPage.css';
 import './LandingPage.css';
 
@@ -141,6 +142,12 @@ export default function GalleryPublicPage() {
 
     return (
         <div className="landing-page gallery-public-page">
+            <SEO 
+                title="Gallery" 
+                description="View Mount Zion School's photo and video gallery. Browse through events, facilities, sports, and daily school life."
+                keywords="school gallery, photos, videos, events, annual day, sports"
+                url="https://mountzionschool.in/gallery"
+            />
             <PublicHeader />
 
             <section style={{ backgroundColor: '#002147', color: 'white', padding: '40px 0' }}>

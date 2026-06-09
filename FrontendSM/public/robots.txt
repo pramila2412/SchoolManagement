@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /admin
+Disallow: /login
+Disallow: /parent-portal
+Disallow: /admin-parent-portal
+Disallow: /students
+Disallow: /finance
+Disallow: /hr
+Disallow: /reports
+Allow: /
+
+Sitemap: https://mountzionschool.in/sitemap.xml

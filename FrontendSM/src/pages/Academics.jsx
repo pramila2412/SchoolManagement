@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Calendar, BookOpen, Users, Clock, FileText, ClipboardCheck,
     PlusCircle, Save, Trash2, Edit3, ChevronDown, ChevronRight,
@@ -1259,11 +1259,13 @@ const TABS = [
 ];
 
 export default function Academics() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'year');
-    const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const currentTab = location.pathname.split('/').pop();
+    const activeTab = TABS.some(t => t.id === currentTab) ? currentTab : 'year';
+
+    const handleNavigate = (tab) => { navigate(`/academics/${tab}`); };
 
     return (
         <div className="academics-page animate-fade-in">
@@ -1275,20 +1277,24 @@ export default function Academics() {
             <div className="card academics-card">
                 <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
-                    {activeTab === 'year' && <AcademicYearTab/>}
-                    {activeTab === 'classes' && <ClassSectionTab/>}
-                    {activeTab === 'subjects' && <SubjectsTab/>}
-                    {activeTab === 'teachers' && <TeacherAssignmentTab/>}
-                    {activeTab === 'timetable' && <TimetableTab/>}
-                    {activeTab === 'syllabus' && <SyllabusTab/>}
-                    {activeTab === 'lesson-plan' && <LessonPlanTab/>}
-                    {activeTab === 'assignments' && <AssignmentsTab/>}
-                    {activeTab === 'attendance' && <AttendanceTab/>}
-                    {activeTab === 'performance' && <PerformanceTab/>}
-                    {activeTab === 'materials' && <StudyMaterialsTab/>}
-                    {activeTab === 'promotion' && <PromotionTab/>}
-                    {activeTab === 'reports' && <ReportsTab/>}
-                    {activeTab === 'settings' && <SettingsTab/>}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="year" replace />} />
+                        <Route path="year" element={<AcademicYearTab />} />
+                        <Route path="classes" element={<ClassSectionTab />} />
+                        <Route path="subjects" element={<SubjectsTab />} />
+                        <Route path="teachers" element={<TeacherAssignmentTab />} />
+                        <Route path="timetable" element={<TimetableTab />} />
+                        <Route path="syllabus" element={<SyllabusTab />} />
+                        <Route path="lesson-plan" element={<LessonPlanTab />} />
+                        <Route path="assignments" element={<AssignmentsTab />} />
+                        <Route path="attendance" element={<AttendanceTab />} />
+                        <Route path="performance" element={<PerformanceTab />} />
+                        <Route path="materials" element={<StudyMaterialsTab />} />
+                        <Route path="promotion" element={<PromotionTab />} />
+                        <Route path="reports" element={<ReportsTab />} />
+                        <Route path="public-content" element={<div style={{padding: 24, textAlign: 'center'}}>Public Content View</div>} />
+                        <Route path="settings" element={<SettingsTab />} />
+                    </Routes>
                 </div>
             </div>
         </div>

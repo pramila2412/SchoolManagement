@@ -6,6 +6,7 @@ import {
     LayoutDashboard, User, CalendarCheck, Megaphone, Award, IndianRupee,
     Clock, Phone, Download, CreditCard, ChevronRight, Users, CheckCircle2, AlertTriangle, MapPin, Mail, Settings
 } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import './ParentPortal.css';
 
 // ======================== CHILD SELECTOR ========================
@@ -227,6 +228,7 @@ function AnnouncementsTab() {
 
     const localAnnouncements = JSON.parse(localStorage.getItem('erp_announcements') || '[]');
     const [apiAnnouncements, setApiAnnouncements] = useState([]);
+    const [readAnnouncements, setReadAnnouncements] = useLocalStorage('mzs_read_announcements', []);
     
     useEffect(() => {
         fetch('/api/collaborate/announcements')
@@ -236,6 +238,12 @@ function AnnouncementsTab() {
     }, []);
 
     const allAnnouncements = [...localAnnouncements, ...apiAnnouncements];
+    
+    const markAsRead = (id) => {
+        if (!readAnnouncements.includes(id)) {
+            setReadAnnouncements([...readAnnouncements, id]);
+        }
+    };
     
     const announcements = allAnnouncements.filter(a => {
         const stat = a.status || 'Published';
@@ -263,11 +271,15 @@ function AnnouncementsTab() {
                 else if(cat.includes('event')) catClass = 'event';
                 else if(cat.includes('urgent')) catClass = 'urgent';
 
+                const annId = a.id || a.title + (a.publishDate || a.date);
+                const isUnread = !readAnnouncements.includes(annId);
+
                 return (
-                <div key={i} className={`pp-announcement ${catClass}`}>
+                <div key={i} className={`pp-announcement ${catClass}`} onClick={() => markAsRead(annId)} style={{ cursor: isUnread ? 'pointer' : 'default', opacity: isUnread ? 1 : 0.8 }}>
                     <h4>
                         <span className={`pp-ann-badge ${catClass}`}>{a.targetGroup || 'Notice'}</span>
                         {a.title}
+                        {isUnread && <span style={{ width: 10, height: 10, background: 'var(--primary)', borderRadius: '50%', display: 'inline-block', marginLeft: 8 }} title="Unread"></span>}
                     </h4>
                     <p>{a.message || a.desc || a.content}</p>
                     <div className="ann-meta">
@@ -343,6 +355,10 @@ function FeePaymentTab({ setTab }) {
         // Register successful payment
         const newPayment = {
             id: `PAY-${Date.now()}`,
+            razorpayOrderId: `order_${Math.random().toString(36).substr(2, 14)}`,
+            razorpayPaymentId: `pay_${Math.random().toString(36).substr(2, 14)}`,
+            razorpaySignature: `sig_${Math.random().toString(36).substr(2, 32)}`,
+            timestamp: new Date().toISOString(),
             date: new Date().toISOString().split('T')[0],
             studentId: selected.id,
             studentName: selected.name,

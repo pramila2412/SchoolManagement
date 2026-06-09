@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     LayoutList, ClipboardCheck, Stamp, Save, PlusCircle, Calendar,
     BookOpen, FileText, BarChart3, Settings, Trash2, CheckCircle2,
@@ -395,24 +395,56 @@ const TABS = [
 ];
 
 export default function Examination() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'setup');
-    const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { setActiveTab(tabFromUrl || 'setup'); }, [tabFromUrl]);
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    let activeTab = 'setup';
+    if (location.pathname.includes('/setup')) activeTab = 'setup';
+    else if (location.pathname.includes('/timetable')) activeTab = 'timetable';
+    else if (location.pathname.includes('/allocation')) activeTab = 'allocation';
+    else if (location.pathname.includes('/hall-ticket')) activeTab = 'halltickets';
+    else if (location.pathname.includes('/marks')) activeTab = 'marks';
+    else if (location.pathname.includes('/results')) activeTab = 'results';
+    else if (location.pathname.includes('/report-card')) activeTab = 'reportcards';
+    else if (location.pathname.includes('/analytics')) activeTab = 'analytics';
+    else if (location.pathname.includes('/settings')) activeTab = 'settings';
+
+    const TABS_MAP = [
+        { id: 'setup', label: 'Exam Setup', icon: LayoutList, path: 'setup' },
+        { id: 'timetable', label: 'Timetable', icon: Calendar, path: 'timetable' },
+        { id: 'allocation', label: 'Student Allocation', icon: LayoutList, path: 'allocation' },
+        { id: 'halltickets', label: 'Hall Tickets', icon: Stamp, path: 'hall-ticket' },
+        { id: 'marks', label: 'Marks Entry', icon: ClipboardCheck, path: 'marks' },
+        { id: 'results', label: 'Results', icon: Award, path: 'results' },
+        { id: 'reportcards', label: 'Report Cards', icon: FileText, path: 'report-card' },
+        { id: 'analytics', label: 'Analytics', icon: BarChart3, path: 'analytics' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: 'settings' },
+    ];
+
+    const handleNavigate = (path) => navigate(`/exam/${path}`);
 
     return (
         <div className="exam-page animate-fade-in">
             <div className="page-header"><div>
                 <div className="page-breadcrumb"><Link to="/">Dashboard</Link><span className="separator">/</span><span>Examination</span>
-                    {activeTab!=='setup'&&<><span className="separator">/</span><span style={{textTransform:'capitalize'}}>{TABS.find(t=>t.id===activeTab)?.label}</span></>}</div>
+                    {activeTab!=='setup'&&<><span className="separator">/</span><span style={{textTransform:'capitalize'}}>{TABS_MAP.find(t=>t.id===activeTab)?.label}</span></>}</div>
                 <h1>Exam Management</h1>
             </div></div>
             <div className="card exam-card">
-                <div className="tabs-header">{TABS.map(tab=>{const Icon=tab.icon;return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>;})}</div>
+                <div className="tabs-header">{TABS_MAP.map(tab=>{const Icon=tab.icon;return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.path)}><Icon size={16}/> {tab.label}</button>;})}</div>
                 <div className="tabs-content">
-                    {activeTab==='setup'&&<ExamSetupTab/>}{activeTab==='timetable'&&<TimetableTab/>}{activeTab==='halltickets'&&<HallTicketsTab/>}{activeTab==='marks'&&<MarksEntryTab/>}
-                    {activeTab==='results'&&<ResultsTab/>}{activeTab==='reportcards'&&<ReportCardsTab/>}{activeTab==='analytics'&&<AnalyticsTab/>}{activeTab==='settings'&&<SettingsTab/>}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="setup" replace />} />
+                        <Route path="setup" element={<ExamSetupTab/>} />
+                        <Route path="timetable" element={<TimetableTab/>} />
+                        <Route path="allocation" element={<div className="animate-fade-in"><h3>Student Allocation</h3><p className="text-muted">Module for allocating students to exam centers/rooms.</p></div>} />
+                        <Route path="hall-ticket" element={<HallTicketsTab/>} />
+                        <Route path="marks" element={<MarksEntryTab/>} />
+                        <Route path="results" element={<ResultsTab/>} />
+                        <Route path="report-card" element={<ReportCardsTab/>} />
+                        <Route path="analytics" element={<AnalyticsTab/>} />
+                        <Route path="settings" element={<SettingsTab/>} />
+                    </Routes>
                 </div>
             </div>
         </div>

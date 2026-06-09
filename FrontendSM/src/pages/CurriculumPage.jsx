@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './CurriculumPage.css';
 import './LandingPage.css';
 
@@ -117,6 +118,12 @@ export default function CurriculumPage() {
 
     return (
         <div className="landing-page curriculum-page">
+            <SEO 
+                title="Academics" 
+                description="Explore the curriculum at Mount Zion School. From Foundation level to Senior Secondary, we offer a comprehensive academic program."
+                keywords="curriculum, academics, cbse syllabus, school subjects, science stream, commerce stream, humanities"
+                url="https://mountzionschool.in/academics"
+            />
             <PublicHeader />
 
             {/* ===== THE CURRICULUM SECTION ===== */}

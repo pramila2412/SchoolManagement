@@ -36,6 +36,8 @@ export default function LoginPage() {
                     navigate('/parent-portal', { replace: true });
                 }
             } else if (user.role === 'Super Admin') {
+                navigate('/', { replace: true });
+            } else if (user.role === 'CMS Admin') {
                 navigate('/settings', { replace: true });
             } else {
                 navigate('/', { replace: true });
@@ -143,7 +145,8 @@ export default function LoginPage() {
                 { email: 'superadmin@mountzion.edu', password: 'admin123', name: 'Super Admin', role: 'Super Admin' },
                 { email: 'admin@mountzion.edu', password: 'admin123', name: 'Dr. Sarah (Admin)', role: 'Admin' },
                 { email: 'teacher@mountzion.edu', password: 'teacher123', name: 'Rajesh (Teacher)', role: 'Teacher' },
-                { email: 'staff@mountzion.edu', password: 'staff123', name: 'Vijay (Staff)', role: 'Staff' }
+                { email: 'staff@mountzion.edu', password: 'staff123', name: 'Vijay (Staff)', role: 'Staff' },
+                { email: 'cms@mountzion.edu', password: 'cms123', name: 'CMS Admin', role: 'CMS Admin' }
             ];
 
             const found = mockUsers.find(u => u.email === email && u.password === password);

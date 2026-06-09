@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Users, UserPlus, FileText, ClipboardCheck, Save, PlusCircle,
     Trash2, Edit3, Eye, Send, Phone, Mail, Calendar, Search,
@@ -319,7 +319,7 @@ function FeesTab() {
 
 // ======================== CONFIRMATION ========================
 function ConfirmationTab() {
-    const [, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [confirmed, setConfirmed] = useLocalStorage('admission_confirmed', [
         { id: 1, admNo: 'ADM-2026-0001', name: 'Arjun Patel', class: 'Grade 2-A', rollNo: 1, date: '2026-03-16', feePaid: true },
         { id: 2, admNo: 'ADM-2026-0002', name: 'Meera Joshi', class: 'Grade 1-B', rollNo: 5, date: '2026-03-11', feePaid: true },
@@ -454,7 +454,7 @@ function ConfirmationTab() {
                 <table className="data-table"><thead><tr><th>Admission No</th><th>Student</th><th>Class</th><th>Roll No</th><th>Confirmed Date</th><th>Actions</th></tr></thead>
                     <tbody>{confirmed.map(c => (
                         <tr key={c.id}><td className="fw-600" style={{ color: 'var(--accent)' }}>{c.admNo}</td><td className="fw-600">{c.name}</td><td>{c.class}</td><td>{c.rollNo}</td><td>{c.date}</td>
-                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Admission: ${c.admNo}\nStudent: ${c.name}\nClass: ${c.class}\nRoll No: ${c.rollNo}\nConfirmed: ${c.date}`)}><Eye size={16}/></button><button className="btn-icon" title="ID Card" onClick={() => setSearchParams({ tab: 'id-card' })}><IdCard size={16}/></button></td></tr>
+                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Admission: ${c.admNo}\nStudent: ${c.name}\nClass: ${c.class}\nRoll No: ${c.rollNo}\nConfirmed: ${c.date}`)}><Eye size={16}/></button><button className="btn-icon" title="ID Card" onClick={() => navigate('/admission/id-card')}><IdCard size={16}/></button></td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -853,11 +853,13 @@ const TABS = [
 ];
 
 export default function Admission() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
-    const [activeTab, setActiveTab] = useState(tabFromUrl || 'enquiry');
-    const handleNavigate = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl); }, [tabFromUrl]);
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const currentTab = location.pathname.split('/').pop();
+    const activeTab = TABS.some(t => t.id === currentTab) ? currentTab : 'enquiry';
+
+    const handleNavigate = (tab) => { navigate(`/admission/${tab}`); };
 
     return (
         <div className="admission-page animate-fade-in">
@@ -869,15 +871,18 @@ export default function Admission() {
             <div className="card admission-card">
                 <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
-                    {activeTab === 'enquiry' && <EnquiryTab/>}
-                    {activeTab === 'apply' && <ApplicationTab/>}
-                    {activeTab === 'documents' && <DocumentsTab/>}
-                    {activeTab === 'review' && <ReviewTab/>}
-                    {activeTab === 'fees' && <FeesTab/>}
-                    {activeTab === 'confirm' && <ConfirmationTab/>}
-                    {activeTab === 'id-card' && <IDCardTab/>}
-                    {activeTab === 'reports' && <ReportsTab/>}
-                    {activeTab === 'settings' && <SettingsTab/>}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="enquiry" replace />} />
+                        <Route path="enquiry" element={<EnquiryTab />} />
+                        <Route path="apply" element={<ApplicationTab />} />
+                        <Route path="documents" element={<DocumentsTab />} />
+                        <Route path="review" element={<ReviewTab />} />
+                        <Route path="fees" element={<FeesTab />} />
+                        <Route path="confirm" element={<ConfirmationTab />} />
+                        <Route path="id-card" element={<IDCardTab />} />
+                        <Route path="reports" element={<ReportsTab />} />
+                        <Route path="settings" element={<SettingsTab />} />
+                    </Routes>
                 </div>
             </div>
         </div>

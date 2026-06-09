@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './ContactPublicPage.css';
 import './LandingPage.css';
 
@@ -135,6 +136,12 @@ export default function ContactPublicPage() {
 
     return (
         <div className="landing-page contact-public-page">
+            <SEO 
+                title="Contact Us" 
+                description="Get in touch with Mount Zion School. We would love to hear from you."
+                keywords="contact mount zion, school contact, mount zion phone number, mount zion address"
+                url="https://mountzionschool.in/contact"
+            />
             <PublicHeader />
 
             {/* ===== NEW CONTACT SECTION ===== */}

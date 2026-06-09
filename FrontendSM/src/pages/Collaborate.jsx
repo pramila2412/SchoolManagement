@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { classes } from '../data/mockData';
 import {
@@ -1325,10 +1325,24 @@ const TABS = [
     { id:'settings', label:'Settings', icon:Settings },
 ];
 
+const TABS_MAP = [
+    { id: 'dashboard', label: 'Collab Dashboard', icon: LayoutDashboard, path: 'dashboard' },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone, path: 'announcements' },
+    { id: 'discussions', label: 'Discussions', icon: MessageSquare, path: 'discussions' },
+    { id: 'groups', label: 'Groups', icon: Users, path: 'groups' },
+    { id: 'files', label: 'File Sharing', icon: FileUp, path: 'files' },
+    { id: 'messages', label: 'Messages', icon: Mail, path: 'messages' },
+    { id: 'meetings', label: 'Meetings', icon: Video, path: 'meetings' },
+    { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: 'tasks' },
+    { id: 'notices', label: 'Notice Board', icon: Clipboard, path: 'notices' },
+    { id: 'activity', label: 'Activity Stream', icon: Activity, path: 'activity' },
+    { id: 'settings', label: 'Collab Settings', icon: Settings, path: 'settings' },
+];
+
 export default function Collaborate() {
     const { user } = useAuth();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab');
+    const navigate = useNavigate();
+    const location = useLocation();
 
     // Compute allowed tabs based on role
     const allowedTabs = useMemo(() => {
@@ -1338,32 +1352,50 @@ export default function Collaborate() {
         const isStudent = roleStr.includes('student');
         const isParent = roleStr.includes('parent');
 
-        if (isAdmin || isTeacher) return TABS;
-        if (isStudent) return TABS.filter(t => ['dashboard', 'announcements', 'discussions', 'groups', 'files', 'messages', 'notices'].includes(t.id));
-        if (isParent) return TABS.filter(t => ['dashboard', 'announcements', 'groups', 'messages', 'notices'].includes(t.id));
-        return TABS.filter(t => ['dashboard', 'announcements', 'messages', 'notices'].includes(t.id));
+        if (isAdmin || isTeacher) return TABS_MAP;
+        if (isStudent) return TABS_MAP.filter(t => ['dashboard', 'announcements', 'discussions', 'groups', 'files', 'messages', 'notices'].includes(t.id));
+        if (isParent) return TABS_MAP.filter(t => ['dashboard', 'announcements', 'groups', 'messages', 'notices'].includes(t.id));
+        return TABS_MAP.filter(t => ['dashboard', 'announcements', 'messages', 'notices'].includes(t.id));
     }, [user]);
 
-    const defaultTab = allowedTabs.length > 0 ? allowedTabs[0].id : 'dashboard';
-    const initialTab = tabFromUrl && allowedTabs.some(t => t.id === tabFromUrl) ? tabFromUrl : defaultTab;
-    
-    const [activeTab, setActiveTab] = useState(initialTab);
-    const handleNavigate = tab => { setActiveTab(tab); setSearchParams({ tab }); };
-    useEffect(() => { if(tabFromUrl && tabFromUrl !== activeTab && allowedTabs.some(t => t.id === tabFromUrl)) setActiveTab(tabFromUrl); }, [tabFromUrl, allowedTabs, activeTab]);
+    let activeTab = 'dashboard';
+    if (location.pathname.includes('/announcements')) activeTab = 'announcements';
+    else if (location.pathname.includes('/discussions')) activeTab = 'discussions';
+    else if (location.pathname.includes('/groups')) activeTab = 'groups';
+    else if (location.pathname.includes('/files')) activeTab = 'files';
+    else if (location.pathname.includes('/messages')) activeTab = 'messages';
+    else if (location.pathname.includes('/meetings')) activeTab = 'meetings';
+    else if (location.pathname.includes('/tasks')) activeTab = 'tasks';
+    else if (location.pathname.includes('/notices')) activeTab = 'notices';
+    else if (location.pathname.includes('/activity')) activeTab = 'activity';
+    else if (location.pathname.includes('/settings')) activeTab = 'settings';
+
+    const handleNavigate = path => navigate(`/collaborate/${path}`);
 
     return (
         <div className="collab-page animate-fade-in">
             <div className="page-header"><div>
                 <div className="page-breadcrumb"><Link to="/">Dashboard</Link><span className="separator">/</span><span>Collaborate</span>
-                    {activeTab!=='dashboard'&&<><span className="separator">/</span><span style={{textTransform:'capitalize'}}>{TABS.find(t=>t.id===activeTab)?.label}</span></>}</div>
+                    {activeTab !== 'dashboard' && <><span className="separator">/</span><span style={{textTransform:'capitalize'}}>{TABS_MAP.find(t=>t.id===activeTab)?.label}</span></>}</div>
                 <h1>Collaborate</h1>
             </div></div>
             <div className="card collab-card">
-                <div className="tabs-header">{allowedTabs.map(tab=>{const Icon=tab.icon;return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>;})}</div>
+                <div className="tabs-header">{allowedTabs.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab===tab.id?'active':''}`} onClick={()=>handleNavigate(tab.path)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
-                    {activeTab==='dashboard'&&<DashboardTab onNavigate={handleNavigate}/>}{activeTab==='announcements'&&<AnnouncementsTab/>}{activeTab==='discussions'&&<DiscussionsTab/>}
-                    {activeTab==='groups'&&<GroupsTab/>}{activeTab==='files'&&<FilesTab/>}{activeTab==='messages'&&<MessagesTab/>}
-                    {activeTab==='meetings'&&<MeetingsTab/>}{activeTab==='tasks'&&<TasksTab/>}{activeTab==='notices'&&<NoticesTab/>}{activeTab==='settings'&&<SettingsTab/>}
+                    <Routes>
+                        <Route path="/" element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<DashboardTab onNavigate={handleNavigate}/>} />
+                        <Route path="announcements" element={<AnnouncementsTab/>} />
+                        <Route path="discussions" element={<DiscussionsTab/>} />
+                        <Route path="groups" element={<GroupsTab/>} />
+                        <Route path="files" element={<FilesTab/>} />
+                        <Route path="messages" element={<MessagesTab/>} />
+                        <Route path="meetings" element={<MeetingsTab/>} />
+                        <Route path="tasks" element={<TasksTab/>} />
+                        <Route path="notices" element={<NoticesTab/>} />
+                        <Route path="activity" element={<div className="animate-fade-in"><h3>Activity Stream</h3><p className="text-muted">Global collaboration activity feed.</p></div>} />
+                        <Route path="settings" element={<SettingsTab/>} />
+                    </Routes>
                 </div>
             </div>
         </div>

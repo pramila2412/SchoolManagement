@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
+import SEO from '../components/SEO';
 import './LandingPage.css';
 
 export default function LandingPage() {
@@ -263,6 +264,12 @@ export default function LandingPage() {
 
     return (
         <div className="landing-page">
+            <SEO 
+                title="Home" 
+                description="Welcome to Mount Zion School. A Global Campus for Global Students fostering a vibrant, inclusive community."
+                keywords="school, cbse, nursery to xii, mount zion, best school"
+                url="https://mountzionschool.in/"
+            />
             <PublicHeader />
 
             <section className="landing-hero" style={{ backgroundImage: `url("${heroImage}")` }}>

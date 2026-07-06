@@ -21,6 +21,36 @@ function VisitorsTab() {
         { id: 3, name: 'Anita Singh', phone: '9876543211', purpose: 'Meeting', person: 'Class Teacher Gr-3', timeIn: '11:00 AM', timeOut: '-', date: '2026-03-25' }
     ]);
     const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState({ name: '', phone: '', purpose: 'Meeting', person: '', date: new Date().toISOString().split('T')[0], timeIn: '' });
+
+    const handleSave = () => {
+        if (!form.name || !form.phone || !form.timeIn) {
+            customAlert("Please fill all required fields (Name, Phone, Time In).");
+            return;
+        }
+        
+        let formattedTime = form.timeIn;
+        if (form.timeIn.includes(':')) {
+            const [h, m] = form.timeIn.split(':');
+            const hour = parseInt(h, 10);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const formattedHour = hour % 12 || 12;
+            formattedTime = `${formattedHour}:${m} ${ampm}`;
+        }
+
+        setVisitors([{ id: Date.now(), ...form, timeIn: formattedTime, timeOut: '-' }, ...visitors]);
+        setShowForm(false);
+        setForm({ name: '', phone: '', purpose: 'Meeting', person: '', date: new Date().toISOString().split('T')[0], timeIn: '' });
+        customAlert("Visitor entry saved successfully!", "Success", "success");
+    };
+
+    const handleClockOut = (id) => {
+        const d = new Date();
+        const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+        const h = d.getHours() % 12 || 12;
+        const timeStr = `${h.toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} ${ampm}`;
+        setVisitors(visitors.map(v => v.id === id ? { ...v, timeOut: timeStr } : v));
+    };
 
     return (
         <div className="animate-fade-in">
@@ -33,14 +63,14 @@ function VisitorsTab() {
                 <div className="ado-form-panel">
                     <h3>New Visitor Entry</h3>
                     <div className="ado-form form-row-3">
-                        <div className="form-group"><label className="form-label">Visitor Name *</label><input type="text" className="form-input"/></div>
-                        <div className="form-group"><label className="form-label">Mobile Number *</label><PhoneInput className="form-input"/></div>
-                        <div className="form-group"><label className="form-label">Purpose of Visit *</label><select className="form-select"><option>Meeting</option><option>Delivery</option><option>Parent Visit</option><option>Interview</option><option>Other</option></select></div>
-                        <div className="form-group"><label className="form-label">Person to Meet</label><input type="text" className="form-input"/></div>
-                        <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" defaultValue={new Date().toISOString().split('T')[0]}/></div>
-                        <div className="form-group"><label className="form-label">Time In</label><input type="time" className="form-input"/></div>
+                        <div className="form-group"><label className="form-label">Visitor Name *</label><input type="text" className="form-input" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Mobile Number *</label><PhoneInput className="form-input" value={form.phone} onChange={val=>setForm({...form,phone:val.target ? val.target.value : val})} /></div>
+                        <div className="form-group"><label className="form-label">Purpose of Visit *</label><select className="form-select" value={form.purpose} onChange={e=>setForm({...form,purpose:e.target.value})}><option>Meeting</option><option>Delivery</option><option>Parent Visit</option><option>Interview</option><option>Other</option></select></div>
+                        <div className="form-group"><label className="form-label">Person to Meet</label><input type="text" className="form-input" value={form.person} onChange={e=>setForm({...form,person:e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Time In *</label><input type="time" className="form-input" value={form.timeIn} onChange={e=>setForm({...form,timeIn:e.target.value})} /></div>
                     </div>
-                    <div className="ado-form form-actions"><button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button><button className="btn btn-primary">Save Entry</button></div>
+                    <div className="ado-form form-actions"><button className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button><button className="btn btn-primary" onClick={handleSave}>Save Entry</button></div>
                 </div>
             )}
 
@@ -49,7 +79,7 @@ function VisitorsTab() {
                     <tbody>{visitors.map(v => (
                         <tr key={v.id}><td className="fw-600">{v.name}</td><td>{v.phone}</td><td><span className="badge badge-info">{v.purpose}</span></td>
                             <td>{v.person}</td><td>{v.timeIn}</td><td>{v.timeOut === '-' ? <span className="badge badge-warning">Inside Campus</span> : v.timeOut}</td>
-                            <td>{v.timeOut === '-' && <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '0.75rem' }}><Clock size={12}/> Clock Out</button>}</td></tr>
+                            <td>{v.timeOut === '-' && <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={()=>handleClockOut(v.id)}><Clock size={12}/> Clock Out</button>}</td></tr>
                     ))}</tbody></table>
             </div>
         </div>
@@ -130,7 +160,22 @@ function GalleryTab() {
         const newImages = await Promise.all(validFiles.map(file => new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                resolve({ id: Date.now() + Math.random(), name: file.name, src: ev.target.result, caption: '', size: (file.size/1024/1024).toFixed(1) + ' MB', uploadedAt: new Date().toISOString().split('T')[0] });
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // compress dimension to save localStorage quota
+                    const scale = Math.min(MAX_WIDTH / img.width, 1);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Compress as JPEG to keep base64 string small
+                    const compressedSrc = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    resolve({ id: Date.now() + Math.random(), name: file.name, src: compressedSrc, caption: '', size: (file.size/1024/1024).toFixed(1) + ' MB', uploadedAt: new Date().toISOString().split('T')[0] });
+                };
+                img.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         })));
@@ -139,10 +184,9 @@ function GalleryTab() {
         // Refresh openAlbum reference
         setOpenAlbum(prev => {
             if (!prev || prev.id !== albumId) return prev;
-            const updated = albums.find(a => a.id === albumId);
             return { ...prev, images: [...(prev.images || []), ...newImages] };
         });
-        await customAlert(`${newImages.length} image(s) uploaded successfully!`, 'Upload Complete', 'success');
+        await customAlert(`${newImages.length} image(s) uploaded successfully! (Note: Images are compressed to fit browser storage limits.)`, 'Upload Complete', 'success');
     };
 
     const handleFileInput = (albumId) => {

@@ -175,9 +175,10 @@ export default function AddStudent() {
     const validate = () => {
         const newErrors = {};
         const requiredStrFields = [
-            'firstName', 'lastName', 'dateOfBirth', 'gender', 'bloodGroup', 
-            'address', 'contactNo', 'email', 'fatherName', 'motherName', 
-            'batch', 'class', 'section', 'rollNo', 'admissionDate', 'admissionNo', 'studentId'
+            'firstName', 'lastName', 'dateOfBirth', 'gender', 
+            'religion', 'category', 'motherName', 
+            'batch', 'class', 'section', 'rollNo', 'admissionDate', 'admissionNo', 'studentId',
+            'address', 'contactNo', 'email', 'fatherName'
         ];
         
         let hasMissing = false;
@@ -207,6 +208,21 @@ export default function AddStudent() {
         if (formData.lastName && !/^[a-zA-Z\s'-]+$/.test(formData.lastName.trim())) {
             newErrors.lastNameMsg = 'Last name can only contain letters, spaces, and hyphens';
             if (!newErrors.lastName) newErrors.lastName = true;
+        }
+
+        // Validate dateOfBirth
+        if (formData.dateOfBirth) {
+            const dob = new Date(formData.dateOfBirth);
+            const today = new Date();
+            const minYear = today.getFullYear() - 25; 
+            
+            if (dob > today) {
+                newErrors.dateOfBirthMsg = 'Date of birth cannot be in the future';
+                if (!newErrors.dateOfBirth) newErrors.dateOfBirth = true;
+            } else if (dob.getFullYear() < minYear) {
+                newErrors.dateOfBirthMsg = `Year of birth cannot be earlier than ${minYear}`;
+                if (!newErrors.dateOfBirth) newErrors.dateOfBirth = true;
+            }
         }
 
         if (formData.contactNo && formData.contactNo.length !== 10) {
@@ -418,10 +434,11 @@ export default function AddStudent() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Date of Birth <span className="required">*</span></label>
-                                <input type="date" className={`form-input ${errors.dateOfBirth ? 'error' : ''}`} name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} />
+                                <input type="date" className={`form-input ${errors.dateOfBirth ? 'error' : ''}`} name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear() - 25)).toISOString().split("T")[0]} />
+                                {errors.dateOfBirthMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.dateOfBirthMsg}</span>}
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Blood Group <span className="required">*</span></label>
+                                <label className="form-label">Blood Group</label>
                                 <select className={`form-select ${errors.bloodGroup ? 'error' : ''}`} name="bloodGroup" value={formData.bloodGroup} onChange={handleChange}>
                                     <option value="">Select</option>
                                     {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b=><option key={b} value={b}>{b}</option>)}
@@ -489,17 +506,6 @@ export default function AddStudent() {
 
                         <div className="form-row two-cols">
                             <div className="form-group">
-                                <label className="form-label">Guardian Phone</label>
-                                <PhoneInput className="form-input" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Enter guardian phone" />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Guardian Occupation</label>
-                                <input type="text" className="form-input" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleChange} placeholder="Enter occupation" />
-                            </div>
-                        </div>
-
-                        <div className="form-row two-cols">
-                            <div className="form-group">
                                 <label className="form-label">Contact No <span className="required">*</span></label>
                                 <PhoneInput className={`form-input ${errors.contactNo ? 'error' : ''}`} name="contactNo" value={formData.contactNo} onChange={handleChange} placeholder="10-digit mobile number" />
                             </div>
@@ -507,6 +513,17 @@ export default function AddStudent() {
                                 <label className="form-label">Parent E-mail ID <span className="required">*</span></label>
                                 <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} name="email" value={formData.email} onChange={handleChange} placeholder="Enter parent email (used for login)" />
                                 {errors.emailMsg && <span className="error-text" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--danger)', marginTop: '4px' }}>{errors.emailMsg}</span>}
+                            </div>
+                        </div>
+
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label className="form-label">Guardian Phone</label>
+                                <PhoneInput className="form-input" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Enter guardian phone" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Guardian Occupation</label>
+                                <input type="text" className="form-input" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleChange} placeholder="Enter occupation" />
                             </div>
                         </div>
 

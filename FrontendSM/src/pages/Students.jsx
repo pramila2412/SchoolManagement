@@ -47,7 +47,9 @@ export default function StudentsPage() {
                     }
                 });
 
-                setStudents(Array.from(allStudentsMap.values()));
+                // Newest students first (reverse the merged array)
+                const mergedArray = Array.from(allStudentsMap.values());
+                setStudents(mergedArray.reverse());
             } catch (err) {
                 console.error("Failed to load students", err);
             } finally {
@@ -301,7 +303,7 @@ export default function StudentsPage() {
                                     <div className="meta-divider" />
                                     <div className="meta-item">
                                         <span className="meta-label">Student ID</span>
-                                        <span className="meta-value">{s.studentId || 'N/A'}</span>
+                                        <span className="meta-value">{s.id || 'N/A'}</span>
                                     </div>
                                     <div className="meta-divider" />
                                     <div className="meta-item">

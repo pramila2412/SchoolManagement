@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import './Academics.css';
-
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
@@ -275,91 +275,136 @@ function SubjectsTab() {
 // ======================== TEACHER ASSIGNMENT ========================
 function TeacherAssignmentTab() {
     const [assignments, setAssignments] = useLocalStorage('academic_teacher_assignments', [
-        { id: 1, class: 'Grade 1', section: 'A', subject: 'Mathematics', teacher: 'Rajesh Kumar', type: 'Subject Teacher' },
-        { id: 2, class: 'Grade 1', section: 'A', subject: 'English', teacher: 'Kavitha Rao', type: 'Subject Teacher' },
-        { id: 3, class: 'Grade 2', section: 'A', subject: 'Science', teacher: 'Mohan Das', type: 'Subject Teacher' },
-        { id: 4, class: 'Grade 1', section: 'A', subject: '—', teacher: 'Rajesh Kumar', type: 'Class Teacher' },
+        { id: 1, class: 'I', section: 'A', subject: 'Mathematics', teacher: 'Rajesh Kumar', type: 'Subject Teacher' },
+        { id: 2, class: 'I', section: 'A', subject: 'English', teacher: 'Kavitha Rao', type: 'Subject Teacher' },
+        { id: 3, class: 'II', section: 'A', subject: 'Science', teacher: 'Mohan Das', type: 'Subject Teacher' },
+        { id: 4, class: 'I', section: 'A', subject: '—', teacher: 'Rajesh Kumar', type: 'Class Teacher' },
     ]);
-    const [allStaff] = useLocalStorage('mzs_staff', [
-        { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-006', name: 'Kavitha Rao', role: 'Teacher', dept: 'English', type: 'Full-time', status: 'Active', joined: '2023-04-15', email: '', phone: '', dob: '', address: '' },
-        { id: 'EMP-2024-007', name: 'Vijay Singh', role: 'Peon', dept: 'Support', type: 'Contract', status: 'Active', joined: '2022-01-05', email: '', phone: '', dob: '', address: '' },
-    ]);
+    const [allStaff] = useLocalStorage('mzs_staff', []);
     const [subjects] = useLocalStorage('academic_subjects', []);
 
-    // Filter staff who have 'teacher' in their role (case-insensitive)
     const teachers = allStaff.filter(s => s.role && s.role.toLowerCase().includes('teacher') && s.status === 'Active');
-
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
-    const [form, setForm] = useState({ class: '', section: '', subject: '', teacher: '', type: 'Subject Teacher' });
+    const [selClass, setSelClass] = useState('');
+    const [selSection, setSelSection] = useState('');
+    
+    // State to hold draft assignments for the selected class/section
+    const [draftAssignments, setDraftAssignments] = useState({});
+    const [draftClassTeacher, setDraftClassTeacher] = useState('');
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!form.teacher) {
-            customAlert('Please select a teacher.', 'Validation Error', 'error');
+    const applicableSubjects = subjects.filter(s => Array.isArray(s.classes) && (s.classes.includes(`Grade ${selClass}`) || s.classes.includes(selClass) || s.classes.includes('All Classes')));
+
+    useEffect(() => {
+        if (selClass && selSection) {
+            const current = assignments.filter(a => a.class === selClass && a.section === selSection);
+            const draft = {};
+            current.filter(a => a.type === 'Subject Teacher').forEach(a => draft[a.subject] = a.teacher);
+            setDraftAssignments(draft);
+            
+            const ct = current.find(a => a.type === 'Class Teacher');
+            setDraftClassTeacher(ct ? ct.teacher : '');
+        } else {
+            setDraftAssignments({});
+            setDraftClassTeacher('');
+        }
+    }, [selClass, selSection, assignments]);
+
+    const handleSave = () => {
+        if (!selClass || !selSection) {
+            customAlert('Please select both Class and Section.', 'Error', 'error');
             return;
         }
-        setAssignments(prev => [...prev, { ...form, id: Date.now() }]);
-        setForm({ class: '', section: '', subject: '', teacher: '', type: 'Subject Teacher' });
-        customAlert('Teacher assignment saved successfully!', 'Success', 'success');
+
+        const newAssignments = assignments.filter(a => !(a.class === selClass && a.section === selSection));
+        
+        if (draftClassTeacher) {
+            newAssignments.push({ id: Date.now() + Math.random(), class: selClass, section: selSection, subject: '—', teacher: draftClassTeacher, type: 'Class Teacher' });
+        }
+        
+        Object.entries(draftAssignments).forEach(([subj, teacher]) => {
+            if (teacher) {
+                newAssignments.push({ id: Date.now() + Math.random(), class: selClass, section: selSection, subject: subj, teacher: teacher, type: 'Subject Teacher' });
+            }
+        });
+        
+        setAssignments(newAssignments);
+        customAlert('Teacher assignments saved successfully!', 'Success', 'success');
     };
 
     return (
         <div className="animate-fade-in">
-            <div className="acad-two-col">
-                <div className="acad-form-panel">
-                    <h3><UserCheck size={18}/> Assign Teacher</h3>
-                    <form className="acad-form" onSubmit={handleSubmit}>
-                        <div className="acad-form form-row">
-                            <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
-                                <select className="form-select" required value={form.class} onChange={e => setForm({ ...form, class: e.target.value })}>
-                                    <option value="">Select</option>
-                                    {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
-                                </select></div>
-                            <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
-                                <select className="form-select" required value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}><option value="">Select</option><option>A</option><option>B</option><option>C</option></select></div>
-                        </div>
-                        <div className="form-group"><label className="form-label">Assignment Type</label>
-                            <select className="form-select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option>Subject Teacher</option><option>Class Teacher</option></select></div>
-                        {form.type === 'Subject Teacher' && <div className="form-group"><label className="form-label">Subject</label>
-                            <select className="form-select" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}>
-                                <option value="">Select</option>
-                                {subjects.length > 0 
-                                    ? subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                                    : <><option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option></>
-                                }
-                            </select></div>}
-                        <div className="form-group"><label className="form-label">Teacher <span className="required">*</span></label>
-                            <select className="form-select" required value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })}>
-                                <option value="">Select Teacher</option>
-                                {teachers.length > 0 
-                                    ? teachers.map(t => <option key={t.id} value={t.name}>{t.name} — {t.dept}</option>)
-                                    : <option disabled>No teachers found. Add staff in HR module.</option>
-                                }
-                            </select>
-                            {teachers.length === 0 && (
-                                <p style={{ fontSize: '0.78rem', color: 'var(--warning)', marginTop: 4 }}>
-                                    ⚠️ No teachers found. Please add staff with a "Teacher" role in the HR → Staff tab.
-                                </p>
-                            )}
-                        </div>
-                        <div className="acad-form form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save Assignment</button></div>
-                    </form>
-                </div>
-                <div className="acad-table-panel">
-                    <table className="data-table"><thead><tr><th>Class</th><th>Section</th><th>Subject</th><th>Teacher</th><th>Type</th><th>Actions</th></tr></thead>
-                        <tbody>{assignments.map(a => (
-                            <tr key={a.id}><td className="fw-600">{a.class}</td><td>{a.section}</td><td>{a.subject}</td><td>{a.teacher}</td>
-                                <td><span className={`badge ${a.type === 'Class Teacher' ? 'badge-success' : 'badge-info'}`}>{a.type}</span></td>
-                                <td><button className="btn-icon" onClick={() => setAssignments(prev => prev.filter(x => x.id !== a.id))}><Trash2 size={16}/></button></td></tr>
-                        ))}</tbody></table>
+            <div className="card" style={{ padding: 20, marginBottom: 20 }}>
+                <h3 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><UserCheck size={18}/> Assign Teachers to Class</h3>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
+                        <select className="form-select" style={{ width: 150 }} value={selClass} onChange={e => setSelClass(e.target.value)}>
+                            <option value="">Select</option>
+                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
+                        <select className="form-select" style={{ width: 120 }} value={selSection} onChange={e => setSelSection(e.target.value)}>
+                            <option value="">Select</option><option>A</option><option>B</option><option>C</option>
+                        </select>
+                    </div>
                 </div>
             </div>
+
+            {selClass && selSection && (
+                <div className="acad-two-col">
+                    <div className="acad-form-panel">
+                        <h4 style={{ marginBottom: 16, color: 'var(--primary)' }}>Assignment Form: {selClass} - {selSection}</h4>
+                        
+                        <div className="form-group" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border-light)' }}>
+                            <label className="form-label">Class Teacher</label>
+                            <select className="form-select" value={draftClassTeacher} onChange={e => setDraftClassTeacher(e.target.value)}>
+                                <option value="">Select Class Teacher</option>
+                                {teachers.map(t => <option key={t.id} value={t.name}>{t.name} ({t.dept})</option>)}
+                            </select>
+                        </div>
+                        
+                        <h5 style={{ marginBottom: 12 }}>Subject Teachers</h5>
+                        {applicableSubjects.length > 0 ? (
+                            applicableSubjects.map(s => (
+                                <div className="form-group" key={s.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                    <label className="form-label" style={{ width: 140, margin: 0 }}>{s.name}</label>
+                                    <select className="form-select" style={{ flex: 1 }} value={draftAssignments[s.name] || ''} onChange={e => setDraftAssignments({...draftAssignments, [s.name]: e.target.value})}>
+                                        <option value="">Select Teacher</option>
+                                        {teachers.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                                    </select>
+                                </div>
+                            ))
+                        ) : (
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No subjects assigned to this class yet.</p>
+                        )}
+                        
+                        <div style={{ marginTop: 20 }}>
+                            <button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Assignments</button>
+                        </div>
+                    </div>
+
+                    <div className="acad-table-panel">
+                        <h4 style={{ marginBottom: 16 }}>Current Assignments ({selClass}-{selSection})</h4>
+                        <table className="data-table">
+                            <thead><tr><th>Subject</th><th>Teacher</th><th>Type</th></tr></thead>
+                            <tbody>
+                                {assignments.filter(a => a.class === selClass && a.section === selSection).length > 0 ? (
+                                    assignments.filter(a => a.class === selClass && a.section === selSection).map(a => (
+                                        <tr key={a.id}>
+                                            <td className="fw-600">{a.subject}</td>
+                                            <td>{a.teacher}</td>
+                                            <td><span className={`badge ${a.type === 'Class Teacher' ? 'badge-success' : 'badge-info'}`}>{a.type}</span></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No assignments saved yet.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -369,48 +414,98 @@ function TimetableTab() {
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const [sel, setSel] = useState({ class: 'I', section: 'A' });
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const [schedule, setSchedule] = useLocalStorage('academic_schedule', [
-        { period: 1, time: '08:30-09:15', Monday: 'Math', Tuesday: 'English', Wednesday: 'Science', Thursday: 'Hindi', Friday: 'Math', Saturday: 'Games' },
-        { period: 2, time: '09:15-10:00', Monday: 'English', Tuesday: 'Math', Wednesday: 'Hindi', Thursday: 'Science', Friday: 'English', Saturday: 'Art' },
-        { period: 3, time: '10:15-11:00', Monday: 'Science', Tuesday: 'Hindi', Wednesday: 'Math', Thursday: 'English', Friday: 'Computer', Saturday: 'Library' },
-        { period: 4, time: '11:00-11:45', Monday: 'Hindi', Tuesday: 'Science', Wednesday: 'English', Thursday: 'Math', Friday: 'Games', Saturday: 'Math' },
-        { period: 5, time: '12:00-12:45', Monday: 'SST', Tuesday: 'Computer', Wednesday: 'SST', Thursday: 'Art', Friday: 'Hindi', Saturday: '—' },
+    
+    const [timetables, setTimetables] = useLocalStorage('academic_timetables', [
+        {
+            class: 'I', section: 'A', status: 'Draft',
+            schedule: [
+                { period: 1, time: '08:30-09:15', Monday: 'Mathematics', Tuesday: 'English', Wednesday: 'Science', Thursday: 'Hindi', Friday: 'Mathematics', Saturday: '—' },
+                { period: 2, time: '09:15-10:00', Monday: 'English', Tuesday: 'Mathematics', Wednesday: 'Hindi', Thursday: 'Science', Friday: 'English', Saturday: '—' },
+                { period: 3, time: '10:15-11:00', Monday: 'Science', Tuesday: 'Hindi', Wednesday: 'Mathematics', Thursday: 'English', Friday: 'Computer Science', Saturday: '—' }
+            ]
+        }
     ]);
-    const [status, setStatus] = useState('Draft');
+    const [assignments] = useLocalStorage('academic_teacher_assignments', []);
+
+    const currentTimetable = timetables.find(t => t.class === sel.class && t.section === sel.section) || {
+        class: sel.class, section: sel.section, status: 'Draft',
+        schedule: [
+            { period: 1, time: '08:30-09:15', Monday: '—', Tuesday: '—', Wednesday: '—', Thursday: '—', Friday: '—', Saturday: '—' },
+            { period: 2, time: '09:15-10:00', Monday: '—', Tuesday: '—', Wednesday: '—', Thursday: '—', Friday: '—', Saturday: '—' }
+        ]
+    };
+    
+    const schedule = currentTimetable.schedule;
+    const status = currentTimetable.status;
+
+    const classAssignments = assignments.filter(a => a.class === sel.class && a.section === sel.section && a.type === 'Subject Teacher');
+
+    const updateCurrentTimetable = (newSchedule, newStatus) => {
+        setTimetables(prev => {
+            const existing = prev.find(t => t.class === sel.class && t.section === sel.section);
+            if (existing) {
+                return prev.map(t => t === existing ? { ...t, schedule: newSchedule, status: newStatus !== undefined ? newStatus : existing.status } : t);
+            } else {
+                return [...prev, { class: sel.class, section: sel.section, status: newStatus || 'Draft', schedule: newSchedule }];
+            }
+        });
+    };
+
+    const setStatus = (newStatus) => updateCurrentTimetable(schedule, newStatus);
+
     const [editingCell, setEditingCell] = useState(null); // { period, day }
-    const [editValue, setEditValue] = useState('');
     const [editingTime, setEditingTime] = useState(null); // period number
     const [timeValue, setTimeValue] = useState('');
 
-    const handleCellClick = (period, day, currentValue) => {
+    const checkTeacherConflict = (subject, day, period) => {
+        if (subject === '—') return false;
+        const assignment = classAssignments.find(a => a.subject === subject);
+        if (!assignment || !assignment.teacher) return false;
+        const teacher = assignment.teacher;
+
+        for (const tt of timetables) {
+            if (tt.class === sel.class && tt.section === sel.section) continue;
+            const row = tt.schedule.find(r => r.period === period);
+            if (row && row[day] !== '—') {
+                const otherAssignments = assignments.filter(a => a.class === tt.class && a.section === tt.section && a.type === 'Subject Teacher');
+                const otherAssign = otherAssignments.find(a => a.subject === row[day]);
+                if (otherAssign && otherAssign.teacher === teacher) {
+                    return `Teacher Double-booking: ${teacher} is already assigned to Class ${tt.class}-${tt.section} for Period ${period} on ${day}.`;
+                }
+            }
+        }
+        return false;
+    };
+
+    const handleCellClick = (period, day) => {
+        if (status === 'Published') return;
         setEditingCell({ period, day });
-        setEditValue(currentValue || '');
     };
 
-    const handleCellSave = () => {
-        if (!editingCell) return;
-        setSchedule(prev => prev.map(row => 
-            row.period === editingCell.period 
-                ? { ...row, [editingCell.day]: editValue.trim() || '—' } 
-                : row
-        ));
-        setEditingCell(null);
-        setEditValue('');
-    };
-
-    const handleCellKeyDown = (e) => {
-        if (e.key === 'Enter') handleCellSave();
-        if (e.key === 'Escape') { setEditingCell(null); setEditValue(''); }
+    const handleSubjectSelect = (e) => {
+        const val = e.target.value;
+        const error = checkTeacherConflict(val, editingCell.day, editingCell.period);
+        
+        if (error) {
+            customAlert(error, 'Conflict Detected', 'error');
+            setEditingCell(null);
+        } else {
+            const newSchedule = schedule.map(row => row.period === editingCell.period ? { ...row, [editingCell.day]: val } : row);
+            updateCurrentTimetable(newSchedule);
+            setEditingCell(null);
+        }
     };
 
     const handleTimeClick = (period, currentTime) => {
+        if (status === 'Published') return;
         setEditingTime(period);
         setTimeValue(currentTime);
     };
 
     const handleTimeSave = () => {
         if (editingTime === null) return;
-        setSchedule(prev => prev.map(row => row.period === editingTime ? { ...row, time: timeValue.trim() } : row));
+        const newSchedule = schedule.map(row => row.period === editingTime ? { ...row, time: timeValue.trim() } : row);
+        updateCurrentTimetable(newSchedule);
         setEditingTime(null);
         setTimeValue('');
     };
@@ -424,17 +519,21 @@ function TimetableTab() {
         const nextPeriod = schedule.length + 1;
         const newRow = { period: nextPeriod, time: '--:--' };
         days.forEach(d => newRow[d] = '—');
-        setSchedule(prev => [...prev, newRow]);
+        updateCurrentTimetable([...schedule, newRow]);
     };
 
     const deletePeriod = async (periodNum) => {
         if (await customConfirm(`Delete Period ${periodNum} from the timetable?`)) {
-            setSchedule(prev => {
-                const filtered = prev.filter(r => r.period !== periodNum);
-                // Re-number remaining periods
-                return filtered.map((r, i) => ({ ...r, period: i + 1 }));
-            });
+            const filtered = schedule.filter(r => r.period !== periodNum);
+            const renumbered = filtered.map((r, i) => ({ ...r, period: i + 1 }));
+            updateCurrentTimetable(renumbered);
         }
+    };
+
+    const getTeacherForSubject = (subject) => {
+        if (subject === '—') return null;
+        const a = classAssignments.find(x => x.subject === subject);
+        return a ? a.teacher : 'Unassigned';
     };
 
     return (
@@ -446,19 +545,24 @@ function TimetableTab() {
                     </select></div>
                 <div className="form-group"><label className="form-label">Section</label>
                     <select className="form-select" style={{ width: 100 }} value={sel.section} onChange={e => setSel({ ...sel, section: e.target.value })}><option>A</option><option>B</option><option>C</option></select></div>
+                
                 <span className={`badge ${status === 'Published' ? 'badge-success' : 'badge-draft'}`} style={{ marginBottom: 8 }}>{status}</span>
+                
                 {status === 'Draft' && <button className="btn btn-primary" style={{ marginBottom: 4 }} onClick={() => { setStatus('Published'); customAlert('Timetable published successfully!', 'Success', 'success'); }}><Send size={16}/> Publish</button>}
-                {status === 'Published' && <button className="btn btn-outline" style={{ marginBottom: 4 }} onClick={() => setStatus('Draft')}><Edit3 size={16}/> Edit</button>}
-                <button className="btn btn-outline" style={{ marginBottom: 4, marginLeft: 'auto' }} onClick={addPeriod}><PlusCircle size={16}/> Add Period</button>
+                {status === 'Published' && <button className="btn btn-outline" style={{ marginBottom: 4 }} onClick={() => setStatus('Draft')}><Edit3 size={16}/> Revert to Draft</button>}
+                
+                {status === 'Draft' && <button className="btn btn-outline" style={{ marginBottom: 4, marginLeft: 'auto' }} onClick={addPeriod}><PlusCircle size={16}/> Add Period</button>}
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 12 }}>💡 Click on any subject cell to edit. Click on time to change period timing.</p>
+            
+            {status === 'Draft' && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 12 }}>💡 Click on any subject cell to assign a subject and teacher. Time slots can also be edited.</p>}
+            
             <div className="timetable-grid-wrapper">
-                <table className="data-table">
-                    <thead><tr><th>Period</th><th>Time</th>{days.map(d => <th key={d}>{d}</th>)}<th style={{ width: 50 }}>Actions</th></tr></thead>
+                <table className="data-table timetable-table">
+                    <thead><tr><th>Period</th><th>Time</th>{days.map(d => <th key={d}>{d}</th>)}{status === 'Draft' && <th style={{ width: 50 }}>Actions</th>}</tr></thead>
                     <tbody>{schedule.map(row => (
                         <tr key={row.period}>
                             <td className="fw-600">Period {row.period}</td>
-                            <td style={{ fontSize: '0.82rem', color: 'var(--text-light)', cursor: 'pointer' }} onClick={() => handleTimeClick(row.period, row.time)}>
+                            <td style={{ fontSize: '0.82rem', color: 'var(--text-light)', cursor: status === 'Draft' ? 'pointer' : 'default' }} onClick={() => handleTimeClick(row.period, row.time)}>
                                 {editingTime === row.period ? (
                                     <input 
                                         type="text" className="form-input" autoFocus
@@ -469,22 +573,30 @@ function TimetableTab() {
                                 ) : row.time}
                             </td>
                             {days.map(d => (
-                                <td key={d} onClick={() => handleCellClick(row.period, d, row[d])} style={{ cursor: 'pointer' }}>
+                                <td key={d} onClick={() => handleCellClick(row.period, d)} style={{ cursor: status === 'Draft' ? 'pointer' : 'default', verticalAlign: 'top' }}>
                                     {editingCell && editingCell.period === row.period && editingCell.day === d ? (
-                                        <input 
-                                            type="text" className="form-input" autoFocus
-                                            value={editValue} onChange={e => setEditValue(e.target.value)}
-                                            onBlur={handleCellSave} onKeyDown={handleCellKeyDown}
-                                            style={{ fontSize: '0.85rem', padding: '4px 8px', width: '100%', textAlign: 'center' }}
-                                        />
+                                        <select 
+                                            className="form-select" autoFocus
+                                            value={row[d]} onChange={handleSubjectSelect}
+                                            onBlur={() => setEditingCell(null)}
+                                            style={{ fontSize: '0.85rem', padding: '4px 20px 4px 8px', width: '100%' }}
+                                        >
+                                            <option value="—">— Free Period —</option>
+                                            {classAssignments.map(a => <option key={a.id} value={a.subject}>{a.subject} ({a.teacher})</option>)}
+                                        </select>
                                     ) : (
-                                        <div className="subject-box" style={{ background: row[d] === '—' ? 'var(--bg)' : 'var(--accent-light)', padding: '4px 8px', borderRadius: 4, textAlign: 'center', fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.15s ease' }}>{row[d]}</div>
+                                        <div className="subject-box" style={{ background: row[d] === '—' ? 'var(--bg)' : 'var(--accent-light)', padding: '6px 8px', borderRadius: 4, textAlign: 'center', transition: 'all 0.15s ease', minHeight: 45, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{row[d]}</span>
+                                            {row[d] !== '—' && <span style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: 2 }}>{getTeacherForSubject(row[d])}</span>}
+                                        </div>
                                     )}
                                 </td>
                             ))}
-                            <td>
-                                <button className="btn-icon" title="Delete Period" style={{ color: 'var(--danger)' }} onClick={() => deletePeriod(row.period)}><Trash2 size={16}/></button>
-                            </td>
+                            {status === 'Draft' && (
+                                <td>
+                                    <button className="btn-icon" title="Delete Period" style={{ color: 'var(--danger)' }} onClick={() => deletePeriod(row.period)}><Trash2 size={16}/></button>
+                                </td>
+                            )}
                         </tr>
                     ))}</tbody>
                 </table>
@@ -498,29 +610,47 @@ function SyllabusTab() {
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const [expandedCh, setExpandedCh] = useState([1]);
     const [syllabus, setSyllabus] = useLocalStorage('academic_syllabus', [
-        { id: 1, class: 'I', subject: 'Mathematics', chapter: 1, title: 'Algebra', hours: 8, topics: ['Linear Equations', 'Quadratic Formula', 'Polynomials'] },
-        { id: 2, class: 'II', subject: 'Mathematics', chapter: 2, title: 'Geometry', hours: 10, topics: ['Triangles', 'Circles', 'Coordinate Geometry'] },
-        { id: 3, class: 'III', subject: 'Science', chapter: 3, title: 'Trigonometry', hours: 6, topics: ['Sine & Cosine', 'Tan & Identities'] },
+        { id: 1, class: 'I', subject: 'Mathematics', chapter: 1, title: 'Algebra', hours: 8, topics: [{ name: 'Linear Equations', obj: 'Solve simple linear equations' }, { name: 'Quadratic Formula', obj: 'Find roots using formula' }], attachment: null },
+        { id: 2, class: 'II', subject: 'Mathematics', chapter: 2, title: 'Geometry', hours: 10, topics: [{ name: 'Triangles', obj: 'Understand basic properties' }], attachment: { name: 'geometry_guide.pdf' } },
     ]);
     const [filterClass, setFilterClass] = useState('I');
     const [filterSubject, setFilterSubject] = useState('Mathematics');
 
     const [isAdding, setIsAdding] = useState(false);
-    const [form, setForm] = useState({ class: 'I', subject: 'Mathematics', chapter: '', title: '', hours: '', topics: '' });
+    const [form, setForm] = useState({ chapter: '', title: '', hours: '', topics: [{ name: '', obj: '' }], attachment: null });
+
+    const handleAddTopic = () => setForm({ ...form, topics: [...form.topics, { name: '', obj: '' }] });
+    const updateTopic = (index, field, value) => {
+        const newTopics = [...form.topics];
+        newTopics[index][field] = value;
+        setForm({ ...form, topics: newTopics });
+    };
+    const removeTopic = (index) => setForm({ ...form, topics: form.topics.filter((_, i) => i !== index) });
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) setForm({ ...form, attachment: { name: file.name } });
+    };
 
     const handleAddChapter = async (e) => {
         e.preventDefault();
+        const validTopics = form.topics.filter(t => t.name.trim());
+        if (validTopics.length === 0) {
+            customAlert('Please add at least one topic.', 'Error', 'error');
+            return;
+        }
         const newChapter = {
             id: Date.now(),
-            class: form.class,
-            subject: form.subject,
-            chapter: parseInt(form.chapter) || (syllabus.length + 1),
+            class: filterClass,
+            subject: filterSubject,
+            chapter: parseInt(form.chapter) || (syllabus.filter(s => s.class === filterClass && s.subject === filterSubject).length + 1),
             title: form.title,
             hours: parseInt(form.hours) || 0,
-            topics: form.topics.split(',').map(t => t.trim()).filter(t => t)
+            topics: validTopics,
+            attachment: form.attachment
         };
         setSyllabus(prev => [...prev, newChapter]);
-        setForm({ class: filterClass, subject: filterSubject, chapter: '', title: '', hours: '', topics: '' });
+        setForm({ chapter: '', title: '', hours: '', topics: [{ name: '', obj: '' }], attachment: null });
         setIsAdding(false);
         await customAlert(`Chapter "${newChapter.title}" added successfully!`, 'Success', 'success');
     };
@@ -554,16 +684,38 @@ function SyllabusTab() {
 
             {isAdding && (
                 <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
-                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Chapter</h3>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Chapter ({filterClass} - {filterSubject})</h3>
                     <form className="acad-form form-row-2" onSubmit={handleAddChapter}>
-                        <div className="form-group"><label className="form-label">Title <span className="required">*</span></label>
-                            <input type="text" className="form-input" required placeholder="e.g. Introduction to Algebra" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
                         <div className="form-group"><label className="form-label">Chapter Number <span className="required">*</span></label>
                             <input type="number" className="form-input" required min="1" value={form.chapter} onChange={e => setForm({...form, chapter: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Title <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Introduction to Algebra" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
                         <div className="form-group"><label className="form-label">Expected Hours <span className="required">*</span></label>
                             <input type="number" className="form-input" required min="1" value={form.hours} onChange={e => setForm({...form, hours: e.target.value})} /></div>
-                        <div className="form-group"><label className="form-label">Topics (comma separated) <span className="required">*</span></label>
-                            <input type="text" className="form-input" required placeholder="e.g. Linear Equations, Polynomials" value={form.topics} onChange={e => setForm({...form, topics: e.target.value})} /></div>
+                        
+                        <div className="form-group">
+                            <label className="form-label">Syllabus File (PDF)</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <input type="file" accept=".pdf" className="form-input" onChange={handleFileUpload} style={{ flex: 1 }} />
+                                {form.attachment && <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}><CheckCircle2 size={14} style={{ verticalAlign: 'middle' }}/> Attached</span>}
+                            </div>
+                        </div>
+
+                        <div style={{ gridColumn: 'span 2', marginTop: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                                <label className="form-label" style={{ margin: 0 }}>Topics <span className="required">*</span></label>
+                                <button type="button" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={handleAddTopic}>+ Add Topic</button>
+                            </div>
+                            {form.topics.map((t, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+                                    <input type="text" className="form-input" placeholder="Topic Name" value={t.name} onChange={e => updateTopic(idx, 'name', e.target.value)} style={{ flex: 1 }} />
+                                    <input type="text" className="form-input" placeholder="Learning Objectives (Optional)" value={t.obj} onChange={e => updateTopic(idx, 'obj', e.target.value)} style={{ flex: 2 }} />
+                                    {form.topics.length > 1 && (
+                                        <button type="button" className="btn-icon" style={{ color: 'var(--danger)', marginTop: 8 }} onClick={() => removeTopic(idx)}><Trash2 size={16}/></button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                         
                         <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
                             <button type="button" className="btn btn-outline" onClick={() => setIsAdding(false)}>Cancel</button>
@@ -581,10 +733,14 @@ function SyllabusTab() {
                                 {expandedCh.includes(ch.id) ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
                                 <span>Chapter {ch.chapter}: {ch.title}</span>
                                 <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>{ch.hours} hrs</span>
+                                {ch.attachment && <span style={{ marginLeft: 16, color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem' }}><FileText size={14}/> PDF</span>}
                                 <button className="btn-icon" onClick={(e) => handleDeleteChapter(ch.id, ch.title, e)} style={{ color: 'var(--danger)', margin: '0 8px 0 16px' }} title="Delete Chapter"><Trash2 size={16}/></button>
                             </div>
                             {expandedCh.includes(ch.id) && ch.topics.map((t, i) => (
-                                <div className="syllabus-topic" key={i}><BookMarked size={14}/> {t}</div>
+                                <div className="syllabus-topic" key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><BookMarked size={14} style={{ color: 'var(--primary)' }}/> <strong>{t.name}</strong></div>
+                                    {t.obj && <div style={{ fontSize: '0.8rem', color: 'var(--text-light)', paddingLeft: 22 }}>Objective: {t.obj}</div>}
+                                </div>
                             ))}
                         </div>
                     )) : (
@@ -600,144 +756,669 @@ function SyllabusTab() {
 
 // ======================== LESSON PLAN ========================
 function LessonPlanTab() {
-    const [plans] = useLocalStorage('academic_lesson_plans', [
-        { id: 1, title: 'Introduction to Linear Equations', chapter: 'Algebra', topic: 'Linear Equations', method: 'Lecture', date: '2026-03-20', status: 'Completed' },
-        { id: 2, title: 'Solving Quadratic Equations', chapter: 'Algebra', topic: 'Quadratic Formula', method: 'Activity', date: '2026-03-22', status: 'Planned' },
-        { id: 3, title: 'Properties of Triangles', chapter: 'Geometry', topic: 'Triangles', method: 'Discussion', date: '2026-03-25', status: 'Pending' },
-        { id: 4, title: 'Circle Theorems', chapter: 'Geometry', topic: 'Circles', method: 'Demo', date: '2026-03-18', status: 'Rescheduled' },
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const [syllabus] = useLocalStorage('academic_syllabus', []);
+    const [plans, setPlans] = useLocalStorage('academic_lesson_plans', [
+        { id: 1, class: 'I', subject: 'Mathematics', title: 'Introduction to Linear Equations', chapter: 'Algebra', topic: 'Linear Equations', method: 'Lecture', date: '2026-03-20', status: 'Completed' },
+        { id: 2, class: 'I', subject: 'Mathematics', title: 'Solving Quadratic Equations', chapter: 'Algebra', topic: 'Quadratic Formula', method: 'Activity', date: '2026-03-22', status: 'Planned' },
     ]);
+    const [filterClass, setFilterClass] = useState('I');
+    const [filterSubject, setFilterSubject] = useState('Mathematics');
+
+    const [showCreate, setShowCreate] = useState(false);
+    const [form, setForm] = useState({ chapterId: '', topicIdx: '', title: '', method: 'Lecture', resources: '', date: '' });
+
+    const [trackingPlan, setTrackingPlan] = useState(null);
+    const [statusForm, setStatusForm] = useState({ status: 'Completed', actualDate: '', notes: '' });
+
+    const filteredPlans = plans.filter(p => p.class === filterClass && p.subject === filterSubject);
+    const filteredSyllabus = syllabus.filter(s => s.class === filterClass && s.subject === filterSubject);
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        const ch = filteredSyllabus.find(s => s.id.toString() === form.chapterId);
+        const topic = ch ? ch.topics[parseInt(form.topicIdx)] : null;
+        if (!ch || !topic) return customAlert('Please select a valid chapter and topic.', 'Error', 'error');
+
+        const newPlan = {
+            id: Date.now(),
+            class: filterClass,
+            subject: filterSubject,
+            title: form.title,
+            chapter: ch.title,
+            topic: topic.name,
+            objectives: topic.obj || '',
+            method: form.method,
+            resources: form.resources,
+            date: form.date,
+            status: 'Planned'
+        };
+        setPlans(prev => [...prev, newPlan]);
+        setShowCreate(false);
+        setForm({ chapterId: '', topicIdx: '', title: '', method: 'Lecture', resources: '', date: '' });
+        customAlert('Lesson plan created successfully!', 'Success', 'success');
+    };
+
+    const handleUpdateStatus = (e) => {
+        e.preventDefault();
+        setPlans(prev => prev.map(p => p.id === trackingPlan.id ? { ...p, ...statusForm } : p));
+        setTrackingPlan(null);
+        customAlert('Lesson plan status updated!', 'Success', 'success');
+    };
+
     const statusBadge = (s) => s === 'Completed' ? 'badge-success' : s === 'Planned' ? 'badge-info' : s === 'Pending' ? 'badge-warning' : 'badge-draft';
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in relative">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <select className="form-select" style={{ width: 140 }}><option>Grade 1</option><option>Grade 2</option></select>
-                    <select className="form-select" style={{ width: 160 }}><option>Mathematics</option><option>Science</option></select>
+                    <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                    </select>
+                    <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
+                        <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                    </select>
                 </div>
-                <button className="btn btn-primary"><PlusCircle size={16}/> Create Lesson Plan</button>
+                {!showCreate && <button className="btn btn-primary" onClick={() => setShowCreate(true)}><PlusCircle size={16}/> Create Lesson Plan</button>}
             </div>
-            <div className="lesson-plan-grid">
-                {plans.map(p => (
-                    <div className="lesson-plan-card" key={p.id}>
-                        <h4>{p.title}</h4>
-                        <div className="lp-meta">
-                            <span><BookMarked size={14}/> {p.chapter}</span>
-                            <span><Calendar size={14}/> {p.date}</span>
-                            <span><GraduationCap size={14}/> {p.method}</span>
+
+            {showCreate && (
+                <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Create Lesson Plan ({filterClass} - {filterSubject})</h3>
+                    <form className="acad-form form-row-2" onSubmit={handleCreate}>
+                        <div className="form-group"><label className="form-label">Syllabus Chapter <span className="required">*</span></label>
+                            <select className="form-select" required value={form.chapterId} onChange={e => setForm({ ...form, chapterId: e.target.value, topicIdx: '' })}>
+                                <option value="">Select Chapter</option>
+                                {filteredSyllabus.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+                            </select>
                         </div>
-                        <span className={`badge ${statusBadge(p.status)}`}>{p.status}</span>
+                        <div className="form-group"><label className="form-label">Topic <span className="required">*</span></label>
+                            <select className="form-select" required value={form.topicIdx} onChange={e => setForm({ ...form, topicIdx: e.target.value })}>
+                                <option value="">Select Topic</option>
+                                {form.chapterId && filteredSyllabus.find(s => s.id.toString() === form.chapterId)?.topics.map((t, i) => (
+                                    <option key={i} value={i}>{t.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Lesson Title <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Introduction to Algebra concepts" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+                        
+                        <div className="form-group"><label className="form-label">Teaching Method <span className="required">*</span></label>
+                            <select className="form-select" required value={form.method} onChange={e => setForm({ ...form, method: e.target.value })}>
+                                <option>Lecture</option><option>Discussion</option><option>Activity</option><option>Demonstration</option><option>Multimedia</option>
+                            </select>
+                        </div>
+                        <div className="form-group"><label className="form-label">Date of Delivery <span className="required">*</span></label>
+                            <input type="date" className="form-input" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
+                        
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Resources / Aids</label>
+                            <input type="text" className="form-input" placeholder="e.g. Projector, Graph Paper, Handouts" value={form.resources} onChange={e => setForm({...form, resources: e.target.value})} /></div>
+                        
+                        <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                            <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> Save Lesson Plan</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {trackingPlan && (
+                <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="modal-content" style={{ background: 'var(--card-bg)', padding: 24, borderRadius: 12, width: '90%', maxWidth: 500 }}>
+                        <h3 style={{ marginBottom: 16 }}>Track Completion: {trackingPlan.title}</h3>
+                        <form onSubmit={handleUpdateStatus}>
+                            <div className="form-group" style={{ marginBottom: 16 }}><label className="form-label">Status</label>
+                                <select className="form-select" value={statusForm.status} onChange={e => setStatusForm({ ...statusForm, status: e.target.value })}>
+                                    <option>Planned</option><option>Completed</option><option>Rescheduled</option><option>Pending</option>
+                                </select>
+                            </div>
+                            {statusForm.status === 'Completed' && (
+                                <div className="form-group" style={{ marginBottom: 16 }}><label className="form-label">Actual Date of Delivery <span className="required">*</span></label>
+                                    <input type="date" className="form-input" required value={statusForm.actualDate} onChange={e => setStatusForm({ ...statusForm, actualDate: e.target.value })} />
+                                </div>
+                            )}
+                            <div className="form-group" style={{ marginBottom: 20 }}><label className="form-label">Delivery Notes / Observations</label>
+                                <textarea className="form-input" rows="3" placeholder="How did the lesson go? Any follow-ups required?" value={statusForm.notes} onChange={e => setStatusForm({ ...statusForm, notes: e.target.value })}></textarea>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                                <button type="button" className="btn btn-outline" onClick={() => setTrackingPlan(null)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary">Update Status</button>
+                            </div>
+                        </form>
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
+
+            {!showCreate && (
+                <div className="lesson-plan-grid">
+                    {filteredPlans.length > 0 ? filteredPlans.map(p => (
+                        <div className="lesson-plan-card" key={p.id} style={{ cursor: 'pointer', position: 'relative' }} onClick={() => { setTrackingPlan(p); setStatusForm({ status: p.status, actualDate: p.actualDate || '', notes: p.notes || '' }); }}>
+                            <div style={{ position: 'absolute', top: 16, right: 16 }}>
+                                <span className={`badge ${statusBadge(p.status)}`}>{p.status}</span>
+                            </div>
+                            <h4 style={{ paddingRight: 80, marginBottom: 8, fontSize: '1.05rem' }}>{p.title}</h4>
+                            <div className="lp-meta" style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><BookMarked size={14}/> {p.chapter} - {p.topic}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14}/> Planned: {p.date}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><GraduationCap size={14}/> {p.method}</span>
+                            </div>
+                        </div>
+                    )) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No lesson plans found for this class and subject.</div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
 
 // ======================== ASSIGNMENTS ========================
 function AssignmentsTab() {
-    const [assignments] = useLocalStorage('academic_assignments', [
-        { id: 1, title: 'Algebra Practice Set 1', class: 'Grade 3-A', subject: 'Mathematics', dueDate: '2026-03-28', status: 'Published', submissions: 28, total: 35 },
-        { id: 2, title: 'Essay on Environment', class: 'Grade 2-A', subject: 'English', dueDate: '2026-03-30', status: 'Draft', submissions: 0, total: 32 },
-        { id: 3, title: 'Plant Cell Diagram', class: 'Grade 3-B', subject: 'Science', dueDate: '2026-03-26', status: 'Graded', submissions: 34, total: 34 },
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const [assignments, setAssignments] = useLocalStorage('academic_assignments', [
+        { id: 1, title: 'Algebra Practice Set 1', class: 'I', section: 'A', subject: 'Mathematics', dueDate: '2026-03-28T10:00', status: 'Published', submissions: 28, total: 35, desc: 'Solve exercises 1-10 on page 42.' },
+        { id: 2, title: 'Essay on Environment', class: 'II', section: 'A', subject: 'English', dueDate: '2026-03-30T15:00', status: 'Draft', submissions: 0, total: 32, desc: 'Write a 200 word essay.' },
     ]);
-    const statusBadge = (s) => s === 'Published' ? 'badge-info' : s === 'Draft' ? 'badge-draft' : s === 'Graded' ? 'badge-success' : 'badge-warning';
+
+    // Submissions mock data
+    const [allSubmissions, setAllSubmissions] = useLocalStorage('academic_submissions', [
+        { id: 101, assignmentId: 1, studentId: 'S001', studentName: 'Aarav Sharma', status: 'Submitted', file: 'aarav_algebra.pdf', submitDate: '2026-03-27T14:30', marks: null, feedback: '' },
+        { id: 102, assignmentId: 1, studentId: 'S002', studentName: 'Diya Patel', status: 'Pending', file: null, submitDate: null, marks: null, feedback: '' },
+        { id: 103, assignmentId: 1, studentId: 'S003', studentName: 'Rohan Singh', status: 'Late', file: 'rohan_math_hw.jpg', submitDate: '2026-03-28T11:45', marks: null, feedback: '' },
+        { id: 104, assignmentId: 1, studentId: 'S004', studentName: 'Ananya Verma', status: 'Graded', file: 'ananya_hw1.pdf', submitDate: '2026-03-26T09:10', marks: 32, feedback: 'Good work, but check question 5.' },
+    ]);
+    
+    const [filterClass, setFilterClass] = useState('I');
+    const [filterSubject, setFilterSubject] = useState('Mathematics');
+
+    const [showCreate, setShowCreate] = useState(false);
+    const [form, setForm] = useState({ class: 'I', section: 'A', subject: 'Mathematics', title: '', desc: '', dueDate: '', status: 'Draft', file: null });
+
+    const [activeAssignment, setActiveAssignment] = useState(null); // The assignment being monitored
+    const [gradingSubmission, setGradingSubmission] = useState(null); // The submission being graded
+    const [gradeForm, setGradeForm] = useState({ marks: '', feedback: '' });
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) setForm({ ...form, file: { name: file.name } });
+    };
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        const newAssignment = {
+            id: Date.now(),
+            class: form.class,
+            section: form.section,
+            subject: form.subject,
+            title: form.title,
+            desc: form.desc,
+            dueDate: form.dueDate,
+            status: form.status,
+            submissions: 0,
+            total: 35, // dummy value
+            file: form.file
+        };
+        setAssignments(prev => [...prev, newAssignment]);
+        setShowCreate(false);
+        setForm({ class: filterClass, section: 'A', subject: filterSubject, title: '', desc: '', dueDate: '', status: 'Draft', file: null });
+        customAlert('Assignment created successfully!', 'Success', 'success');
+    };
+
+    const toggleStatus = (id, currentStatus) => {
+        const nextStatus = currentStatus === 'Draft' ? 'Published' : 'Draft';
+        setAssignments(prev => prev.map(a => a.id === id ? { ...a, status: nextStatus } : a));
+    };
+
+    const handleSaveGrade = (e) => {
+        e.preventDefault();
+        setAllSubmissions(prev => prev.map(sub => sub.id === gradingSubmission.id ? { ...sub, marks: gradeForm.marks, feedback: gradeForm.feedback, status: 'Graded' } : sub));
+        setGradingSubmission(null);
+        customAlert('Submission graded successfully!', 'Success', 'success');
+    };
+
+    const filteredAssignments = assignments.filter(a => a.class === filterClass && a.subject === filterSubject);
+    const activeSubmissions = activeAssignment ? allSubmissions.filter(s => s.assignmentId === activeAssignment.id) : [];
+
+    const statusBadge = (s) => s === 'Published' || s === 'Submitted' ? 'badge-info' : s === 'Draft' || s === 'Pending' ? 'badge-draft' : s === 'Graded' ? 'badge-success' : 'badge-warning';
+
+    if (activeAssignment) {
+        return (
+            <div className="animate-fade-in relative">
+                <button className="btn btn-outline" style={{ marginBottom: 20 }} onClick={() => setActiveAssignment(null)}><ChevronRight size={16} style={{ transform: 'rotate(180deg)' }}/> Back to Assignments</button>
+                <div style={{ marginBottom: 20 }}>
+                    <h3 style={{ color: 'var(--primary)' }}>Submission Monitor: {activeAssignment.title}</h3>
+                    <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>Due: {new Date(activeAssignment.dueDate).toLocaleString()} | Class: {activeAssignment.class}-{activeAssignment.section}</p>
+                </div>
+                
+                <div className="table-responsive">
+                    <table className="data-table"><thead><tr><th>Student ID</th><th>Student Name</th><th>Submitted On</th><th>File</th><th>Status</th><th>Marks</th><th>Actions</th></tr></thead>
+                        <tbody>{activeSubmissions.length > 0 ? activeSubmissions.map(sub => (
+                            <tr key={sub.id}>
+                                <td>{sub.studentId}</td>
+                                <td className="fw-600">{sub.studentName}</td>
+                                <td>{sub.submitDate ? new Date(sub.submitDate).toLocaleString() : '—'}</td>
+                                <td>{sub.file ? <span style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 4 }}><FileText size={14}/> {sub.file}</span> : '—'}</td>
+                                <td><span className={`badge ${statusBadge(sub.status)}`}>{sub.status}</span></td>
+                                <td>{sub.marks !== null ? sub.marks : '—'}</td>
+                                <td>
+                                    {(sub.status === 'Submitted' || sub.status === 'Late' || sub.status === 'Graded') && (
+                                        <button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => { setGradingSubmission(sub); setGradeForm({ marks: sub.marks || '', feedback: sub.feedback || '' }); }}>
+                                            <Edit3 size={14} style={{ marginRight: 4 }}/> Evaluate
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No submissions found for this assignment.</td></tr>
+                        )}</tbody>
+                    </table>
+                </div>
+
+                {gradingSubmission && (
+                    <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="modal-content" style={{ background: 'var(--card-bg)', padding: 24, borderRadius: 12, width: '90%', maxWidth: 500 }}>
+                            <h3 style={{ marginBottom: 16, color: 'var(--primary)' }}>Evaluate Submission</h3>
+                            <div style={{ marginBottom: 20, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                <p><strong>Student:</strong> {gradingSubmission.studentName} ({gradingSubmission.studentId})</p>
+                                <p><strong>File:</strong> {gradingSubmission.file} <a href="#" style={{ color: 'var(--primary)', marginLeft: 8 }}>Download</a></p>
+                                <p><strong>Submitted On:</strong> {new Date(gradingSubmission.submitDate).toLocaleString()}</p>
+                            </div>
+                            <form onSubmit={handleSaveGrade}>
+                                <div className="form-group" style={{ marginBottom: 16 }}><label className="form-label">Marks Awarded <span className="required">*</span></label>
+                                    <input type="number" className="form-input" required value={gradeForm.marks} onChange={e => setGradeForm({ ...gradeForm, marks: e.target.value })} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 20 }}><label className="form-label">Feedback / Remarks</label>
+                                    <textarea className="form-input" rows="4" placeholder="Provide constructive feedback..." value={gradeForm.feedback} onChange={e => setGradeForm({ ...gradeForm, feedback: e.target.value })}></textarea>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                                    <button type="button" className="btn btn-outline" onClick={() => setGradingSubmission(null)}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">Mark as Graded</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h3 style={{ color: 'var(--primary)' }}>Assignments & Homework</h3>
-                <button className="btn btn-primary"><PlusCircle size={16}/> Create Assignment</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                    </select>
+                    <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
+                        <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                    </select>
+                </div>
+                {!showCreate && <button className="btn btn-primary" onClick={() => setShowCreate(true)}><PlusCircle size={16}/> Create Assignment</button>}
             </div>
-            <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Due Date</th><th>Submissions</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody>{assignments.map(a => (
-                        <tr key={a.id}><td className="fw-600">{a.title}</td><td>{a.class}</td><td>{a.subject}</td><td>{a.dueDate}</td>
-                            <td>{a.submissions}/{a.total}</td>
-                            <td><span className={`badge ${statusBadge(a.status)}`}>{a.status}</span></td>
-                            <td><button className="btn-icon" title="View" onClick={() => customAlert(`Assignment: ${a.title}\nClass: ${a.class}\nSubject: ${a.subject}\nDue: ${a.dueDate}\nSubmissions: ${a.submissions}/${a.total}\nStatus: ${a.status}`)}><Eye size={16}/></button><button className="btn-icon" title="Edit" onClick={() => customAlert(`Edit assignment "${a.title}"\n\nUse the Create Assignment form to update.`)}><Edit3 size={16}/></button></td></tr>
-                    ))}</tbody></table>
-            </div>
+
+            {showCreate && (
+                <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Create New Assignment</h3>
+                    <form className="acad-form form-row-2" onSubmit={handleCreate}>
+                        <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
+                            <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
+                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}><option>A</option><option>B</option><option>C</option></select></div>
+                        <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
+                            <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
+                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Assignment Title <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Chapter 1 Exercises" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+                        
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Description / Instructions</label>
+                            <textarea className="form-input" rows="3" placeholder="Provide detailed instructions for the students..." value={form.desc} onChange={e => setForm({...form, desc: e.target.value})}></textarea></div>
+                        
+                        <div className="form-group"><label className="form-label">Due Date & Time <span className="required">*</span></label>
+                            <input type="datetime-local" className="form-input" required value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} /></div>
+                        
+                        <div className="form-group">
+                            <label className="form-label">Reference File / Attachment</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <input type="file" className="form-input" onChange={handleFileChange} style={{ flex: 1 }} />
+                                {form.file && <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}><CheckCircle2 size={14} style={{ verticalAlign: 'middle' }}/> Attached</span>}
+                            </div>
+                        </div>
+
+                        <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                            <label className="form-label" style={{ margin: 0 }}>Visibility:</label>
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                                    <input type="radio" name="status" checked={form.status === 'Draft'} onChange={() => setForm({...form, status: 'Draft'})} /> Save as Draft
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                                    <input type="radio" name="status" checked={form.status === 'Published'} onChange={() => setForm({...form, status: 'Published'})} /> Publish Immediately
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                            <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> Save Assignment</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {!showCreate && (
+                <div className="table-responsive">
+                    <table className="data-table"><thead><tr><th>Title</th><th>Section</th><th>Due Date</th><th>Submissions</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>{filteredAssignments.length > 0 ? filteredAssignments.map(a => (
+                            <tr key={a.id}>
+                                <td className="fw-600">
+                                    {a.title}
+                                    {a.file && <FileText size={12} style={{ marginLeft: 6, color: 'var(--primary)', verticalAlign: 'middle' }} />}
+                                </td>
+                                <td>{a.section}</td>
+                                <td>{new Date(a.dueDate).toLocaleString()}</td>
+                                <td>{a.submissions}/{a.total}</td>
+                                <td>
+                                    <span className={`badge ${statusBadge(a.status)}`} style={{ cursor: 'pointer' }} onClick={() => toggleStatus(a.id, a.status)} title="Click to toggle status">
+                                        {a.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    {a.status === 'Published' && (
+                                        <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: 8 }} onClick={() => setActiveAssignment(a)}>
+                                            Submissions
+                                        </button>
+                                    )}
+                                    <button className="btn-icon" title="View" onClick={() => customAlert(`Assignment: ${a.title}\nDescription: ${a.desc}\nClass: ${a.class}-${a.section}\nSubject: ${a.subject}\nDue: ${new Date(a.dueDate).toLocaleString()}\nStatus: ${a.status}`)}><Eye size={16}/></button>
+                                    <button className="btn-icon" title="Delete" onClick={() => setAssignments(prev => prev.filter(x => x.id !== a.id))} style={{ color: 'var(--danger)' }}><Trash2 size={16}/></button>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No assignments found for this class and subject.</td></tr>
+                        )}</tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }
 
 // ======================== ATTENDANCE ========================
+// ======================== ATTENDANCE ========================
 function AttendanceTab() {
-    const [students, setStudents] = useLocalStorage('academic_attendance', [
-        { id: 1, name: 'Aarav Sharma', rollNo: '01', status: 'P' }, { id: 2, name: 'Diya Patel', rollNo: '02', status: 'P' },
-        { id: 3, name: 'Kavya Gupta', rollNo: '03', status: 'A' }, { id: 4, name: 'Rohan Singh', rollNo: '04', status: 'P' },
-        { id: 5, name: 'Ananya Verma', rollNo: '05', status: 'L' }, { id: 6, name: 'Ishaan Roy', rollNo: '06', status: 'P' },
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    
+    // Using a more structured dummy data that can be filtered by class/section
+    const [allStudents, setAllStudents] = useLocalStorage('academic_attendance_records', [
+        { id: 1, class: 'I', section: 'A', name: 'Aarav Sharma', rollNo: '01', status: 'P', remarks: '' },
+        { id: 2, class: 'I', section: 'A', name: 'Diya Patel', rollNo: '02', status: 'P', remarks: '' },
+        { id: 3, class: 'I', section: 'A', name: 'Kavya Gupta', rollNo: '03', status: 'A', remarks: 'Fever' },
+        { id: 4, class: 'I', section: 'A', name: 'Rohan Singh', rollNo: '04', status: 'P', remarks: '' },
+        { id: 5, class: 'I', section: 'B', name: 'Ananya Verma', rollNo: '05', status: 'L', remarks: 'Family function' },
+        { id: 6, class: 'I', section: 'B', name: 'Ishaan Roy', rollNo: '06', status: 'P', remarks: '' },
     ]);
-    const markAll = (status) => setStudents(prev => prev.map(s => ({ ...s, status })));
-    const toggle = (id, status) => setStudents(prev => prev.map(s => s.id === id ? { ...s, status } : s));
-    const counts = { P: students.filter(s => s.status === 'P').length, A: students.filter(s => s.status === 'A').length, L: students.filter(s => s.status === 'L').length };
+    
+    const [filterClass, setFilterClass] = useState('I');
+    const [filterSection, setFilterSection] = useState('A');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+    // Derived state for current view
+    const currentStudents = allStudents.filter(s => s.class === filterClass && s.section === filterSection);
+
+    const markAll = (status) => {
+        setAllStudents(prev => prev.map(s => (s.class === filterClass && s.section === filterSection) ? { ...s, status, remarks: status === 'P' ? '' : s.remarks } : s));
+    };
+
+    const toggle = (id, status) => {
+        setAllStudents(prev => prev.map(s => s.id === id ? { ...s, status, remarks: status === 'P' ? '' : s.remarks } : s));
+    };
+
+    const updateRemarks = (id, remarks) => {
+        setAllStudents(prev => prev.map(s => s.id === id ? { ...s, remarks } : s));
+    };
+
+    const handleSave = () => {
+        customAlert('Attendance saved successfully!', 'Success', 'success');
+    };
+
+    const counts = { 
+        P: currentStudents.filter(s => s.status === 'P').length, 
+        A: currentStudents.filter(s => s.status === 'A').length, 
+        L: currentStudents.filter(s => s.status === 'L').length 
+    };
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" style={{ width: 140 }}><option>Grade 1</option><option>Grade 2</option></select></div>
-                <div className="form-group"><label className="form-label">Section</label><select className="form-select" style={{ width: 100 }}><option>A</option><option>B</option></select></div>
-                <div className="form-group"><label className="form-label">Date</label><input type="date" className="form-input" style={{ width: 160 }} defaultValue={new Date().toISOString().split('T')[0]} /></div>
-                <button className="btn btn-outline" onClick={() => markAll('P')}>Mark All Present</button>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="form-group"><label className="form-label">Class</label>
+                        <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group"><label className="form-label">Section</label>
+                        <select className="form-select" style={{ width: 100 }} value={filterSection} onChange={e => setFilterSection(e.target.value)}>
+                            <option>A</option><option>B</option><option>C</option>
+                        </select>
+                    </div>
+                    <div className="form-group"><label className="form-label">Date</label>
+                        <input type="date" className="form-input" style={{ width: 160 }} value={date} onChange={e => setDate(e.target.value)} />
+                    </div>
+                </div>
+                <button className="btn btn-outline" onClick={() => markAll('P')}><CheckCircle2 size={16}/> Mark All Present</button>
             </div>
+            
             <div className="acad-stats-row" style={{ marginBottom: 16 }}>
                 <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--success-light)' }}><CheckCircle2 size={24} style={{ color: 'var(--success)' }}/></div><div className="acad-stat-info"><h4>{counts.P}</h4><p>Present</p></div></div>
                 <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--danger-light)' }}><XCircle size={24} style={{ color: 'var(--danger)' }}/></div><div className="acad-stat-info"><h4>{counts.A}</h4><p>Absent</p></div></div>
                 <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--warning-light)' }}><Calendar size={24} style={{ color: 'var(--warning)' }}/></div><div className="acad-stat-info"><h4>{counts.L}</h4><p>Leave</p></div></div>
             </div>
+            
             <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Roll</th><th>Student</th><th>Present</th><th>Absent</th><th>Leave</th></tr></thead>
-                    <tbody>{students.map(s => (
-                        <tr key={s.id}><td>{s.rollNo}</td><td className="fw-600">{s.name}</td>
-                            {['P', 'A', 'L'].map(st => <td key={st}><input type="radio" name={`att-${s.id}`} checked={s.status === st} onChange={() => toggle(s.id, st)} style={{ accentColor: st === 'P' ? 'var(--success)' : st === 'A' ? 'var(--danger)' : 'var(--warning)' }}/></td>)}
-                        </tr>
-                    ))}</tbody></table>
+                <table className="data-table">
+                    <thead><tr><th>Roll No</th><th>Student Name</th><th>Present</th><th>Absent</th><th>Leave</th><th>Remarks</th></tr></thead>
+                    <tbody>
+                        {currentStudents.length > 0 ? currentStudents.map(s => (
+                            <tr key={s.id}>
+                                <td>{s.rollNo}</td>
+                                <td className="fw-600">{s.name}</td>
+                                {['P', 'A', 'L'].map(st => (
+                                    <td key={st}>
+                                        <input type="radio" name={`att-${s.id}`} checked={s.status === st} onChange={() => toggle(s.id, st)} style={{ accentColor: st === 'P' ? 'var(--success)' : st === 'A' ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', width: 18, height: 18 }}/>
+                                    </td>
+                                ))}
+                                <td>
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        style={{ width: '100%', padding: '4px 8px', fontSize: '0.85rem', opacity: s.status === 'P' ? 0.3 : 1 }} 
+                                        placeholder={s.status === 'P' ? 'N/A' : 'Add remarks (optional)'} 
+                                        value={s.remarks} 
+                                        onChange={e => updateRemarks(s.id, e.target.value)}
+                                        disabled={s.status === 'P'}
+                                    />
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No students found for this class and section.</td></tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
-            <div style={{ marginTop: 16 }}><button className="btn btn-primary"><Save size={16}/> Save Attendance</button></div>
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Attendance</button>
+            </div>
         </div>
     );
 }
 
 // ======================== PERFORMANCE ========================
 function PerformanceTab() {
-    const [assessments] = useLocalStorage('academic_assessments', [
-        { id: 1, name: 'Unit Test 1', class: 'Grade 3-A', subject: 'Mathematics', maxMarks: 50, date: '2026-02-15', avgMarks: 38 },
-        { id: 2, name: 'Mid-Term Class Test', class: 'Grade 3-A', subject: 'Science', maxMarks: 100, date: '2026-03-01', avgMarks: 72 },
-        { id: 3, name: 'Unit Test 2', class: 'Grade 2-A', subject: 'English', maxMarks: 50, date: '2026-03-10', avgMarks: 41 },
+    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const [assessments, setAssessments] = useLocalStorage('academic_assessments', [
+        { id: 1, name: 'Unit Test 1', class: 'I', section: 'A', subject: 'Mathematics', maxMarks: 50, date: '2026-02-15', marks: { 'S001': 45, 'S002': 38, 'S003': 30 } },
+        { id: 2, name: 'Mid-Term Class Test', class: 'II', section: 'B', subject: 'Science', maxMarks: 100, date: '2026-03-01', marks: {} },
     ]);
+
+    const DUMMY_STUDENTS = [
+        { id: 'S001', name: 'Aarav Sharma', roll: '01' },
+        { id: 'S002', name: 'Diya Patel', roll: '02' },
+        { id: 'S003', name: 'Kavya Gupta', roll: '03' },
+        { id: 'S004', name: 'Rohan Singh', roll: '04' },
+    ];
+
+    const [showCreate, setShowCreate] = useState(false);
+    const [form, setForm] = useState({ name: '', class: 'I', section: 'A', subject: 'Mathematics', maxMarks: 100, date: '' });
+    
+    const [markingAssessment, setMarkingAssessment] = useState(null);
+    const [marksForm, setMarksForm] = useState({});
+
+    const handleCreate = (e) => {
+        e.preventDefault();
+        const newAssessment = {
+            id: Date.now(),
+            ...form,
+            maxMarks: parseInt(form.maxMarks),
+            marks: {}
+        };
+        setAssessments(prev => [...prev, newAssessment]);
+        setShowCreate(false);
+        setForm({ name: '', class: 'I', section: 'A', subject: 'Mathematics', maxMarks: 100, date: '' });
+        customAlert('Assessment created successfully!', 'Success', 'success');
+    };
+
+    const handleSaveMarks = (e) => {
+        e.preventDefault();
+        setAssessments(prev => prev.map(a => a.id === markingAssessment.id ? { ...a, marks: marksForm } : a));
+        setMarkingAssessment(null);
+        customAlert('Marks saved successfully!', 'Success', 'success');
+    };
+
+    const getAvg = (marks) => {
+        const values = Object.values(marks).filter(v => v !== null && v !== '');
+        if (values.length === 0) return 0;
+        return (values.reduce((sum, v) => sum + Number(v), 0) / values.length).toFixed(1);
+    };
+
+    if (markingAssessment) {
+        return (
+            <div className="animate-fade-in relative">
+                <button className="btn btn-outline" style={{ marginBottom: 20 }} onClick={() => setMarkingAssessment(null)}><ChevronRight size={16} style={{ transform: 'rotate(180deg)' }}/> Back to Assessments</button>
+                <div style={{ marginBottom: 20 }}>
+                    <h3 style={{ color: 'var(--primary)' }}>Enter Marks: {markingAssessment.name}</h3>
+                    <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>Class: {markingAssessment.class}-{markingAssessment.section} | Subject: {markingAssessment.subject} | Max Marks: {markingAssessment.maxMarks}</p>
+                </div>
+                
+                <form onSubmit={handleSaveMarks}>
+                    <div className="table-responsive" style={{ marginBottom: 20 }}>
+                        <table className="data-table"><thead><tr><th>Roll No</th><th>Student Name</th><th>Marks Awarded (out of {markingAssessment.maxMarks})</th></tr></thead>
+                            <tbody>{DUMMY_STUDENTS.map(s => (
+                                <tr key={s.id}>
+                                    <td>{s.roll}</td>
+                                    <td className="fw-600">{s.name}</td>
+                                    <td>
+                                        <input type="number" className="form-input" style={{ width: 150 }} max={markingAssessment.maxMarks} min="0" value={marksForm[s.id] || ''} onChange={e => setMarksForm({ ...marksForm, [s.id]: e.target.value })} placeholder="Enter marks" />
+                                    </td>
+                                </tr>
+                            ))}</tbody>
+                        </table>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                        <button type="button" className="btn btn-outline" onClick={() => setMarkingAssessment(null)}>Cancel</button>
+                        <button type="submit" className="btn btn-primary"><Save size={16}/> Save Marks</button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <h3 style={{ color: 'var(--primary)' }}>Internal Assessments</h3>
-                <button className="btn btn-primary"><PlusCircle size={16}/> Create Assessment</button>
+                {!showCreate && <button className="btn btn-primary" onClick={() => setShowCreate(true)}><PlusCircle size={16}/> Create Assessment</button>}
             </div>
-            <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Assessment</th><th>Class</th><th>Subject</th><th>Max Marks</th><th>Date</th><th>Avg Marks</th><th>Performance</th><th>Actions</th></tr></thead>
-                    <tbody>{assessments.map(a => (
-                        <tr key={a.id}><td className="fw-600">{a.name}</td><td>{a.class}</td><td>{a.subject}</td><td>{a.maxMarks}</td><td>{a.date}</td><td>{a.avgMarks}</td>
-                            <td style={{ minWidth: 120 }}><div className="progress-bar"><div className="progress-bar-fill" style={{ width: `${(a.avgMarks / a.maxMarks) * 100}%` }}/></div></td>
-                            <td><button className="btn-icon" title="Marks" onClick={() => customAlert(`Assessment: ${a.name}\nClass: ${a.class}\nSubject: ${a.subject}\nMax Marks: ${a.maxMarks}\nAvg: ${a.avgMarks}\nDate: ${a.date}`)}><ClipboardCheck size={16}/></button><button className="btn-icon" title="View" onClick={() => customAlert(`Performance Analysis\n\n${a.name} — ${a.class}\nAverage: ${a.avgMarks}/${a.maxMarks} (${Math.round(a.avgMarks/a.maxMarks*100)}%)`)}><Eye size={16}/></button></td></tr>
-                    ))}</tbody></table>
-            </div>
+
+            {showCreate && (
+                <div className="acad-form-panel animate-fade-in" style={{ padding: 24, marginBottom: 20 }}>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Create New Assessment</h3>
+                    <form className="acad-form form-row-2" onSubmit={handleCreate}>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Assessment Name <span className="required">*</span></label>
+                            <input type="text" className="form-input" required placeholder="e.g. Unit Test 1, Mid-Term" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+                        
+                        <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
+                            <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                            </select></div>
+                        <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
+                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}><option>A</option><option>B</option><option>C</option></select></div>
+                        <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
+                            <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
+                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                            </select></div>
+                        
+                        <div className="form-group"><label className="form-label">Date of Assessment <span className="required">*</span></label>
+                            <input type="date" className="form-input" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
+                        <div className="form-group"><label className="form-label">Maximum Marks <span className="required">*</span></label>
+                            <input type="number" className="form-input" required min="1" value={form.maxMarks} onChange={e => setForm({...form, maxMarks: e.target.value})} /></div>
+                        
+                        <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
+                            <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
+                            <button type="submit" className="btn btn-primary"><Save size={16}/> Save Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {!showCreate && (
+                <div className="table-responsive">
+                    <table className="data-table"><thead><tr><th>Assessment Name</th><th>Class</th><th>Subject</th><th>Max Marks</th><th>Date</th><th>Avg Marks</th><th>Performance Trend</th><th>Actions</th></tr></thead>
+                        <tbody>{assessments.length > 0 ? assessments.map(a => {
+                            const avg = getAvg(a.marks);
+                            const percent = a.maxMarks > 0 ? (avg / a.maxMarks) * 100 : 0;
+                            return (
+                                <tr key={a.id}>
+                                    <td className="fw-600">{a.name}</td>
+                                    <td>{a.class}-{a.section}</td>
+                                    <td>{a.subject}</td>
+                                    <td>{a.maxMarks}</td>
+                                    <td>{new Date(a.date).toLocaleDateString()}</td>
+                                    <td>{avg}</td>
+                                    <td style={{ minWidth: 120 }}><div className="progress-bar"><div className="progress-bar-fill" style={{ width: `${percent}%`, background: percent >= 75 ? 'var(--success)' : percent >= 50 ? 'var(--warning)' : 'var(--danger)' }}/></div></td>
+                                    <td>
+                                        <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: 8 }} onClick={() => { setMarkingAssessment(a); setMarksForm(a.marks || {}); }}>
+                                            Enter Marks
+                                        </button>
+                                        <button className="btn-icon" title="View Analytics" onClick={() => customAlert(`Performance Analytics\n\nAssessment: ${a.name}\nClass Average: ${avg}/${a.maxMarks} (${Math.round(percent)}%)\n\nDetailed analytics will appear here.`)}><Eye size={16}/></button>
+                                        <button className="btn-icon" title="Delete" onClick={() => setAssessments(prev => prev.filter(x => x.id !== a.id))} style={{ color: 'var(--danger)' }}><Trash2 size={16}/></button>
+                                    </td>
+                                </tr>
+                            )
+                        }) : (
+                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No assessments found.</td></tr>
+                        )}</tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }
 
 // ======================== STUDY MATERIALS ========================
+// ======================== STUDY MATERIALS ========================
 function StudyMaterialsTab() {
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     const [materials, setMaterials] = useLocalStorage('academic_materials', [
-        { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'PDF', uploadedBy: 'Mrs. Sharma', date: '2026-03-15' },
-        { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', uploadedBy: 'Mr. Roy', date: '2026-03-18' },
-        { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', uploadedBy: 'Ms. Gupta', date: '2026-03-20' },
+        { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Mrs. Sharma', date: '2026-03-15', url: null, fileName: 'algebra_notes.pdf' },
+        { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', visibility: 'Specific Section', uploadedBy: 'Mr. Roy', date: '2026-03-18', url: 'https://youtube.com/watch?v=123', fileName: null },
+        { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', visibility: 'All Students', uploadedBy: 'Ms. Gupta', date: '2026-03-20', url: null, fileName: 'grammar.pptx' },
     ]);
     const [isUploading, setIsUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [form, setForm] = useState({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
+    const [form, setForm] = useState({ title: '', class: '', subject: '', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Admin', videoUrl: '' });
 
-    const typeBadge = (t) => t === 'PDF' ? 'badge-danger' : t === 'Video Link' ? 'badge-info' : 'badge-warning';
+    const typeBadge = (t) => t === 'Notes / PDF' ? 'badge-danger' : t === 'Video Link' ? 'badge-info' : 'badge-warning';
 
     const handleUploadSubmit = async (e) => {
         e.preventDefault();
@@ -747,12 +1428,14 @@ function StudyMaterialsTab() {
             class: form.class,
             subject: form.subject,
             type: form.type,
+            visibility: form.visibility,
             uploadedBy: form.uploadedBy,
-            fileName: selectedFile ? selectedFile.name : '—',
+            fileName: form.type === 'Video Link' ? null : (selectedFile ? selectedFile.name : '—'),
+            url: form.type === 'Video Link' ? form.videoUrl : null,
             date: new Date().toISOString().split('T')[0]
         };
         setMaterials(prev => [...prev, newMaterial]);
-        setForm({ title: '', class: '', subject: '', type: 'PDF', uploadedBy: 'Admin' });
+        setForm({ title: '', class: '', subject: '', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Admin', videoUrl: '' });
         setSelectedFile(null);
         setIsUploading(false);
         await customAlert('Study Material uploaded successfully!', 'Success', 'success');
@@ -778,6 +1461,7 @@ function StudyMaterialsTab() {
                     <form className="acad-form form-row-2" onSubmit={handleUploadSubmit}>
                         <div className="form-group"><label className="form-label">Title <span className="required">*</span></label>
                             <input type="text" className="form-input" required placeholder="Enter material title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+                        
                         <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
                             <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
                                 <option value="">Select Class</option>
@@ -788,42 +1472,54 @@ function StudyMaterialsTab() {
                                 <option value="">Select Subject</option>
                                 <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Social Science</option><option>Computer Science</option>
                             </select></div>
+                        <div className="form-group"><label className="form-label">Visibility <span className="required">*</span></label>
+                            <select className="form-select" required value={form.visibility} onChange={e => setForm({...form, visibility: e.target.value})}>
+                                <option>All Students</option><option>Specific Section</option>
+                            </select></div>
+
                         <div className="form-group"><label className="form-label">Material Type <span className="required">*</span></label>
                             <select className="form-select" required value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                                <option>PDF</option><option>Video Link</option><option>Presentation</option><option>Document</option>
+                                <option>Notes / PDF</option><option>Presentation</option><option>Document</option><option>Image</option><option>Video Link</option>
                             </select></div>
+                        
+                        {form.type === 'Video Link' ? (
+                            <div className="form-group"><label className="form-label">Video URL <span className="required">*</span></label>
+                                <input type="url" className="form-input" required placeholder="https://youtube.com/..." value={form.videoUrl} onChange={e => setForm({...form, videoUrl: e.target.value})} /></div>
+                        ) : (
+                            <div className="form-group">
+                                <label className="form-label">Upload File <span className="required">*</span></label>
+                                <div 
+                                    className="upload-box" 
+                                    onClick={() => document.getElementById('material-file-input').click()}
+                                    style={{ 
+                                        border: '2px dashed var(--border-light)', 
+                                        padding: '16px', 
+                                        textAlign: 'center', 
+                                        borderRadius: '8px', 
+                                        cursor: 'pointer', 
+                                        background: 'var(--bg-light)',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <Upload size={20} style={{ color: 'var(--text-light)', marginBottom: 8 }} />
+                                    {selectedFile ? (
+                                        <p style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>{selectedFile.name}</p>
+                                    ) : (
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>Click to select file</p>
+                                    )}
+                                    <input 
+                                        id="material-file-input"
+                                        type="file" 
+                                        style={{ display: 'none' }} 
+                                        required={form.type !== 'Video Link'}
+                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <div className="form-group"><label className="form-label">Uploaded By <span className="required">*</span></label>
                             <input type="text" className="form-input" required value={form.uploadedBy} onChange={e => setForm({...form, uploadedBy: e.target.value})} /></div>
-                        
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                            <label className="form-label">Upload File <span className="required">*</span></label>
-                            <div 
-                                className="upload-box" 
-                                onClick={() => document.getElementById('material-file-input').click()}
-                                style={{ 
-                                    border: '2px dashed var(--border-light)', 
-                                    padding: '20px', 
-                                    textAlign: 'center', 
-                                    borderRadius: '8px', 
-                                    cursor: 'pointer', 
-                                    background: 'var(--bg-light)',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                <Upload size={24} style={{ color: 'var(--text-light)', marginBottom: 8 }} />
-                                {selectedFile ? (
-                                    <p style={{ color: 'var(--accent)', fontWeight: 600 }}>{selectedFile.name}</p>
-                                ) : (
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Click to select or drop material file here</p>
-                                )}
-                                <input 
-                                    id="material-file-input"
-                                    type="file" 
-                                    style={{ display: 'none' }} 
-                                    onChange={(e) => setSelectedFile(e.target.files[0])}
-                                />
-                            </div>
-                        </div>
                         
                         <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
                             <button type="button" className="btn btn-outline" onClick={() => setIsUploading(false)}>Cancel</button>
@@ -835,19 +1531,26 @@ function StudyMaterialsTab() {
 
             {!isUploading && (
                 <div className="table-responsive">
-                    <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>File</th><th>Type</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
+                    <table className="data-table"><thead><tr><th>Title</th><th>Class</th><th>Subject</th><th>Type</th><th>File/Link</th><th>Visibility</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead>
                         <tbody>{materials.length > 0 ? materials.map(m => (
                             <tr key={m.id}><td className="fw-600">{m.title}</td><td>{m.class}</td><td>{m.subject}</td>
-                                <td style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>{m.fileName || '—'}</td>
                                 <td><span className={`badge ${typeBadge(m.type)}`}>{m.type}</span></td>
+                                <td style={{ fontSize: '0.85rem', color: 'var(--accent)' }}>
+                                    {m.type === 'Video Link' ? (
+                                        <a href={m.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--primary)' }}><ExternalLink size={14}/> Open Link</a>
+                                    ) : (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><FileText size={14}/> {m.fileName || '—'}</span>
+                                    )}
+                                </td>
+                                <td>{m.visibility}</td>
                                 <td>{m.uploadedBy}</td><td>{m.date}</td>
                                 <td>
-                                    <button className="btn-icon" title="View" onClick={() => customAlert(`Study Material\n\nTitle: ${m.title}\nClass: ${m.class}\nSubject: ${m.subject}\nType: ${m.type}\nUploaded by: ${m.uploadedBy}\nDate: ${m.date}`)}><Eye size={16}/></button>
+                                    <button className="btn-icon" title="View" onClick={() => customAlert(`Study Material\n\nTitle: ${m.title}\nClass: ${m.class}\nSubject: ${m.subject}\nType: ${m.type}\nVisibility: ${m.visibility}\nUploaded by: ${m.uploadedBy}\nDate: ${m.date}`)}><Eye size={16}/></button>
                                     <button className="btn-icon" title="Delete" onClick={() => handleDelete(m.id, m.title)} style={{color:'var(--danger)'}}><Trash2 size={16}/></button>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No study materials uploaded yet.</td></tr>
+                            <tr><td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No study materials uploaded yet.</td></tr>
                         )}</tbody></table>
                 </div>
             )}
@@ -858,13 +1561,49 @@ function StudyMaterialsTab() {
 // ======================== PROMOTION ========================
 function PromotionTab() {
     const [students, setStudents] = useLocalStorage('academic_promotion_students', [
-        { id: 1, name: 'Aarav Sharma', rollNo: '01', result: 'Pass', attendance: '92%', selected: true },
-        { id: 2, name: 'Diya Patel', rollNo: '02', result: 'Pass', attendance: '88%', selected: true },
-        { id: 3, name: 'Kavya Gupta', rollNo: '03', result: 'Fail', attendance: '65%', selected: false },
-        { id: 4, name: 'Rohan Singh', rollNo: '04', result: 'Pass', attendance: '78%', selected: true },
-        { id: 5, name: 'Ananya Verma', rollNo: '05', result: 'Borderline', attendance: '72%', selected: false },
+        { id: 1, name: 'Aarav Sharma', rollNo: '01', result: 'Pass', attendance: '92%', selected: true, status: 'Pending' },
+        { id: 2, name: 'Diya Patel', rollNo: '02', result: 'Pass', attendance: '88%', selected: true, status: 'Pending' },
+        { id: 3, name: 'Kavya Gupta', rollNo: '03', result: 'Fail', attendance: '65%', selected: false, status: 'Pending' },
+        { id: 4, name: 'Rohan Singh', rollNo: '04', result: 'Pass', attendance: '78%', selected: true, status: 'Pending' },
+        { id: 5, name: 'Ananya Verma', rollNo: '05', result: 'Borderline', attendance: '72%', selected: false, status: 'Pending' },
     ]);
-    const toggleSelect = (id) => setStudents(prev => prev.map(s => s.id === id ? { ...s, selected: !s.selected } : s));
+    const [retentionModal, setRetentionModal] = useState({ open: false, student: null, reason: 'Failed Academically', remarks: '' });
+
+    const toggleSelect = (id) => setStudents(prev => prev.map(s => s.id === id && s.status === 'Pending' ? { ...s, selected: !s.selected } : s));
+    const toggleAll = (e) => {
+        const checked = e.target.checked;
+        setStudents(prev => prev.map(s => s.status === 'Pending' ? { ...s, selected: checked } : s));
+    };
+
+    const handlePromote = async () => {
+        const selectedCount = students.filter(s => s.selected).length;
+        if (selectedCount === 0) return customAlert('Please select at least one student to promote.', 'No Selection', 'warning');
+        
+        if (await customConfirm(`Are you sure you want to promote ${selectedCount} selected students to the next class?`)) {
+            setStudents(prev => prev.map(s => s.selected ? { ...s, status: 'Promoted', selected: false } : s));
+            await customAlert(`Successfully promoted ${selectedCount} students!`, 'Success', 'success');
+        }
+    };
+
+    const openRetentionModal = (student) => {
+        setRetentionModal({ open: true, student, reason: 'Failed Academically', remarks: '' });
+    };
+
+    const handleRetainSubmit = async (e) => {
+        e.preventDefault();
+        setStudents(prev => prev.map(s => s.id === retentionModal.student.id ? { 
+            ...s, 
+            status: 'Retained', 
+            retentionReason: retentionModal.reason, 
+            remarks: retentionModal.remarks,
+            selected: false 
+        } : s));
+        setRetentionModal({ open: false, student: null, reason: 'Failed Academically', remarks: '' });
+        await customAlert(`Student marked as retained.`, 'Success', 'success');
+    };
+
+    const pendingStudents = students.filter(s => s.status === 'Pending');
+    const allSelected = pendingStudents.length > 0 && pendingStudents.every(s => s.selected);
 
     return (
         <div className="animate-fade-in">
@@ -874,21 +1613,78 @@ function PromotionTab() {
                 <div className="form-group"><label className="form-label">To Class</label><select className="form-select" style={{ width: 140 }}><option>Grade 2</option><option>Grade 3</option></select></div>
             </div>
             <div className="table-responsive">
-                <table className="data-table"><thead><tr><th><input type="checkbox"/></th><th>Roll</th><th>Student</th><th>Result</th><th>Attendance</th><th>Action</th></tr></thead>
+                <table className="data-table"><thead><tr>
+                    <th><input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={pendingStudents.length === 0} /></th>
+                    <th>Roll</th><th>Student</th><th>Result</th><th>Attendance</th><th>Status</th><th>Action</th></tr></thead>
                     <tbody>{students.map(s => (
-                        <tr key={s.id}><td><input type="checkbox" checked={s.selected} onChange={() => toggleSelect(s.id)}/></td><td>{s.rollNo}</td><td className="fw-600">{s.name}</td>
+                        <tr key={s.id} style={{ background: s.status === 'Retained' ? 'var(--bg-danger)' : s.status === 'Promoted' ? 'var(--bg-success)' : 'transparent' }}>
+                            <td><input type="checkbox" checked={s.selected} onChange={() => toggleSelect(s.id)} disabled={s.status !== 'Pending'}/></td>
+                            <td>{s.rollNo}</td>
+                            <td className="fw-600">
+                                {s.name}
+                                {s.status === 'Retained' && s.retentionReason && <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: 4 }}>Reason: {s.retentionReason}</div>}
+                            </td>
                             <td><span className={`badge ${s.result === 'Pass' ? 'badge-success' : s.result === 'Fail' ? 'badge-danger' : 'badge-warning'}`}>{s.result}</span></td>
                             <td>{s.attendance}</td>
-                            <td>{!s.selected && <button className="btn-icon" title="Retain" onClick={() => toggleSelect(s.id)}><XCircle size={16} style={{ color: 'var(--danger)' }}/></button>}</td></tr>
+                            <td>
+                                {s.status === 'Pending' ? <span className="badge badge-warning">Pending</span> : 
+                                 s.status === 'Promoted' ? <span className="badge badge-success">Promoted</span> : 
+                                 <span className="badge badge-danger">Retained</span>}
+                            </td>
+                            <td>
+                                {s.status === 'Pending' && (
+                                    <button className="btn-icon" title="Mark as Retained" onClick={() => openRetentionModal(s)}><XCircle size={16} style={{ color: 'var(--danger)' }}/></button>
+                                )}
+                            </td>
+                        </tr>
                     ))}</tbody></table>
             </div>
             <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
-                <button className="btn btn-primary"><ArrowUpRight size={16}/> Promote Selected ({students.filter(s => s.selected).length})</button>
+                <button className="btn btn-primary" onClick={handlePromote} disabled={students.filter(s => s.selected).length === 0}>
+                    <ArrowUpRight size={16}/> Promote Selected ({students.filter(s => s.selected).length})
+                </button>
             </div>
+
+            {retentionModal.open && (
+                <div className="acad-modal-overlay animate-fade-in">
+                    <div className="acad-modal card animate-slide-up" style={{ maxWidth: 500, width: '90%' }}>
+                        <div className="modal-header">
+                            <h3>Retain Student</h3>
+                            <button className="btn-icon" onClick={() => setRetentionModal({ open: false, student: null, reason: 'Failed Academically', remarks: '' })}><X size={20}/></button>
+                        </div>
+                        <div className="modal-body">
+                            <div style={{ marginBottom: 20, padding: 12, background: 'var(--bg-light)', borderRadius: 8 }}>
+                                <p style={{ margin: 0, fontWeight: 600 }}>{retentionModal.student?.name}</p>
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>Roll No: {retentionModal.student?.rollNo} | Result: {retentionModal.student?.result} | Attendance: {retentionModal.student?.attendance}</p>
+                            </div>
+                            <form onSubmit={handleRetainSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Retention Reason <span className="required">*</span></label>
+                                    <select className="form-select" required value={retentionModal.reason} onChange={e => setRetentionModal({...retentionModal, reason: e.target.value})}>
+                                        <option>Failed Academically</option>
+                                        <option>Low Attendance</option>
+                                        <option>Parent Request</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginTop: 16 }}>
+                                    <label className="form-label">Remarks</label>
+                                    <textarea className="form-input" rows="3" placeholder="Enter remarks (optional)..." value={retentionModal.remarks} onChange={e => setRetentionModal({...retentionModal, remarks: e.target.value})}></textarea>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+                                    <button type="button" className="btn btn-outline" onClick={() => setRetentionModal({ open: false, student: null, reason: 'Failed Academically', remarks: '' })}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }}>Confirm Retention</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
+// ======================== REPORTS ========================
 // ======================== REPORTS ========================
 function ReportsTab() {
     const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -908,6 +1704,13 @@ function ReportsTab() {
     const [params, setParams] = useState({ class: 'I', section: 'A', format: 'PDF' });
     const [genProgress, setGenProgress] = useState(0);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Dummy Data for Charts
+    const classPerfData = [ { name: 'Grade 1', Math: 85, Science: 90, English: 80 }, { name: 'Grade 2', Math: 78, Science: 82, English: 85 }, { name: 'Grade 3', Math: 88, Science: 86, English: 92 } ];
+    const trendData = [ { month: 'Sep', Avg: 72 }, { month: 'Oct', Avg: 75 }, { month: 'Nov', Avg: 78 }, { month: 'Dec', Avg: 82 }, { month: 'Jan', Avg: 85 } ];
+    const passFailData = [ { name: 'Pass', value: 85 }, { name: 'Fail', value: 10 }, { name: 'Borderline', value: 5 } ];
+    const assignmentData = [ { name: 'Grade 1', Submitted: 40, Pending: 10, Late: 5 }, { name: 'Grade 2', Submitted: 35, Pending: 15, Late: 2 }, { name: 'Grade 3', Submitted: 50, Pending: 2, Late: 0 } ];
+    const COLORS = ['#10b981', '#ef4444', '#f59e0b'];
 
     const handleStartGenerate = (r) => {
         setModal({ open: true, config: r });
@@ -937,7 +1740,83 @@ function ReportsTab() {
 
     return (
         <div className="animate-fade-in">
-            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}>Academic Reports</h3>
+            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}>Data Visualizations</h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 32 }}>
+                {/* Bar Chart: Class-wise Performance */}
+                <div className="card" style={{ padding: 20 }}>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: 16 }}>Class-wise Subject Performance</h4>
+                    <div style={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer>
+                            <BarChart data={classPerfData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                                <XAxis dataKey="name" fontSize={12} />
+                                <YAxis fontSize={12} />
+                                <Tooltip />
+                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                <Bar dataKey="Math" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="Science" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="English" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Line Chart: Performance Trend */}
+                <div className="card" style={{ padding: 20 }}>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: 16 }}>Student Performance Trend</h4>
+                    <div style={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer>
+                            <LineChart data={trendData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                                <XAxis dataKey="month" fontSize={12} />
+                                <YAxis fontSize={12} domain={[0, 100]} />
+                                <Tooltip />
+                                <Line type="monotone" dataKey="Avg" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Pie Chart: Pass vs Fail */}
+                <div className="card" style={{ padding: 20 }}>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: 16 }}>Pass vs Fail Distribution</h4>
+                    <div style={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer>
+                            <PieChart>
+                                <Pie data={passFailData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                    {passFailData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Stacked Bar: Assignment Submission */}
+                <div className="card" style={{ padding: 20 }}>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: 16 }}>Assignment Submissions</h4>
+                    <div style={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer>
+                            <BarChart data={assignmentData} stackOffset="expand">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                                <XAxis dataKey="name" fontSize={12} />
+                                <YAxis fontSize={12} tickFormatter={(tick) => `${tick * 100}%`} />
+                                <Tooltip />
+                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                <Bar dataKey="Submitted" stackId="a" fill="#10b981" />
+                                <Bar dataKey="Late" stackId="a" fill="#f59e0b" />
+                                <Bar dataKey="Pending" stackId="a" fill="#ef4444" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}>Academic Reports Generation</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
                 {reports.map((r, i) => (
                     <div key={i} className="card" style={{ padding: 20 }}>
@@ -1204,12 +2083,22 @@ function PublicContentTab() {
 
 // ======================== SETTINGS ========================
 function SettingsTab() {
-    const settings = [
-        { label: 'Grading Scale', value: 'A+, A, B+, B, C, D, F' }, { label: 'Passing Marks', value: '35%' },
-        { label: 'Attendance Threshold', value: '75%' }, { label: 'Period Duration', value: '45 min' },
-        { label: 'Working Days', value: 'Mon–Sat' }, { label: 'Timetable Edit Lock', value: 'Unlocked' },
-        { label: 'Assignment Late Policy', value: 'Accept' }, { label: 'Promotion Auto-suggest', value: 'Enabled' },
-    ];
+    const [config, setConfig] = useLocalStorage('academic_settings', {
+        gradingScale: 'A+, A, B+, B, C, D, F',
+        passingMarks: 35,
+        attendanceThreshold: 75,
+        periodDuration: 45,
+        workingDays: 'Mon–Sat',
+        timetableLock: 'Unlocked',
+        latePolicy: 'Accept',
+        promoSuggest: 'Enabled'
+    });
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        await customAlert('Module Configuration saved successfully!', 'Success', 'success');
+    };
+
     const rbac = [
         ['Academic Year Setup', 'Yes', 'Yes', 'No', 'No'], ['Class & Section Mgmt', 'Yes', 'Yes', 'No', 'No'],
         ['Subject Management', 'Yes', 'Yes', 'No', 'No'], ['Teacher Assignment', 'Yes', 'Yes', 'No', 'No'],
@@ -1224,16 +2113,57 @@ function SettingsTab() {
         <div className="animate-fade-in acad-settings-grid">
             <div className="acad-settings-panel">
                 <h3><Settings size={18}/> Module Configuration</h3>
-                {settings.map((s, i) => (
-                    <div className="acad-setting-item" key={i}><label>{s.label}</label><span className="setting-value">{s.value}</span></div>
-                ))}
+                <form className="acad-form" onSubmit={handleSave}>
+                    <div className="form-group" style={{ marginBottom: 12 }}>
+                        <label className="form-label">Grading Scale (comma separated)</label>
+                        <input type="text" className="form-input" value={config.gradingScale} onChange={e => setConfig({...config, gradingScale: e.target.value})} required />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
+                        <div className="form-group"><label className="form-label">Passing Marks (%)</label><input type="number" className="form-input" value={config.passingMarks} onChange={e => setConfig({...config, passingMarks: e.target.value})} min="0" max="100" required /></div>
+                        <div className="form-group"><label className="form-label">Attendance Threshold (%)</label><input type="number" className="form-input" value={config.attendanceThreshold} onChange={e => setConfig({...config, attendanceThreshold: e.target.value})} min="0" max="100" required /></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
+                        <div className="form-group"><label className="form-label">Period Duration (minutes)</label><input type="number" className="form-input" value={config.periodDuration} onChange={e => setConfig({...config, periodDuration: e.target.value})} min="1" required /></div>
+                        <div className="form-group"><label className="form-label">Working Days</label><select className="form-select" value={config.workingDays} onChange={e => setConfig({...config, workingDays: e.target.value})}><option>Mon–Fri</option><option>Mon–Sat</option></select></div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                        <div className="form-group"><label className="form-label">Timetable Edit Lock</label><select className="form-select" value={config.timetableLock} onChange={e => setConfig({...config, timetableLock: e.target.value})}><option>Unlocked</option><option>Locked</option></select></div>
+                        <div className="form-group"><label className="form-label">Assignment Late Policy</label><select className="form-select" value={config.latePolicy} onChange={e => setConfig({...config, latePolicy: e.target.value})}><option>Accept</option><option>Reject</option></select></div>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 24 }}>
+                        <label className="form-label">Promotion Auto-suggest</label>
+                        <select className="form-select" value={config.promoSuggest} onChange={e => setConfig({...config, promoSuggest: e.target.value})}><option>Enabled</option><option>Disabled</option></select>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}><Save size={16}/> Save Settings</button>
+                </form>
             </div>
             <div className="acad-settings-panel">
                 <h3><Users size={18}/> Role-Based Access Matrix</h3>
-                <table className="acad-rbac-table"><thead><tr><th>Feature</th><th>Super Admin</th><th>Admin</th><th>Teacher</th><th>Student</th></tr></thead>
-                    <tbody>{rbac.map((r, i) => (
-                        <tr key={i}>{r.map((c, j) => <td key={j} style={j > 0 ? { color: c === 'Yes' || c.startsWith('Own') ? 'var(--success)' : c === 'No' ? 'var(--danger)' : 'var(--warning)', fontWeight: 600 } : undefined}>{c}</td>)}</tr>
-                    ))}</tbody></table>
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="acad-rbac-table" style={{ minWidth: 600 }}><thead><tr><th>Feature</th><th>Super Admin</th><th>Admin</th><th>Teacher</th><th>Student</th></tr></thead>
+                        <tbody>{rbac.map((r, i) => (
+                            <tr key={i}>{r.map((c, j) => <td key={j} style={j > 0 ? { color: c === 'Yes' || c.startsWith('Own') ? 'var(--success)' : c === 'No' ? 'var(--danger)' : 'var(--warning)', fontWeight: 600, fontSize: '0.8rem' } : { fontSize: '0.85rem' }}>{c}</td>)}</tr>
+                        ))}</tbody></table>
+                </div>
+            </div>
+            
+            <div className="acad-settings-panel" style={{ gridColumn: '1 / -1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h3 style={{ margin: 0 }}><ClipboardCheck size={18}/> Audit Trail / Recent Activity</h3>
+                    <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>Export Logs</button>
+                </div>
+                <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid var(--border-light)', borderRadius: 8 }}>
+                    <table className="data-table" style={{ margin: 0 }}>
+                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 1 }}><tr><th>Timestamp</th><th>User Role</th><th>Action Performed</th><th>Target</th><th>IP Address</th></tr></thead>
+                        <tbody>
+                            <tr><td>Today, 10:45 AM</td><td>Super Admin</td><td style={{ color: 'var(--primary)' }}>Modified Timetable</td><td>Grade 3-A</td><td>192.168.1.105</td></tr>
+                            <tr><td>Today, 09:30 AM</td><td>Teacher</td><td style={{ color: 'var(--success)' }}>Entered Assessment Marks</td><td>Grade 2-B (Science)</td><td>192.168.1.112</td></tr>
+                            <tr><td>Yesterday, 14:15 PM</td><td>Admin</td><td style={{ color: 'var(--warning)' }}>Retained Student</td><td>Kavya Gupta (Grade 1)</td><td>192.168.1.101</td></tr>
+                            <tr><td>Yesterday, 11:00 AM</td><td>Teacher</td><td style={{ color: 'var(--primary)' }}>Uploaded Study Material</td><td>Math Notes (Grade 3)</td><td>192.168.1.112</td></tr>
+                            <tr><td>Yesterday, 08:45 AM</td><td>Super Admin</td><td style={{ color: 'var(--danger)' }}>Changed System Settings</td><td>Passing Marks Threshold</td><td>192.168.1.105</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
@@ -1261,24 +2191,55 @@ const TABS = [
 export default function Academics() {
     const location = useLocation();
     const navigate = useNavigate();
+    const [currentRole, setCurrentRole] = useLocalStorage('academic_current_role', 'Super Admin');
     
+    // Filter tabs based on role
+    const visibleTabs = TABS.filter(t => {
+        if (currentRole === 'Super Admin' || currentRole === 'Admin') return true;
+        if (currentRole === 'Teacher') {
+            const hidden = ['year', 'classes', 'subjects', 'teachers', 'promotion', 'settings', 'public-content'];
+            return !hidden.includes(t.id);
+        }
+        if (currentRole === 'Student') {
+            const hidden = ['year', 'classes', 'subjects', 'teachers', 'lesson-plan', 'attendance', 'performance', 'promotion', 'settings', 'public-content', 'reports'];
+            return !hidden.includes(t.id);
+        }
+        return true;
+    });
+
     const currentTab = location.pathname.split('/').pop();
-    const activeTab = TABS.some(t => t.id === currentTab) ? currentTab : 'year';
+    const activeTab = visibleTabs.some(t => t.id === currentTab) ? currentTab : visibleTabs[0]?.id;
 
     const handleNavigate = (tab) => { navigate(`/academics/${tab}`); };
 
     return (
         <div className="academics-page animate-fade-in">
-            <div className="page-header"><div>
-                <div className="page-breadcrumb"><Link to="/">Dashboard</Link><span className="separator">/</span><span>Academics</span>
-                    {activeTab !== 'year' && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}</div>
-                <h1>Academics Management</h1>
-            </div></div>
+            <div className="page-header">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 16 }}>
+                    <div>
+                        <div className="page-breadcrumb"><Link to="/">Dashboard</Link><span className="separator">/</span><span>Academics</span>
+                            {activeTab && <><span className="separator">/</span><span style={{ textTransform: 'capitalize' }}>{TABS.find(t => t.id === activeTab)?.label}</span></>}</div>
+                        <h1>Academics Management</h1>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-light)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <Users size={16} style={{ color: 'var(--text-light)' }}/>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>View As:</span>
+                        <select className="form-select" style={{ width: 'auto', padding: '4px 24px 4px 10px', minHeight: 30, fontSize: '0.85rem' }} value={currentRole} onChange={e => {
+                            setCurrentRole(e.target.value);
+                            navigate('/academics/timetable'); // safe tab redirect
+                        }}>
+                            <option>Super Admin</option>
+                            <option>Teacher</option>
+                            <option>Student</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             <div className="card academics-card">
-                <div className="tabs-header">{TABS.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
+                <div className="tabs-header">{visibleTabs.map(tab => { const Icon = tab.icon; return <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => handleNavigate(tab.id)}><Icon size={16}/> {tab.label}</button>; })}</div>
                 <div className="tabs-content">
                     <Routes>
-                        <Route path="/" element={<Navigate to="year" replace />} />
+                        <Route path="/" element={<Navigate to="timetable" replace />} />
                         <Route path="year" element={<AcademicYearTab />} />
                         <Route path="classes" element={<ClassSectionTab />} />
                         <Route path="subjects" element={<SubjectsTab />} />

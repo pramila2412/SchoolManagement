@@ -143,7 +143,19 @@ export default function StudentDetail() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await api.getStudentById(id);
+                let data;
+                try {
+                    data = await api.getStudentById(id);
+                } catch (apiErr) {
+                    // Fallback to local storage
+                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                    const localMatch = localData.find(s => s.id === id || s.admissionNo === id);
+                    if (localMatch) {
+                        data = localMatch;
+                    } else {
+                        throw apiErr;
+                    }
+                }
                 setStudent(data);
                 
                 // Fetch parent portal credentials and potential local data override from localStorage

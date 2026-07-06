@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigat
 import {
     LayoutList, ClipboardCheck, Stamp, Save, PlusCircle, Calendar,
     BookOpen, FileText, BarChart3, Settings, Trash2, CheckCircle2,
-    XCircle, Award, ChevronRight, Users, Eye, Download, Send
+    XCircle, Award, ChevronRight, Users, Eye, Download, Send, Edit3
 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import './Examination.css';
@@ -36,32 +36,48 @@ function useApi(endpoint) {
 // ======================== EXAM SETUP ========================
 function ExamSetupTab() {
     const { data: exams, refresh } = useApi('/');
-    const [form, setForm] = useState({ name:'', academicYear:'2025-2026', type:'Theory', startDate:'', endDate:'', classes:[] });
-    const [classInput, setClassInput] = useState({ className:'', sections:'A' });
+    const activeYear = JSON.parse(localStorage.getItem('academic_years') || '[]').find(y => y.active)?.label || '2025-2026';
+    const [form, setForm] = useState({ name:'', academicYear: activeYear, type:'Theory', startDate:'', endDate:'', classes:[] });
+    const [classInput, setClassInput] = useState({ className:'', sections:'' });
     const [selectedExam, setSelectedExam] = useState(null);
-    const [subForm, setSubForm] = useState({ name:'', code:'', type:'Theory', totalMarks:100, passingMarks:33, theoryMarks:100, practicalMarks:0 });
+    const [subForm, setSubForm] = useState({ targetClass: '', name:'', code:'', type:'Both', totalMarks:100, passingMarks:33, theoryMarks:80, practicalMarks:20, teacher: '' });
 
     const addClass = () => {
-        if (!classInput.className) return;
-        setForm(f => ({ ...f, classes: [...f.classes, { className: classInput.className, sections: classInput.sections.split(',').map(s=>s.trim()), subjects:[] }] }));
-        setClassInput({ className:'', sections:'A' });
+        if (!classInput.className) return customAlert('Please select a class');
+        if (!classInput.sections) return customAlert('Please select at least one section');
+        setForm(f => ({ ...f, classes: [...f.classes, { className: classInput.className, sections: classInput.sections.split(',').filter(Boolean).map(s=>s.trim()), subjects:[] }] }));
+        setClassInput({ className:'', sections:'' });
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (form.classes.length === 0) return customAlert('Please add at least one class to the exam before saving.', 'Missing Class', 'error');
         await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(form) });
-        setForm({ name:'', academicYear:'2025-2026', type:'Theory', startDate:'', endDate:'', classes:[] });
+        setForm({ name:'', academicYear: activeYear, type:'Theory', startDate:'', endDate:'', classes:[] });
         refresh();
     };
     const handleDelete = async (id) => { if(!await customConfirm('Delete?')) return; await fetch(`${API}/${id}`,{method:'DELETE'}); refresh(); };
     const handleAddSubject = async (e) => {
         e.preventDefault(); if(!selectedExam) return;
         const exam = exams.find(x=>x._id===selectedExam);
-        const cls = exam?.classes?.[0];
-        if(!cls) return await customAlert('No class in this exam');
+        if (!subForm.targetClass) return customAlert('Please select a target class & section');
+
+        if (subForm.type === 'Both' || subForm.type === 'Practical') {
+            if (subForm.totalMarks !== (subForm.theoryMarks + subForm.practicalMarks)) {
+                return customAlert(`Validation Failed! Total Marks (${subForm.totalMarks}) must equal Theory (${subForm.theoryMarks}) + Practical (${subForm.practicalMarks})`, 'Validation Error', 'error');
+            }
+        }
+
+        const [targetClassName, targetSection] = subForm.targetClass.split('|');
+        const cls = exam?.classes?.find(c => c.className === targetClassName);
+        if(!cls) return await customAlert('Target class not found in this exam');
+
+        const newSubject = { ...subForm, section: targetSection };
+
         await fetch(`${API}/${selectedExam}/subjects`, { method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ className:cls.className, sections:cls.sections, subjects:[...cls.subjects||[], subForm] }) });
-        setSubForm({ name:'', code:'', type:'Theory', totalMarks:100, passingMarks:33, theoryMarks:100, practicalMarks:0 });
+            body:JSON.stringify({ className:cls.className, sections:cls.sections, subjects:[...cls.subjects||[], newSubject] }) });
+        setSubForm({ targetClass: subForm.targetClass, name:'', code:'', type:'Both', totalMarks:100, passingMarks:33, theoryMarks:80, practicalMarks:20, teacher: '' });
         refresh();
+        customAlert(`Subject added to ${targetClassName} - ${targetSection} successfully!`, 'Success', 'success');
     };
     const statusCls = s => s==='Draft'?'badge-draft':s==='Scheduled'?'badge-scheduled':s==='Ongoing'?'badge-ongoing':'badge-completed';
 
@@ -84,30 +100,73 @@ function ExamSetupTab() {
                             <div className="form-group"><label className="form-label">End Date</label><input type="date" className="form-input" value={form.endDate} onChange={e=>setForm({...form,endDate:e.target.value})} /></div>
                         </div>
                         <div className="exam-section-divider"><Users size={16}/> Add Class</div>
-                        <div className="form-row">
+                        <div className="form-row" style={{ alignItems: 'flex-start' }}>
                             <div className="form-group"><label className="form-label">Class</label>
                                 <select className="form-select" value={classInput.className} onChange={e=>setClassInput({...classInput,className:e.target.value})}>
                                     <option value="">Select Class</option>
                                     {STANDARD_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
-                            <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={classInput.sections} onChange={e=>setClassInput({...classInput,sections:e.target.value})}><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                            <div className="form-group"><label className="form-label">Sections</label>
+                                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+                                    {['A','B','C','D'].map(sec => {
+                                        const isSelected = classInput.sections.split(',').includes(sec);
+                                        return (
+                                            <label key={sec} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: '0.9rem' }}>
+                                                <input type="checkbox" checked={isSelected} onChange={e => {
+                                                    let arr = classInput.sections ? classInput.sections.split(',') : [];
+                                                    if (e.target.checked) arr.push(sec);
+                                                    else arr = arr.filter(x => x !== sec);
+                                                    setClassInput({...classInput, sections: arr.join(',')});
+                                                }}/> {sec}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                         <button type="button" className="btn btn-outline" style={{marginBottom:12}} onClick={addClass}><PlusCircle size={14}/> Add Class</button>
-                        {form.classes.length>0 && <div style={{marginBottom:12,fontSize:'0.85rem'}}>{form.classes.map((c,i)=><span key={i} className="badge badge-info" style={{marginRight:6}}>{c.className} ({c.sections.join(',')})</span>)}</div>}
+                        {form.classes.length>0 && <div style={{marginBottom:12,fontSize:'0.85rem'}}>{form.classes.map((c,i)=><span key={i} className="badge badge-info" style={{marginRight:6}}>{c.className} ({c.sections.join(', ')})</span>)}</div>}
                         <div className="form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save Exam</button></div>
                     </form>
                     {selectedExam && (
-                        <>
-                            <div className="exam-section-divider" style={{marginTop:24}}><BookOpen size={16}/> Add Subject & Marks</div>
+                        <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-light)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                            <div className="exam-section-divider" style={{marginTop:0}}><BookOpen size={16}/> Add Subject & Marks</div>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>Adding subjects to: <strong>{exams.find(x=>x._id===selectedExam)?.name}</strong></p>
                             <form className="exam-form" onSubmit={handleAddSubject}>
+                                <div className="form-row">
+                                    <div className="form-group"><label className="form-label">Target Class *</label>
+                                        <select className="form-select" value={subForm.targetClass} onChange={e=>setSubForm({...subForm,targetClass:e.target.value})} required>
+                                            <option value="">Select Class & Section</option>
+                                            {exams.find(x=>x._id===selectedExam)?.classes?.flatMap(c => 
+                                                (c.sections && c.sections.length > 0 ? c.sections : ['All']).map(s => (
+                                                    <option key={`${c.className}|${s}`} value={`${c.className}|${s}`}>
+                                                        {c.className} - {s}
+                                                    </option>
+                                                ))
+                                            )}
+                                        </select>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Subject Type</label>
+                                        <select className="form-select" value={subForm.type} onChange={e=>setSubForm({...subForm,type:e.target.value})}>
+                                            <option>Theory</option><option>Practical</option><option>Both</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div className="form-row"><div className="form-group"><label className="form-label">Subject Name *</label><input type="text" className="form-input" required value={subForm.name} onChange={e=>setSubForm({...subForm,name:e.target.value})} /></div>
                                     <div className="form-group"><label className="form-label">Code</label><input type="text" className="form-input" value={subForm.code} onChange={e=>setSubForm({...subForm,code:e.target.value})} /></div></div>
                                 <div className="form-row"><div className="form-group"><label className="form-label">Total Marks</label><input type="number" className="form-input" value={subForm.totalMarks} onChange={e=>setSubForm({...subForm,totalMarks:+e.target.value})} /></div>
                                     <div className="form-group"><label className="form-label">Passing Marks</label><input type="number" className="form-input" value={subForm.passingMarks} onChange={e=>setSubForm({...subForm,passingMarks:+e.target.value})} /></div></div>
-                                <div className="form-actions"><button type="submit" className="btn btn-primary"><PlusCircle size={14}/> Add Subject</button></div>
+                                {(subForm.type === 'Both' || subForm.type === 'Practical') && (
+                                    <div className="form-row">
+                                        <div className="form-group"><label className="form-label">Theory Marks</label><input type="number" className="form-input" value={subForm.theoryMarks} onChange={e=>setSubForm({...subForm,theoryMarks:+e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Practical Marks</label><input type="number" className="form-input" value={subForm.practicalMarks} onChange={e=>setSubForm({...subForm,practicalMarks:+e.target.value})} /></div>
+                                    </div>
+                                )}
+                                <div className="form-group"><label className="form-label">Teacher (Optional)</label><input type="text" className="form-input" placeholder="Assign Teacher" value={subForm.teacher} onChange={e=>setSubForm({...subForm,teacher:e.target.value})} /></div>
+                                <div className="form-actions"><button type="submit" className="btn btn-primary"><PlusCircle size={14}/> Save Subject & Marks</button></div>
                             </form>
-                        </>
+                        </div>
                     )}
                 </div>
                 <div className="exam-table-panel table-responsive">
@@ -115,11 +174,29 @@ function ExamSetupTab() {
                         <tbody>{exams.length===0?<tr><td colSpan="7" style={{textAlign:'center',padding:40,color:'var(--text-light)'}}>No exams created yet</td></tr>:
                             exams.map(e=><tr key={e._id} style={{background:selectedExam===e._id?'var(--accent-light)':undefined}}>
                                 <td className="fw-600">{e.name}</td><td>{e.type}</td><td>{e.academicYear}</td>
-                                <td>{e.classes?.map(c=>c.className).join(', ')||'—'}</td>
+                                <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        {e.classes?.map(c=>`${c.className}`).join(', ')||'—'}
+                                        <button className="btn-icon" title="View Classes" onClick={()=>customAlert(`Classes assigned: ${e.classes?.map(c=>`${c.className} (${c.sections.join(', ')})`).join(', ')}`, "Assigned Classes")}><Eye size={14}/></button>
+                                    </div>
+                                </td>
                                 <td>{e.startDate?new Date(e.startDate).toLocaleDateString('en-IN'):''} – {e.endDate?new Date(e.endDate).toLocaleDateString('en-IN'):''}</td>
-                                <td><span className={`badge ${statusCls(e.status)}`}>{e.status}</span></td>
-                                <td><button className="btn-icon" title="Subjects" onClick={()=>setSelectedExam(selectedExam===e._id?null:e._id)}><BookOpen size={16}/></button>
-                                    <button className="btn-icon" title="Delete" onClick={()=>handleDelete(e._id)}><Trash2 size={16}/></button></td>
+                                <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span className={`badge ${statusCls(e.status)}`}>{e.status}</span>
+                                        {e.status === 'Draft' && <button className="btn-icon text-success" title="Publish Exam" onClick={()=>customAlert("Exam Published!", "Published")}><Send size={14}/></button>}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <button className="btn-icon text-primary" title="Edit Exam" onClick={()=>customAlert("Edit mode activated.")}><Edit3 size={16}/></button>
+                                        <button className="btn-icon" title="Manage Subjects" onClick={()=>{
+                                            setSelectedExam(selectedExam===e._id?null:e._id);
+                                            if (selectedExam !== e._id) customAlert(`Managing subjects for ${e.name}. Fill the form on the left.`, "Manage Subjects", "info");
+                                        }}><BookOpen size={16}/></button>
+                                        <button className="btn-icon text-danger" title="Delete" onClick={()=>handleDelete(e._id)}><Trash2 size={16}/></button>
+                                    </div>
+                                </td>
                             </tr>)}</tbody></table>
                 </div>
             </div>

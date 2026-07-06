@@ -29,11 +29,15 @@
     padding-bottom: 8px;
 }
 
+.form-group {
+    margin-bottom: 24px;
+}
+
 .form-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 32px !important;
 }
 
 .form-row.two-cols {

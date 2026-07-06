@@ -279,7 +279,6 @@ export const SIDEBAR_MODULES = [
             { name: 'Contact School', path: '/parent-portal?tab=contact' },
         ]
     },
-    { id: 'attendance', name: 'Attendance', icon: 'CalendarCheck', path: '/attendance' },
     {
         id: 'transport', name: 'Transport', icon: 'Bus', path: '/transport',
         subModules: [

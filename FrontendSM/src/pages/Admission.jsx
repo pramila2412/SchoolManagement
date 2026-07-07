@@ -110,6 +110,17 @@ function ApplicationTab() {
     });
     const u = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
 
+    const handleSubmit = async () => {
+        try {
+            await api.submitAdmissionApplication(form);
+            await customAlert('Application submitted successfully!', 'Success', 'success');
+            setStep(0);
+        } catch (e) {
+            console.error(e);
+            await customAlert('Failed to submit application: ' + e.message, 'Error', 'danger');
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <div className="adm-steps">
@@ -126,7 +137,7 @@ function ApplicationTab() {
                     <div className="adm-form">
                         <div className="form-group"><label className="form-label">Full Name <span className="required">*</span></label><input type="text" className="form-input" value={form.fullName} onChange={e => u('fullName', e.target.value)} /></div>
                         <div className="form-row">
-                            <div className="form-group"><label className="form-label">Date of Birth <span className="required">*</span></label><input type="date" className="form-input" value={form.dob} onChange={e => u('dob', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Date of Birth <span className="required">*</span></label><input type="date" className="form-input" value={form.dob} onChange={e => u('dob', e.target.value)} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear() - 25)).toISOString().split("T")[0]} /></div>
                             <div className="form-group"><label className="form-label">Gender <span className="required">*</span></label><select className="form-select" value={form.gender} onChange={e => u('gender', e.target.value)}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
                         </div>
                         <div className="form-row">
@@ -207,7 +218,7 @@ function ApplicationTab() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                     <button className="btn btn-outline" disabled={step === 0} onClick={() => setStep(s => s - 1)}>← Previous</button>
                     {step < 4 ? <button className="btn btn-primary" onClick={() => setStep(s => s + 1)}>Next →</button>
-                        : <button className="btn btn-primary"><Send size={16}/> Submit Application</button>}
+                        : <button className="btn btn-primary" onClick={handleSubmit}><Send size={16}/> Submit Application</button>}
                 </div>
             </div>
         </div>
@@ -251,16 +262,185 @@ function DocumentsTab() {
 
 // ======================== REVIEW ========================
 function ReviewTab() {
-    const [applications, setApplications] = useLocalStorage('admission_applications', [
-        { id: 1, name: 'Rahul Kumar', class: 'Grade 1', date: '2026-03-20', status: 'Submitted', docs: '3/3' },
-        { id: 2, name: 'Priya Singh', class: 'Grade 3', date: '2026-03-18', status: 'Under Review', docs: '5/5' },
-        { id: 3, name: 'Arjun Patel', class: 'Grade 2', date: '2026-03-15', status: 'Approved', docs: '4/5' },
-        { id: 4, name: 'Sneha Reddy', class: 'Grade 1', date: '2026-03-12', status: 'Rejected', docs: '2/3' },
-    ]);
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedAppId, setSelectedAppId] = useState(null);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectForm, setRejectForm] = useState({ reason: 'Incomplete documents', remarks: '', notify: true });
+    const [internalRemarks, setInternalRemarks] = useState('');
+
+    useEffect(() => {
+        fetchApplications();
+    }, []);
+
+    const fetchApplications = async () => {
+        try {
+            const data = await api.getAdmissionApplications();
+            setApplications(data);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const statusBadge = (s) => s === 'Submitted' ? 'badge-info' : s === 'Under Review' ? 'badge-warning' : s === 'Approved' ? 'badge-success' : 'badge-danger';
-    const handleView = async (a) => await customAlert(`Application Details\n\nStudent: ${a.name}\nClass: ${a.class}\nApplied: ${a.date}\nDocuments: ${a.docs}\nStatus: ${a.status}`);
-    const handleApprove = async (id) => { if(await customConfirm('Approve this application?')) setApplications(prev => prev.map(a => a.id===id ? {...a, status:'Approved'} : a)); };
-    const handleReject = async (id) => { if(await customConfirm('Reject this application?')) setApplications(prev => prev.map(a => a.id===id ? {...a, status:'Rejected'} : a)); };
+    
+    const selectedApp = applications.find(a => a._id === selectedAppId);
+
+    const handleVerifyDoc = async (appId, docIndex) => {
+        try {
+            const app = applications.find(a => a._id === appId);
+            const newDocs = [...app.documents];
+            newDocs[docIndex].status = newDocs[docIndex].status === 'Verified' ? 'Uploaded' : 'Verified';
+            
+            await api.updateAdmissionApplicationDocuments(appId, newDocs);
+            setApplications(prev => prev.map(a => a._id === appId ? { ...a, documents: newDocs } : a));
+        } catch (e) {
+            console.error(e);
+            customAlert('Failed to update document status');
+        }
+    };
+
+    const handleApprove = async () => {
+        if(await customConfirm('Approve this application?')) {
+            try {
+                await api.updateAdmissionApplicationStatus(selectedAppId, { status: 'Approved', internalRemarks });
+                setApplications(prev => prev.map(a => a._id === selectedAppId ? {...a, status:'Approved', internalRemarks} : a));
+                setSelectedAppId(null);
+                customAlert('Application Approved!', 'Success', 'success');
+            } catch (e) {
+                console.error(e);
+                customAlert('Failed to approve application');
+            }
+        }
+    };
+
+    const handleConfirmReject = async () => {
+        if (!rejectForm.remarks.trim()) {
+            customAlert('Please enter detailed rejection remarks.', 'Required', 'warning');
+            return;
+        }
+        try {
+            await api.updateAdmissionApplicationStatus(selectedAppId, { 
+                status: 'Rejected', 
+                rejectReason: rejectForm.reason, 
+                internalRemarks: rejectForm.remarks 
+            });
+            setApplications(prev => prev.map(a => a._id === selectedAppId ? {...a, status:'Rejected', rejectReason: rejectForm.reason, internalRemarks: rejectForm.remarks} : a));
+            if (rejectForm.notify) {
+                console.log(`Notification sent to applicant about rejection: ${rejectForm.reason}`);
+            }
+            setShowRejectModal(false);
+            setSelectedAppId(null);
+            customAlert('Application Rejected successfully.', 'Rejected', 'info');
+        } catch (e) {
+            console.error(e);
+            customAlert('Failed to reject application');
+        }
+    };
+
+    if (selectedApp) {
+        return (
+            <div className="animate-fade-in" style={{ padding: '0 10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                        <button className="btn btn-outline" style={{ padding: '6px 12px' }} onClick={() => setSelectedAppId(null)}>← Back</button>
+                        <h3 style={{ margin: 0, color: 'var(--primary)' }}>Application Review: {selectedApp.name}</h3>
+                    </div>
+                    <span className={`badge ${statusBadge(selectedApp.status)}`} style={{ fontSize: '0.9rem', padding: '6px 12px' }}>{selectedApp.status}</span>
+                </div>
+
+                <div className="adm-form" style={{ marginBottom: 20 }}>
+                    <h4 style={{ marginBottom: 15, borderBottom: '1px solid var(--border-color)', paddingBottom: 8 }}>Student & Parent Details</h4>
+                    <div className="form-row-3" style={{ marginBottom: 15 }}>
+                        <div><strong>Class Applied:</strong> <div style={{marginTop:4}}>{selectedApp.class}</div></div>
+                        <div><strong>DOB:</strong> <div style={{marginTop:4}}>{selectedApp.dob}</div></div>
+                        <div><strong>Gender:</strong> <div style={{marginTop:4}}>{selectedApp.gender}</div></div>
+                    </div>
+                    <div className="form-row-3" style={{ marginBottom: 15 }}>
+                        <div><strong>Parent Name:</strong> <div style={{marginTop:4}}>{selectedApp.parentName}</div></div>
+                        <div><strong>Contact No:</strong> <div style={{marginTop:4}}>{selectedApp.parentPhone}</div></div>
+                        <div><strong>Email:</strong> <div style={{marginTop:4}}>{selectedApp.email}</div></div>
+                    </div>
+                    <div className="form-row" style={{ marginBottom: 15 }}>
+                        <div><strong>Address:</strong> <div style={{marginTop:4}}>{selectedApp.address}</div></div>
+                        <div><strong>Previous School:</strong> <div style={{marginTop:4}}>{selectedApp.prevSchool || 'N/A'}</div></div>
+                    </div>
+                </div>
+
+                <div className="adm-form" style={{ marginBottom: 20 }}>
+                    <h4 style={{ marginBottom: 15, borderBottom: '1px solid var(--border-color)', paddingBottom: 8 }}>Documents Verification</h4>
+                    {selectedApp.documents && selectedApp.documents.length > 0 ? (
+                        <table className="data-table">
+                            <thead><tr><th style={{textAlign: 'left'}}>Document Name</th><th style={{textAlign: 'left'}}>Status</th><th style={{textAlign: 'center'}}>Action</th></tr></thead>
+                            <tbody>
+                                {selectedApp.documents.map((doc, idx) => (
+                                    <tr key={idx}>
+                                        <td style={{textAlign: 'left'}}>{doc.name}</td>
+                                        <td style={{textAlign: 'left'}}><span className={`badge ${doc.status === 'Verified' ? 'badge-success' : 'badge-warning'}`}>{doc.status}</span></td>
+                                        <td style={{textAlign: 'center'}}>
+                                            <button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => handleVerifyDoc(selectedApp.id, idx)}>
+                                                {doc.status === 'Verified' ? 'Mark Pending' : 'Verify'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : <p style={{ color: 'var(--text-light)' }}>No documents uploaded.</p>}
+                </div>
+
+                <div className="adm-form" style={{ marginBottom: 20 }}>
+                    <h4 style={{ marginBottom: 15, borderBottom: '1px solid var(--border-color)', paddingBottom: 8 }}>Internal Remarks</h4>
+                    <textarea className="form-input" rows="3" placeholder="Add notes about this application..." value={internalRemarks} onChange={e => setInternalRemarks(e.target.value)}></textarea>
+                </div>
+
+                {(selectedApp.status === 'Submitted' || selectedApp.status === 'Under Review') && (
+                    <div style={{ display: 'flex', gap: 15, justifyContent: 'flex-end', marginTop: 20 }}>
+                        <button className="btn btn-danger" onClick={() => setShowRejectModal(true)}>Reject Application</button>
+                        <button className="btn btn-success" onClick={handleApprove}>Approve Application</button>
+                    </div>
+                )}
+
+                {showRejectModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content animate-scale-in" style={{ maxWidth: 500 }}>
+                            <div className="modal-header">
+                                <h3>Reject Application</h3>
+                                <button className="btn-icon" onClick={() => setShowRejectModal(false)}><X size={20}/></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Rejection Reason <span className="required">*</span></label>
+                                    <select className="form-select" value={rejectForm.reason} onChange={e => setRejectForm({...rejectForm, reason: e.target.value})}>
+                                        <option>Incomplete documents</option>
+                                        <option>Age ineligible</option>
+                                        <option>Capacity full</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Detailed Remarks <span className="required">*</span></label>
+                                    <textarea className="form-input" rows="4" placeholder="Enter reason for rejection..." value={rejectForm.remarks} onChange={e => setRejectForm({...rejectForm, remarks: e.target.value})}></textarea>
+                                </div>
+                                <div className="form-group" style={{ marginTop: 15 }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem' }}>
+                                        <input type="checkbox" checked={rejectForm.notify} onChange={e => setRejectForm({...rejectForm, notify: e.target.checked})} style={{ accentColor: 'var(--accent)' }}/>
+                                        Notify Applicant via Email/SMS
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-outline" onClick={() => setShowRejectModal(false)}>Cancel</button>
+                                <button className="btn btn-danger" onClick={handleConfirmReject}>Confirm Rejection</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="animate-fade-in">
@@ -272,18 +452,20 @@ function ReviewTab() {
                 ].map((s, i) => { const I = s.icon; return <div className="adm-stat-card" key={i}><div className="adm-stat-icon" style={{ background: s.bg }}><I size={24} style={{ color: s.color }}/></div><div className="adm-stat-info"><h4>{s.value}</h4><p>{s.label}</p></div></div>; })}
             </div>
             <div className="table-responsive">
-                <table className="data-table"><thead><tr><th>Student</th><th>Class</th><th>Applied Date</th><th>Documents</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody>{applications.map(a => (
-                        <tr key={a.id}><td className="fw-600">{a.name}</td><td>{a.class}</td><td>{a.date}</td><td>{a.docs}</td>
-                            <td><span className={`badge ${statusBadge(a.status)}`}>{a.status}</span></td>
-                            <td style={{ display: 'flex', gap: 2 }}>
-                                <button className="btn-icon" title="View" onClick={() => handleView(a)}><Eye size={16}/></button>
-                                {(a.status === 'Submitted' || a.status === 'Under Review') && <>
-                                    <button className="btn-icon" title="Approve" style={{ color: 'var(--success)' }} onClick={() => handleApprove(a.id)}><CheckCircle2 size={16}/></button>
-                                    <button className="btn-icon" title="Reject" style={{ color: 'var(--danger)' }} onClick={() => handleReject(a.id)}><XCircle size={16}/></button>
-                                </>}
-                            </td></tr>
-                    ))}</tbody></table>
+                <table className="data-table"><thead><tr><th style={{textAlign: 'left'}}>Student</th><th style={{textAlign: 'left'}}>Class</th><th style={{textAlign: 'left'}}>Applied Date</th><th style={{textAlign: 'left'}}>Documents</th><th style={{textAlign: 'left'}}>Status</th><th style={{textAlign: 'center'}}>Actions</th></tr></thead>
+                    <tbody>{applications.map(a => {
+                        const dateStr = a.appliedDate ? new Date(a.appliedDate).toLocaleDateString() : '';
+                        const docsUploaded = a.documents ? a.documents.length : 0;
+                        const docsVerified = a.documents ? a.documents.filter(d => d.status === 'Verified').length : 0;
+                        const docsStr = `${docsVerified}/${docsUploaded}`;
+                        return (
+                            <tr key={a._id}><td className="fw-600" style={{textAlign: 'left'}}>{a.fullName}</td><td style={{textAlign: 'left'}}>{a.applyingClass}</td><td style={{textAlign: 'left'}}>{dateStr}</td><td style={{textAlign: 'left'}}>{docsStr}</td>
+                                <td style={{textAlign: 'left'}}><span className={`badge ${statusBadge(a.status)}`}>{a.status}</span></td>
+                                <td style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                                    <button className="btn-icon" title="View Application" style={{ color: 'var(--primary)' }} onClick={() => setSelectedAppId(a._id)}><Eye size={16}/></button>
+                                </td></tr>
+                        );
+                    })}</tbody></table>
             </div>
         </div>
     );

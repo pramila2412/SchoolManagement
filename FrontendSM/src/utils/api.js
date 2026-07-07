@@ -109,5 +109,39 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to delete concession');
         return res.json();
+    },
+
+    // Admission
+    submitAdmissionApplication: async (data) => {
+        const res = await fetch(`${API_BASE_URL}/admission/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to submit application');
+        return res.json();
+    },
+    getAdmissionApplications: async () => {
+        const res = await fetch(`${API_BASE_URL}/admission/applications`);
+        if (!res.ok) throw new Error('Failed to fetch applications');
+        return res.json();
+    },
+    updateAdmissionApplicationStatus: async (id, data) => {
+        const res = await fetch(`${API_BASE_URL}/admission/applications/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to update application status');
+        return res.json();
+    },
+    updateAdmissionApplicationDocuments: async (id, documents) => {
+        const res = await fetch(`${API_BASE_URL}/admission/applications/${id}/documents`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documents }),
+        });
+        if (!res.ok) throw new Error('Failed to update application documents');
+        return res.json();
     }
 };

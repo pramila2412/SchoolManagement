@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Calendar, BookOpen, Users, Clock, FileText, ClipboardCheck,
     PlusCircle, Save, Trash2, Edit3, ChevronDown, ChevronRight,
     GraduationCap, Layers, BookMarked, PencilLine, Upload,
     BarChart3, Settings, ArrowUpRight, CheckCircle2, XCircle,
-    Award, Eye, Send, UserCheck, CalendarCheck, FolderOpen
+    Award, Eye, Send, UserCheck, CalendarCheck, FolderOpen, ExternalLink
 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import './Academics.css';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { classes as MOCK_CLASSES, sections as MOCK_SECTIONS } from '../data/mockData';
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
@@ -65,53 +67,224 @@ function AcademicYearTab() {
     );
 }
 
+
 // ======================== CLASS & SECTION ========================
 function ClassSectionTab() {
-    const [classes, setClasses] = useLocalStorage('academic_classes', [
-        { id: 1, name: 'Grade 1', sections: [{ label: 'A', teacher: 'Mrs. Sharma', capacity: 40 }, { label: 'B', teacher: 'Mr. Patel', capacity: 40 }] },
-        { id: 2, name: 'Grade 2', sections: [{ label: 'A', teacher: 'Ms. Gupta', capacity: 35 }] },
-        { id: 3, name: 'Grade 3', sections: [{ label: 'A', teacher: 'Mr. Roy', capacity: 38 }, { label: 'B', teacher: 'Mrs. Verma', capacity: 38 }, { label: 'C', teacher: 'Mr. Singh', capacity: 36 }] },
-    ]);
-    const [form, setForm] = useState({ className: '', sectionLabel: '', teacher: '', capacity: 40 });
+    const [classes, setClasses] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    
+    // Class Form
+    const [className, setClassName] = useState('');
+    
+    // Sections Form
+    const [sections, setSections] = useState([]);
+    const [sectionLabel, setSectionLabel] = useState('');
+    const [capacity, setCapacity] = useState(40);
+    const [classTeacher, setClassTeacher] = useState('');
 
-    const handleAdd = (e) => {
-        e.preventDefault();
-        const existing = classes.find(c => c.name === form.className);
-        const newSection = { label: form.sectionLabel, teacher: form.teacher, capacity: +form.capacity };
-        if (existing) {
-            setClasses(prev => prev.map(c => c.name === form.className ? { ...c, sections: [...c.sections, newSection] } : c));
-        } else {
-            setClasses(prev => [...prev, { id: Date.now(), name: form.className, sections: [newSection] }]);
+    useEffect(() => {
+        fetchClasses();
+    }, []);
+
+    const fetchClasses = async () => {
+        try {
+            const classesRes = await fetch('/api/academics/classes');
+            
+            if (classesRes.ok) {
+                const data = await classesRes.json();
+                setClasses(data);
+                // Also update local storage so mockData utilities continue to work globally
+                localStorage.setItem('academic_classes', JSON.stringify(data.map(c => ({
+                    name: c.className,
+                    sections: c.sections
+                }))));
+            }
+            
+            // Fetch teachers from HR Staff List in localStorage
+            try {
+                const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
+                const teachersList = hrStaff
+                    .filter(s => s.role === 'Teacher')
+                    .map(s => ({
+                        _id: s.id || Math.random().toString(),
+                        name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
+                    }));
+                setTeachers(teachersList);
+            } catch (err) {
+                console.error("Failed to parse hr staff", err);
+            }
+        } catch (e) {
+            console.error("Error fetching classes:", e);
+        } finally {
+            setLoading(false);
         }
-        setForm({ className: '', sectionLabel: '', teacher: '', capacity: 40 });
     };
+
+    const handleAddSection = (e) => {
+        e.preventDefault();
+        if(!sectionLabel) return;
+        setSections([...sections, { label: sectionLabel, capacity, classTeacher }]);
+        setSectionLabel('');
+        setCapacity(40);
+        setClassTeacher('');
+    };
+
+    const removeSection = (idx) => {
+        setSections(sections.filter((_, i) => i !== idx));
+    };
+
+    const handleSaveClass = async () => {
+        if (!className) {
+            customAlert("Please enter a class name");
+            return;
+        }
+
+        let sectionsToSave = [...sections];
+        if (sectionLabel && sections.length === 0) {
+            // Auto-add if user forgot to click Add Section
+            sectionsToSave = [{ label: sectionLabel, capacity, classTeacher }];
+        }
+
+        if (sectionsToSave.length === 0) {
+            customAlert("Please add at least one section");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/academics/classes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ className, sections: sectionsToSave })
+            });
+            
+            if (res.ok) {
+                customAlert("Class and Sections saved successfully!");
+                setClassName('');
+                setSections([]);
+                setSectionLabel('');
+                setCapacity(40);
+                setClassTeacher('');
+                fetchClasses();
+            } else {
+                const data = await res.json();
+                customAlert(data.message || "Error saving class");
+            }
+        } catch (e) {
+            customAlert("Network error saving class");
+            console.error(e);
+        }
+    };
+
+    const deleteClass = async (id) => {
+        if (!await customConfirm("Are you sure you want to delete this class?")) return;
+        try {
+            const res = await fetch('/api/academics/classes/' + id, { method: 'DELETE' });
+            if (res.ok) fetchClasses();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    if (loading) return <div className="p-6 text-center">Loading...</div>;
 
     return (
         <div className="animate-fade-in">
             <div className="acad-two-col">
                 <div className="acad-form-panel">
                     <h3><Layers size={18}/> Add Class / Section</h3>
-                    <form className="acad-form" onSubmit={handleAdd}>
-                        <div className="form-group"><label className="form-label">Class Name <span className="required">*</span></label>
-                            <input type="text" className="form-input" required placeholder="e.g. Grade 1, Class 10" value={form.className} onChange={e => setForm({ ...form, className: e.target.value })} /></div>
-                        <div className="acad-form form-row">
-                            <div className="form-group"><label className="form-label">Section Label <span className="required">*</span></label>
-                                <input type="text" className="form-input" required placeholder="e.g. A" value={form.sectionLabel} onChange={e => setForm({ ...form, sectionLabel: e.target.value })} /></div>
-                            <div className="form-group"><label className="form-label">Max Capacity</label>
-                                <input type="number" className="form-input" value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} /></div>
+                    <div className="acad-form">
+                        <div className="form-group">
+                            <label className="form-label">Class Name <span className="required">*</span></label>
+                            <input 
+                                type="text" 
+                                list="existing-classes"
+                                className="form-input" 
+                                required 
+                                placeholder="Select existing or type new class name" 
+                                value={className} 
+                                onChange={e => setClassName(e.target.value)} 
+                            />
+                            <datalist id="existing-classes">
+                                {classes.map(c => <option key={c._id} value={c.className} />)}
+                            </datalist>
+                            {classes.some(c => c.className === className) && (
+                                <small style={{ color: 'var(--primary)', marginTop: '4px', display: 'block' }}>
+                                    💡 This class already exists. New sections will be added to it.
+                                </small>
+                            )}
                         </div>
-                        <div className="form-group"><label className="form-label">Class Teacher</label>
-                            <select className="form-select" value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })}>
-                                <option value="">Select Teacher</option><option>Mrs. Sharma</option><option>Mr. Patel</option><option>Ms. Gupta</option><option>Mr. Roy</option><option>Mrs. Verma</option><option>Mr. Singh</option>
-                            </select></div>
-                        <div className="acad-form form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save</button></div>
-                    </form>
+                        
+                        <div style={{ padding: '15px', background: 'var(--surface-50)', borderRadius: '8px', border: '1px solid var(--border-light)', marginTop: '15px' }}>
+                            <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--text-secondary)' }}>Add Sections</h4>
+                            <div className="acad-form form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Section Label <span className="required">*</span></label>
+                                    <input type="text" className="form-input" placeholder="e.g. A, B, Alpha" value={sectionLabel} onChange={e => setSectionLabel(e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Max Capacity</label>
+                                    <input type="number" className="form-input" value={capacity} onChange={e => setCapacity(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Class Teacher</label>
+                                <select className="form-select" value={classTeacher} onChange={e => setClassTeacher(e.target.value)}>
+                                    <option value="">Select Teacher</option>
+                                    {teachers.map(t => (
+                                        <option key={t._id} value={t.name}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button type="button" className="btn btn-secondary mt-2" onClick={handleAddSection}><PlusCircle size={16}/> Add Section</button>
+                        </div>
+                        
+                        {sections.length > 0 && (
+                            <div style={{ marginTop: '15px' }}>
+                                <label className="form-label">Sections to be added:</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {sections.map((s, idx) => (
+                                        <div key={idx} style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', padding: '5px 10px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                                            <strong>{s.label}</strong> (Cap: {s.capacity}) {s.classTeacher ? ` - ${s.classTeacher}` : ''}
+                                            <Trash2 size={14} color="var(--danger)" style={{ cursor: 'pointer' }} onClick={() => removeSection(idx)} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="acad-form form-actions" style={{ marginTop: '20px' }}>
+                            <button type="button" className="btn btn-primary" onClick={handleSaveClass}><Save size={16}/> Save Class</button>
+                        </div>
+                    </div>
                 </div>
                 <div className="acad-table-panel">
-                    <table className="data-table"><thead><tr><th>Class</th><th>Section</th><th>Class Teacher</th><th>Capacity</th></tr></thead>
-                        <tbody>{classes.flatMap(c => c.sections.map((s, i) => (
-                            <tr key={`${c.id}-${i}`}><td className="fw-600">{c.name}</td><td>{s.label}</td><td>{s.teacher || '—'}</td><td>{s.capacity}</td></tr>
-                        )))}</tbody></table>
+                    <table className="data-table">
+                        <thead><tr><th>Class</th><th>Section</th><th>Class Teacher</th><th>Capacity</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {classes.map(c => (
+                                <React.Fragment key={c._id}>
+                                    <tr style={{ backgroundColor: 'var(--surface-50)' }}>
+                                        <td colSpan="4" className="fw-bold" style={{ color: 'var(--primary)' }}>
+                                            Class: {c.className}
+                                        </td>
+                                        <td>
+                                            <button className="btn-icon" onClick={() => deleteClass(c._id)} title="Delete Class"><Trash2 size={16} color="var(--danger)" /></button>
+                                        </td>
+                                    </tr>
+                                    {c.sections.map((s, i) => (
+                                        <tr key={`${c._id}-${i}`}>
+                                            <td style={{ paddingLeft: '30px', color: 'var(--text-muted)' }}>↳</td>
+                                            <td>Section {s.label}</td>
+                                            <td>{s.classTeacher || '—'}</td>
+                                            <td>{s.capacity}</td>
+                                            <td></td>
+                                        </tr>
+                                    ))}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -120,80 +293,103 @@ function ClassSectionTab() {
 
 // ======================== SUBJECTS ========================
 function SubjectsTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-    const [subjects, setSubjects] = useLocalStorage('academic_subjects', [
-        { id: 1, name: 'Mathematics', code: 'MATH-01', type: 'Theory', classes: ['Grade 1', 'Grade 2', 'Grade 3'] },
-        { id: 2, name: 'Science', code: 'SCI-01', type: 'Both', classes: ['Grade 2', 'Grade 3'] },
-        { id: 3, name: 'English', code: 'ENG-01', type: 'Theory', classes: ['Grade 1', 'Grade 2', 'Grade 3'] },
-        { id: 4, name: 'Hindi', code: 'HIN-01', type: 'Theory', classes: ['Grade 1', 'Grade 2'] },
-        { id: 5, name: 'Computer Science', code: 'CS-01', type: 'Practical', classes: ['Grade 3'] },
-    ]);
-    const [editingId, setEditingId] = useState(null);
+    const [subjects, setSubjects] = useState([]);
+    const [classesList, setClassesList] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [classDropdownOpen, setClassDropdownOpen] = useState(false);
     
-    const [form, setForm] = useState({ name: '', code: '', type: 'Theory', classes: [] });
+    const [form, setForm] = useState({ subjectName: '', subjectCode: '', type: 'Theory', assignedClasses: [] });
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const [subjRes, classRes] = await Promise.all([
+                fetch('/api/academics/subjects'),
+                fetch('/api/academics/classes')
+            ]);
+            if (subjRes.ok) setSubjects(await subjRes.json());
+            if (classRes.ok) {
+                const clsData = await classRes.json();
+                setClassesList(clsData.map(c => c.className));
+            }
+        } catch (error) {
+            console.error("Error fetching subjects:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const toggleClass = (cls) => {
         if (cls === 'All Classes') {
-            const isAllSelected = form.classes.includes('All Classes');
+            const isAllSelected = form.assignedClasses.includes('All Classes');
             setForm(prev => ({ 
                 ...prev, 
-                classes: isAllSelected ? [] : ['All Classes'] 
+                assignedClasses: isAllSelected ? [] : ['All Classes'] 
             }));
             return;
         }
         setForm(prev => {
-            const withoutAll = prev.classes.filter(c => c !== 'All Classes');
+            const withoutAll = prev.assignedClasses.filter(c => c !== 'All Classes');
             const updated = withoutAll.includes(cls) 
                 ? withoutAll.filter(c => c !== cls) 
                 : [...withoutAll, cls];
-            return { ...prev, classes: updated };
+            return { ...prev, assignedClasses: updated };
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (form.classes.length === 0) {
+        if (form.assignedClasses.length === 0) {
             customAlert('Please assign this subject to at least one class.');
             return;
         }
 
-        if (editingId) {
-            setSubjects(prev => prev.map(s => s.id === editingId ? { ...form, id: editingId } : s));
-            customAlert('Subject updated successfully!');
-        } else {
-            setSubjects(prev => [...prev, { ...form, id: Date.now() }]);
-            customAlert('Subject added successfully!');
+        try {
+            const res = await fetch('/api/academics/subjects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+            if (res.ok) {
+                customAlert('Subject saved successfully!');
+                setForm({ subjectName: '', subjectCode: '', type: 'Theory', assignedClasses: [] });
+                fetchData();
+            } else {
+                const data = await res.json();
+                customAlert(data.message || "Error saving subject");
+            }
+        } catch (e) {
+            customAlert("Network error");
+            console.error(e);
         }
-        
-        setForm({ name: '', code: '', type: 'Theory', classes: [] });
-        setEditingId(null);
-        setClassDropdownOpen(false);
     };
 
-    const handleEdit = (s) => {
-        setForm({ name: s.name, code: s.code, type: s.type, classes: Array.isArray(s.classes) ? [...s.classes] : [] });
-        setEditingId(s.id);
-        setClassDropdownOpen(false);
+    const deleteSubject = async (id) => {
+        if (!await customConfirm("Are you sure you want to delete this subject?")) return;
+        try {
+            const res = await fetch('/api/academics/subjects/' + id, { method: 'DELETE' });
+            if (res.ok) fetchData();
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const handleCancel = () => {
-        setForm({ name: '', code: '', type: 'Theory', classes: [] });
-        setEditingId(null);
-        setClassDropdownOpen(false);
-    };
+    if (loading) return <div className="p-6 text-center">Loading...</div>;
 
     return (
         <div className="animate-fade-in">
             <div className="acad-two-col">
                 <div className="acad-form-panel">
-                    <h3><BookOpen size={18}/> {editingId ? 'Edit Subject' : 'Add Subject'}</h3>
+                    <h3><BookOpen size={18}/> Add Subject</h3>
                     <form className="acad-form" onSubmit={handleSubmit}>
                         <div className="form-group"><label className="form-label">Subject Name <span className="required">*</span></label>
-                            <input type="text" className="form-input" required placeholder="e.g. Mathematics" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+                            <input type="text" className="form-input" required placeholder="e.g. Mathematics" value={form.subjectName} onChange={e => setForm({ ...form, subjectName: e.target.value })} /></div>
                         <div className="acad-form form-row">
                             <div className="form-group"><label className="form-label">Subject Code</label>
-                                <input type="text" className="form-input" placeholder="e.g. MATH-01" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></div>
+                                <input type="text" className="form-input" required placeholder="e.g. MATH-01" value={form.subjectCode} onChange={e => setForm({ ...form, subjectCode: e.target.value })} /></div>
                             <div className="form-group"><label className="form-label">Subject Type</label>
                                 <select className="form-select" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option>Theory</option><option>Practical</option><option>Both</option></select></div>
                         </div>
@@ -205,16 +401,13 @@ function SubjectsTab() {
                                 onClick={() => setClassDropdownOpen(!classDropdownOpen)}
                                 style={{ minHeight: '44px', cursor: 'pointer', display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px 12px' }}
                             >
-                                {form.classes.length === 0 ? (
+                                {form.assignedClasses.length === 0 ? (
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Select classes...</span>
                                 ) : (
-                                    form.classes.map(cls => (
+                                    form.assignedClasses.map(cls => (
                                         <span key={cls} className="multi-select-tag">
                                             {cls}
-                                            <span 
-                                                className="tag-close" 
-                                                onClick={(e) => { e.stopPropagation(); toggleClass(cls); }}
-                                            >×</span>
+                                            <span className="tag-close" onClick={(e) => { e.stopPropagation(); toggleClass(cls); }}>×</span>
                                         </span>
                                     ))
                                 )}
@@ -223,47 +416,28 @@ function SubjectsTab() {
                             
                             {classDropdownOpen && (
                                 <div className="multi-select-dropdown">
-                                    <label className="dropdown-item" style={{ fontWeight: 600, borderBottom: '1px solid var(--border-light)', background: form.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={form.classes.includes('All Classes')} 
-                                            onChange={() => toggleClass('All Classes')} 
-                                            style={{ accentColor: 'var(--accent)' }}
-                                        />
+                                    <label className="dropdown-item" style={{ fontWeight: 600, borderBottom: '1px solid var(--border-light)', background: form.assignedClasses.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
+                                        <input type="checkbox" checked={form.assignedClasses.includes('All Classes')} onChange={() => toggleClass('All Classes')} style={{ accentColor: 'var(--accent)' }} />
                                         <span>All Classes</span>
                                     </label>
-                                    {ALL_CLASSES.map(cls => (
-                                        <label key={cls} className="dropdown-item" style={{ background: (form.classes.includes('All Classes') || form.classes.includes(cls)) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={form.classes.includes('All Classes') || form.classes.includes(cls)} 
-                                                disabled={form.classes.includes('All Classes')}
-                                                onChange={() => toggleClass(cls)} 
-                                                style={{ accentColor: 'var(--accent)' }}
-                                            />
-                                            <span>Class {cls}</span>
+                                    {classesList.map(cls => (
+                                        <label key={cls} className="dropdown-item" style={{ background: (form.assignedClasses.includes('All Classes') || form.assignedClasses.includes(cls)) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
+                                            <input type="checkbox" checked={form.assignedClasses.includes('All Classes') || form.assignedClasses.includes(cls)} disabled={form.assignedClasses.includes('All Classes')} onChange={() => toggleClass(cls)} style={{ accentColor: 'var(--accent)' }} />
+                                            <span>{cls}</span>
                                         </label>
                                     ))}
                                 </div>
                             )}
                         </div>
-
-                        <div className="acad-form form-actions">
-                            {editingId && <button type="button" className="btn btn-outline" onClick={handleCancel}>Cancel</button>}
-                            <button type="submit" className="btn btn-primary"><Save size={16}/> {editingId ? 'Update Subject' : 'Save Subject'}</button>
-                        </div>
+                        <div className="acad-form form-actions"><button type="submit" className="btn btn-primary"><Save size={16}/> Save Subject</button></div>
                     </form>
                 </div>
                 <div className="acad-table-panel">
-                    <table className="data-table"><thead><tr><th>Subject</th><th>Code</th><th>Type</th><th>Classes</th><th>Actions</th></tr></thead>
+                    <table className="data-table"><thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Assigned Classes</th><th>Action</th></tr></thead>
                         <tbody>{subjects.map(s => (
-                            <tr key={s.id} className={editingId === s.id ? 'row-editing' : ''}><td className="fw-600">{s.name}</td><td>{s.code}</td>
-                                <td><span className={`badge ${s.type === 'Theory' ? 'badge-info' : s.type === 'Practical' ? 'badge-warning' : 'badge-success'}`}>{s.type}</span></td>
-                                <td>{Array.isArray(s.classes) ? s.classes.join(', ') : '—'}</td>
-                                <td>
-                                    <button className="btn-icon" onClick={() => handleEdit(s)} title="Edit"><Edit3 size={16}/></button>
-                                    <button className="btn-icon" onClick={async () => { if(await customConfirm(`Delete subject "${s.name}"?`)) setSubjects(prev => prev.filter(x => x.id !== s.id)) }} title="Delete" style={{color: 'var(--danger)'}}><Trash2 size={16}/></button>
-                                </td></tr>
+                            <tr key={s._id}><td className="fw-600">{s.subjectName}</td><td><span className="badge badge-draft">{s.subjectCode}</span></td><td>{s.type}</td>
+                                <td>{s.assignedClasses.join(', ')}</td>
+                                <td><button className="btn-icon" onClick={() => deleteSubject(s._id)}><Trash2 size={16}/></button></td></tr>
                         ))}</tbody></table>
                 </div>
             </div>
@@ -271,138 +445,203 @@ function SubjectsTab() {
     );
 }
 
-
 // ======================== TEACHER ASSIGNMENT ========================
 function TeacherAssignmentTab() {
-    const [assignments, setAssignments] = useLocalStorage('academic_teacher_assignments', [
-        { id: 1, class: 'I', section: 'A', subject: 'Mathematics', teacher: 'Rajesh Kumar', type: 'Subject Teacher' },
-        { id: 2, class: 'I', section: 'A', subject: 'English', teacher: 'Kavitha Rao', type: 'Subject Teacher' },
-        { id: 3, class: 'II', section: 'A', subject: 'Science', teacher: 'Mohan Das', type: 'Subject Teacher' },
-        { id: 4, class: 'I', section: 'A', subject: '—', teacher: 'Rajesh Kumar', type: 'Class Teacher' },
-    ]);
-    const [allStaff] = useLocalStorage('mzs_staff', []);
-    const [subjects] = useLocalStorage('academic_subjects', []);
-
-    const teachers = allStaff.filter(s => s.role && s.role.toLowerCase().includes('teacher') && s.status === 'Active');
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-
-    const [selClass, setSelClass] = useState('');
-    const [selSection, setSelSection] = useState('');
+    const [classes, setClasses] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [assignments, setAssignments] = useState([]); // Array of { subjectName, teacherName }
     
-    // State to hold draft assignments for the selected class/section
-    const [draftAssignments, setDraftAssignments] = useState({});
-    const [draftClassTeacher, setDraftClassTeacher] = useState('');
-
-    const applicableSubjects = subjects.filter(s => Array.isArray(s.classes) && (s.classes.includes(`Grade ${selClass}`) || s.classes.includes(selClass) || s.classes.includes('All Classes')));
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedSection, setSelectedSection] = useState('');
+    
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (selClass && selSection) {
-            const current = assignments.filter(a => a.class === selClass && a.section === selSection);
-            const draft = {};
-            current.filter(a => a.type === 'Subject Teacher').forEach(a => draft[a.subject] = a.teacher);
-            setDraftAssignments(draft);
-            
-            const ct = current.find(a => a.type === 'Class Teacher');
-            setDraftClassTeacher(ct ? ct.teacher : '');
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (selectedClass && selectedSection) {
+            loadAssignmentsForSection(selectedClass, selectedSection);
         } else {
-            setDraftAssignments({});
-            setDraftClassTeacher('');
+            setAssignments([]);
         }
-    }, [selClass, selSection, assignments]);
+    }, [selectedClass, selectedSection]);
 
-    const handleSave = () => {
-        if (!selClass || !selSection) {
-            customAlert('Please select both Class and Section.', 'Error', 'error');
-            return;
+    const fetchData = async () => {
+        try {
+            const [clsRes, subjRes] = await Promise.all([
+                fetch('/api/academics/classes'),
+                fetch('/api/academics/subjects')
+            ]);
+            if (clsRes.ok) setClasses(await clsRes.json());
+            if (subjRes.ok) setSubjects(await subjRes.json());
+            
+            // Fetch teachers from HR Staff List in localStorage
+            try {
+                const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
+                const teachersList = hrStaff
+                    .filter(s => s.role === 'Teacher')
+                    .map(s => ({
+                        _id: s.id || Math.random().toString(),
+                        name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
+                    }));
+                setTeachers(teachersList);
+            } catch (err) {
+                console.error("Failed to parse hr staff", err);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        const newAssignments = assignments.filter(a => !(a.class === selClass && a.section === selSection));
-        
-        if (draftClassTeacher) {
-            newAssignments.push({ id: Date.now() + Math.random(), class: selClass, section: selSection, subject: '—', teacher: draftClassTeacher, type: 'Class Teacher' });
+    const loadAssignmentsForSection = async (cls, sec) => {
+        try {
+            const res = await fetch(`/api/academics/assignments?className=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.length > 0 && data[0].assignments) {
+                    setAssignments(data[0].assignments);
+                } else {
+                    setAssignments([]);
+                }
+            }
+        } catch (e) {
+            console.error(e);
         }
+    };
+
+    // Filter sections based on selected class
+    const availableSections = selectedClass 
+        ? (classes.find(c => c.className === selectedClass)?.sections || [])
+        : [];
         
-        Object.entries(draftAssignments).forEach(([subj, teacher]) => {
-            if (teacher) {
-                newAssignments.push({ id: Date.now() + Math.random(), class: selClass, section: selSection, subject: subj, teacher: teacher, type: 'Subject Teacher' });
+    // Filter subjects that belong to selected class (or "All Classes")
+    const applicableSubjects = subjects.filter(s => 
+        s.assignedClasses.includes('All Classes') || s.assignedClasses.includes(selectedClass)
+    );
+
+    const handleTeacherChange = (subjectName, teacherName) => {
+        setAssignments(prev => {
+            const existing = prev.findIndex(a => a.subjectName === subjectName);
+            if (existing >= 0) {
+                const newArr = [...prev];
+                newArr[existing] = { subjectName, teacherName };
+                return newArr;
+            } else {
+                return [...prev, { subjectName, teacherName }];
             }
         });
-        
-        setAssignments(newAssignments);
-        customAlert('Teacher assignments saved successfully!', 'Success', 'success');
     };
+
+    const getTeacherForSubject = (subjectName) => {
+        const found = assignments.find(a => a.subjectName === subjectName);
+        return found ? found.teacherName : '';
+    };
+
+    const handleSave = async () => {
+        if (!selectedClass || !selectedSection) {
+            customAlert("Select a Class and Section first.");
+            return;
+        }
+        try {
+            const res = await fetch('/api/academics/assignments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    className: selectedClass,
+                    section: selectedSection,
+                    assignments
+                })
+            });
+            if (res.ok) {
+                customAlert("Teacher assignments saved successfully!");
+            }
+        } catch (e) {
+            customAlert("Error saving assignments");
+            console.error(e);
+        }
+    };
+
+    if (loading) return <div className="p-6">Loading...</div>;
 
     return (
         <div className="animate-fade-in">
-            <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-                <h3 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><UserCheck size={18}/> Assign Teachers to Class</h3>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
-                        <select className="form-select" style={{ width: 150 }} value={selClass} onChange={e => setSelClass(e.target.value)}>
-                            <option value="">Select</option>
-                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
-                        </select>
-                    </div>
-                    <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
-                        <select className="form-select" style={{ width: 120 }} value={selSection} onChange={e => setSelSection(e.target.value)}>
-                            <option value="">Select</option><option>A</option><option>B</option><option>C</option>
-                        </select>
-                    </div>
+            <div className="acad-filter-bar mb-6" style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', gap: '20px', alignItems: 'flex-end' }}>
+                <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                    <label className="form-label">Select Class</label>
+                    <select className="form-select" value={selectedClass} onChange={e => { setSelectedClass(e.target.value); setSelectedSection(''); }}>
+                        <option value="">-- Select Class --</option>
+                        {classes.map(c => <option key={c._id} value={c.className}>{c.className}</option>)}
+                    </select>
+                </div>
+                <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                    <label className="form-label">Select Section</label>
+                    <select className="form-select" value={selectedSection} onChange={e => setSelectedSection(e.target.value)} disabled={!selectedClass}>
+                        <option value="">-- Select Section --</option>
+                        {availableSections.map(s => <option key={s.label} value={s.label}>{s.label}</option>)}
+                    </select>
                 </div>
             </div>
 
-            {selClass && selSection && (
-                <div className="acad-two-col">
-                    <div className="acad-form-panel">
-                        <h4 style={{ marginBottom: 16, color: 'var(--primary)' }}>Assignment Form: {selClass} - {selSection}</h4>
-                        
-                        <div className="form-group" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border-light)' }}>
-                            <label className="form-label">Class Teacher</label>
-                            <select className="form-select" value={draftClassTeacher} onChange={e => setDraftClassTeacher(e.target.value)}>
-                                <option value="">Select Class Teacher</option>
-                                {teachers.map(t => <option key={t.id} value={t.name}>{t.name} ({t.dept})</option>)}
-                            </select>
+            {selectedClass && selectedSection ? (
+                <div className="acad-card">
+                    <div className="acad-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ margin: 0 }}>Assign Teachers to Subjects</h3>
+                            <p style={{ margin: '5px 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                Class {selectedClass} - Section {selectedSection}
+                            </p>
                         </div>
-                        
-                        <h5 style={{ marginBottom: 12 }}>Subject Teachers</h5>
-                        {applicableSubjects.length > 0 ? (
-                            applicableSubjects.map(s => (
-                                <div className="form-group" key={s.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                                    <label className="form-label" style={{ width: 140, margin: 0 }}>{s.name}</label>
-                                    <select className="form-select" style={{ flex: 1 }} value={draftAssignments[s.name] || ''} onChange={e => setDraftAssignments({...draftAssignments, [s.name]: e.target.value})}>
-                                        <option value="">Select Teacher</option>
-                                        {teachers.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
-                                    </select>
-                                </div>
-                            ))
+                        <button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Assignments</button>
+                    </div>
+                    <div className="acad-card-body p-0">
+                        {applicableSubjects.length === 0 ? (
+                            <div className="p-6 text-center text-muted">No subjects assigned to this class yet. Go to Subjects tab.</div>
                         ) : (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No subjects assigned to this class yet.</p>
-                        )}
-                        
-                        <div style={{ marginTop: 20 }}>
-                            <button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Assignments</button>
-                        </div>
-                    </div>
-
-                    <div className="acad-table-panel">
-                        <h4 style={{ marginBottom: 16 }}>Current Assignments ({selClass}-{selSection})</h4>
-                        <table className="data-table">
-                            <thead><tr><th>Subject</th><th>Teacher</th><th>Type</th></tr></thead>
-                            <tbody>
-                                {assignments.filter(a => a.class === selClass && a.section === selSection).length > 0 ? (
-                                    assignments.filter(a => a.class === selClass && a.section === selSection).map(a => (
-                                        <tr key={a.id}>
-                                            <td className="fw-600">{a.subject}</td>
-                                            <td>{a.teacher}</td>
-                                            <td><span className={`badge ${a.type === 'Class Teacher' ? 'badge-success' : 'badge-info'}`}>{a.type}</span></td>
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subject Name</th>
+                                        <th>Subject Code</th>
+                                        <th>Subject Type</th>
+                                        <th style={{ width: '40%' }}>Assigned Teacher</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {applicableSubjects.map(subj => (
+                                        <tr key={subj._id}>
+                                            <td className="fw-600">{subj.subjectName}</td>
+                                            <td><span className="badge badge-draft">{subj.subjectCode}</span></td>
+                                            <td>{subj.type}</td>
+                                            <td>
+                                                <select 
+                                                    className="form-select" 
+                                                    style={{ maxWidth: '100%' }}
+                                                    value={getTeacherForSubject(subj.subjectName)}
+                                                    onChange={e => handleTeacherChange(subj.subjectName, e.target.value)}
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {teachers.map(t => (
+                                                        <option key={t._id} value={t.name}>{t.name}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No assignments saved yet.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
+                </div>
+            ) : (
+                <div className="empty-state" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--surface)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+                    <Users size={48} style={{ color: 'var(--border-color)', margin: '0 auto 15px' }} />
+                    <h3>Select Class & Section</h3>
+                    <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto' }}>Please select a class and section from the dropdowns above to assign subject teachers.</p>
                 </div>
             )}
         </div>
@@ -411,7 +650,7 @@ function TeacherAssignmentTab() {
 
 // ======================== TIMETABLE ========================
 function TimetableTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [sel, setSel] = useState({ class: 'I', section: 'A' });
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
@@ -541,10 +780,10 @@ function TimetableTab() {
             <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div className="form-group"><label className="form-label">Class</label>
                     <select className="form-select" style={{ width: 140 }} value={sel.class} onChange={e => setSel({ ...sel, class: e.target.value })}>
-                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                     </select></div>
                 <div className="form-group"><label className="form-label">Section</label>
-                    <select className="form-select" style={{ width: 100 }} value={sel.section} onChange={e => setSel({ ...sel, section: e.target.value })}><option>A</option><option>B</option><option>C</option></select></div>
+                    <select className="form-select" style={{ width: 100 }} value={sel.section} onChange={e => setSel({ ...sel, section: e.target.value })}>{getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                 
                 <span className={`badge ${status === 'Published' ? 'badge-success' : 'badge-draft'}`} style={{ marginBottom: 8 }}>{status}</span>
                 
@@ -607,7 +846,7 @@ function TimetableTab() {
 
 // ======================== SYLLABUS ========================
 function SyllabusTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [expandedCh, setExpandedCh] = useState([1]);
     const [syllabus, setSyllabus] = useLocalStorage('academic_syllabus', [
         { id: 1, class: 'I', subject: 'Mathematics', chapter: 1, title: 'Algebra', hours: 8, topics: [{ name: 'Linear Equations', obj: 'Solve simple linear equations' }, { name: 'Quadratic Formula', obj: 'Find roots using formula' }], attachment: null },
@@ -670,7 +909,7 @@ function SyllabusTab() {
                 <div style={{ display: 'flex', gap: 16 }}>
                     <div className="form-group"><label className="form-label">Class</label>
                         <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
-                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                         </select>
                     </div>
                     <div className="form-group"><label className="form-label">Subject</label>
@@ -756,7 +995,7 @@ function SyllabusTab() {
 
 // ======================== LESSON PLAN ========================
 function LessonPlanTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [syllabus] = useLocalStorage('academic_syllabus', []);
     const [plans, setPlans] = useLocalStorage('academic_lesson_plans', [
         { id: 1, class: 'I', subject: 'Mathematics', title: 'Introduction to Linear Equations', chapter: 'Algebra', topic: 'Linear Equations', method: 'Lecture', date: '2026-03-20', status: 'Completed' },
@@ -813,7 +1052,7 @@ function LessonPlanTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
-                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                     </select>
                     <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
                         <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
@@ -914,7 +1153,7 @@ function LessonPlanTab() {
 
 // ======================== ASSIGNMENTS ========================
 function AssignmentsTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [assignments, setAssignments] = useLocalStorage('academic_assignments', [
         { id: 1, title: 'Algebra Practice Set 1', class: 'I', section: 'A', subject: 'Mathematics', dueDate: '2026-03-28T10:00', status: 'Published', submissions: 28, total: 35, desc: 'Solve exercises 1-10 on page 42.' },
         { id: 2, title: 'Essay on Environment', class: 'II', section: 'A', subject: 'English', dueDate: '2026-03-30T15:00', status: 'Draft', submissions: 0, total: 32, desc: 'Write a 200 word essay.' },
@@ -1047,7 +1286,7 @@ function AssignmentsTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
-                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                     </select>
                     <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
                         <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
@@ -1062,10 +1301,10 @@ function AssignmentsTab() {
                     <form className="acad-form form-row-2" onSubmit={handleCreate}>
                         <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
                             <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
-                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                             </select></div>
                         <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
-                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}><option>A</option><option>B</option><option>C</option></select></div>
+                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}>{getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
                                 <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
@@ -1147,7 +1386,7 @@ function AssignmentsTab() {
 // ======================== ATTENDANCE ========================
 // ======================== ATTENDANCE ========================
 function AttendanceTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     
     // Using a more structured dummy data that can be filtered by class/section
     const [allStudents, setAllStudents] = useLocalStorage('academic_attendance_records', [
@@ -1194,12 +1433,12 @@ function AttendanceTab() {
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div className="form-group"><label className="form-label">Class</label>
                         <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
-                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                         </select>
                     </div>
                     <div className="form-group"><label className="form-label">Section</label>
                         <select className="form-select" style={{ width: 100 }} value={filterSection} onChange={e => setFilterSection(e.target.value)}>
-                            <option>A</option><option>B</option><option>C</option>
+                            {getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
                     <div className="form-group"><label className="form-label">Date</label>
@@ -1255,7 +1494,7 @@ function AttendanceTab() {
 
 // ======================== PERFORMANCE ========================
 function PerformanceTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [assessments, setAssessments] = useLocalStorage('academic_assessments', [
         { id: 1, name: 'Unit Test 1', class: 'I', section: 'A', subject: 'Mathematics', maxMarks: 50, date: '2026-02-15', marks: { 'S001': 45, 'S002': 38, 'S003': 30 } },
         { id: 2, name: 'Mid-Term Class Test', class: 'II', section: 'B', subject: 'Science', maxMarks: 100, date: '2026-03-01', marks: {} },
@@ -1349,10 +1588,10 @@ function PerformanceTab() {
                         
                         <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
                             <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
-                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                             </select></div>
                         <div className="form-group"><label className="form-label">Section <span className="required">*</span></label>
-                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}><option>A</option><option>B</option><option>C</option></select></div>
+                            <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}>{getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
                                 <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
@@ -1408,7 +1647,7 @@ function PerformanceTab() {
 // ======================== STUDY MATERIALS ========================
 // ======================== STUDY MATERIALS ========================
 function StudyMaterialsTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [materials, setMaterials] = useLocalStorage('academic_materials', [
         { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Mrs. Sharma', date: '2026-03-15', url: null, fileName: 'algebra_notes.pdf' },
         { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', visibility: 'Specific Section', uploadedBy: 'Mr. Roy', date: '2026-03-18', url: 'https://youtube.com/watch?v=123', fileName: null },
@@ -1465,7 +1704,7 @@ function StudyMaterialsTab() {
                         <div className="form-group"><label className="form-label">Class <span className="required">*</span></label>
                             <select className="form-select" required value={form.class} onChange={e => setForm({...form, class: e.target.value})}>
                                 <option value="">Select Class</option>
-                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                             </select></div>
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
@@ -1687,7 +1926,7 @@ function PromotionTab() {
 // ======================== REPORTS ========================
 // ======================== REPORTS ========================
 function ReportsTab() {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const reports = [
         { id: 'class-perf', name: 'Class Performance Report', desc: 'Average marks, pass/fail rates per class', formats: 'PDF, Excel' },
         { id: 'subj-analysis', name: 'Subject Analysis', desc: 'Marks distribution per subject', formats: 'PDF, Excel' },
@@ -1842,13 +2081,13 @@ function ReportsTab() {
                                 <div className="form-group">
                                     <label className="form-label">Select Class</label>
                                     <select className="form-select" value={params.class} onChange={e => setParams({...params, class: e.target.value})}>
-                                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>Class {cls}</option>)}
+                                        {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group" style={{ marginTop: 15 }}>
                                     <label className="form-label">Select Section</label>
                                     <select className="form-select" value={params.section} onChange={e => setParams({...params, section: e.target.value})}>
-                                        <option>A</option><option>B</option><option>C</option>
+                                        {getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group" style={{ marginTop: 15 }}>

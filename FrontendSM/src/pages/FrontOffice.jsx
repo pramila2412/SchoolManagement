@@ -7,6 +7,7 @@ import {
     ArrowRight, Phone, HelpCircle, Trash2, Printer
 } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './FrontOffice.css';
@@ -26,6 +27,7 @@ const statusColor = s => ({ 'Checked In':'warning','Pending':'warning','Schedule
 export default function FrontOffice() {
     const [searchParams, setSearchParams] = useSearchParams();
     const tabFromUrl = searchParams.get('tab') || 'dashboard';
+    const { ALL_CLASSES } = useAcademicClassesData();
     const [activeTab, setActiveTab] = useState(tabFromUrl);
 
     useEffect(() => { setActiveTab(searchParams.get('tab') || 'dashboard'); }, [searchParams]);
@@ -430,7 +432,7 @@ function EnquiryTab() {
                                     <input className="form-input" value={form.parentName} onChange={e=>setForm({...form,parentName:e.target.value})}/></div>
                                 <div className="form-group"><label className="form-label">Class Interested</label>
                                     <select className="form-select" value={form.classInterested} onChange={e=>setForm({...form,classInterested:e.target.value})}>
-                                        <option value="">Select</option>{['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c}>{c}</option>)}</select></div>
+                                        <option value="">Select</option>{ALL_CLASSES.map(c=><option key={c}>{c}</option>)}</select></div>
                             </div>
                         )}
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>

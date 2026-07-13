@@ -1,13 +1,15 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
-import { classes, sections, getBatches, categories } from '../data/mockData';
+import { getActiveClasses, getBatches, categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
 export default function EditStudent() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { id } = useParams();
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
@@ -554,14 +556,14 @@ export default function EditStudent() {
                                 <label className="form-label">Class <span className="required">*</span></label>
                                 <select className={`form-select ${errors.class ? 'error' : ''}`} name="class" value={formData.class} onChange={handleChange}>
                                     <option value="">Select Class</option>
-                                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section <span className="required">*</span></label>
                                 <select className={`form-select ${errors.section ? 'error' : ''}`} name="section" value={formData.section} onChange={handleChange}>
                                     <option value="">Select Section</option>
-                                    {sections.map(s => <option key={s} value={s}>{s}</option>)}
+                                    {getSectionsForClass(formData?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                         </div>

@@ -1,11 +1,14 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Upload, Video, FileDigit, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { getActiveClasses } from '../data/mockData';
 import './EContent.css';
 
 export default function EContent() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [activeTab, setActiveTab] = useState('add'); // 'add', 'custom', 'view'
     const [eContentList, setEContentList] = useLocalStorage('econtent_list', [
         { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Algebra Basics', type: 'Video', date: '2026-03-16' },
@@ -96,16 +99,14 @@ export default function EContent() {
                                 <label className="form-label">Class <span className="required">*</span></label>
                                 <select className="form-select" required value={addForm.class} onChange={e => setAddForm({ ...addForm, class: e.target.value })}>
                                     <option value="">Select Class</option>
-                                    <option value="VI">Class VI</option>
-                                    <option value="VII">Class VII</option>
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section <span className="required">*</span></label>
                                 <select className="form-select" required value={addForm.section} onChange={e => setAddForm({ ...addForm, section: e.target.value })}>
                                     <option value="">Select Section</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
+                                    {getSectionsForClass(addForm?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

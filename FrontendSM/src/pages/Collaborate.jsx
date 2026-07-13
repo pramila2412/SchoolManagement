@@ -1,7 +1,8 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { classes } from '../data/mockData';
+import { getActiveClasses } from '../data/mockData';
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
     Video, CheckSquare, Clipboard, Activity, Settings, Save, PlusCircle,
@@ -500,7 +501,7 @@ function FilesTab() {
                 <div className="form-group"><label className="form-label">Access Level</label><select className="form-select" value={form.accessLevel} onChange={e => setForm({ ...form, accessLevel: e.target.value })}><option>View Only</option><option>Download Allowed</option><option>Restricted</option></select></div>
             </div>
             {form.audience === 'Specific Class' && (
-                <div className="form-group"><label className="form-label">Select Class *</label><select className="form-select" required value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">Select Class</option>{classes.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Select Class *</label><select className="form-select" required value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">Select Class</option>{ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
             )}
             {form.audience === 'Specific Group' && (
                 <div className="form-group"><label className="form-label">Select Group *</label><select className="form-select" required value={form.targetId} onChange={e => setForm({ ...form, targetId: e.target.value })}><option value="">Select Group</option>{existingGroups.map(g => <option key={g._id} value={g.name}>{g.name}</option>)}</select></div>
@@ -1340,6 +1341,7 @@ const TABS_MAP = [
 ];
 
 export default function Collaborate() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();

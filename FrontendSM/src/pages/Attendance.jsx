@@ -1,13 +1,16 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Eye, Check, X, Clock, Save, RotateCcw, BarChart2, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { customAlert } from '../utils/dialogs';
+import { getActiveClasses } from '../data/mockData';
 import './Attendance.css';
 
 const API = '/api';
 
 export default function Attendance() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { user } = useAuth();
     const isTeacher = user?.role === 'Teacher';
 
@@ -108,14 +111,14 @@ export default function Attendance() {
                                         <label className="form-label">Class</label>
                                         <select className="form-select" value={formData.class} onChange={e=>setFormData({...formData,class:e.target.value})}>
                                             <option value="">Select Class</option>
-                                            {['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c} value={c}>{c}</option>)}
+                                            {ALL_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Section</label>
                                         <select className="form-select" value={formData.section} onChange={e=>setFormData({...formData,section:e.target.value})}>
-                                            <option value="">Select Section</option>
-                                            {['A','B','C','D'].map(s=><option key={s} value={s}>{s}</option>)}
+                                            <option value="">Select</option>
+                                            {getSectionsForClass(formData?.class || 'I').map(s=><option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
@@ -223,15 +226,15 @@ export default function Attendance() {
                             <div className="form-group">
                                 <label className="form-label">Class</label>
                                 <select className="form-select" value={reportForm.class} onChange={e=>setReportForm({...reportForm,class:e.target.value})}>
-                                    <option value="">Select</option>
-                                    {['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'].map(c=><option key={c} value={c}>{c}</option>)}
+                                    <option value="">Select Class</option>
+                                    {ALL_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section</label>
                                 <select className="form-select" value={reportForm.section} onChange={e=>setReportForm({...reportForm,section:e.target.value})}>
-                                    <option value="">Select</option>
-                                    {['A','B','C','D'].map(s=><option key={s} value={s}>{s}</option>)}
+                                    <option value="">Select Section</option>
+                                    {getSectionsForClass(formData?.class || 'I').map(s=><option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

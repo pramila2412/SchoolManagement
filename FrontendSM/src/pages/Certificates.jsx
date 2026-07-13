@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Eye, Printer, FileText, Award, Plus, Trash2, Download, X } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -239,6 +240,7 @@ export default function Certificates() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('generate');
     const [formData, setFormData] = useState({ class: '', section: '', keyword: '' });
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [certType, setCertType] = useState('');
     const [purpose, setPurpose] = useState('');
     const [remarks, setRemarks] = useState('');
@@ -517,14 +519,14 @@ export default function Certificates() {
                                     <label className="form-label">Class</label>
                                     <select className="form-select" value={formData.class} onChange={e => setFormData({ ...formData, class: e.target.value })}>
                                         <option value="">All Classes</option>
-                                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => <option key={c} value={c}>{c}</option>)}
+                                        {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Section</label>
                                     <select className="form-select" value={formData.section} onChange={e => setFormData({ ...formData, section: e.target.value })}>
                                         <option value="">All Sections</option>
-                                        {['A', 'B', 'C', 'D'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        {getSectionsForClass(formData.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">

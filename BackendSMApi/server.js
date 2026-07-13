@@ -24,6 +24,8 @@ const contactRoutes = require('./routes/contact');
 const landingPageRoutes = require('./routes/landingPage');
 const uploadRoutes = require('./routes/upload');
 const admissionRoutes = require('./routes/admission');
+const academicsRoutes = require('./routes/academics');
+const teacherRoutes = require('./routes/teachers');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -60,6 +62,8 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/landing-page', landingPageRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admission', admissionRoutes);
+app.use('/api/academics', academicsRoutes);
+app.use('/api/teachers', teacherRoutes);
 
 // Serve public uploads directory
 const frontendPublicPath = path.join(__dirname, '..', 'FrontendSM', 'public');

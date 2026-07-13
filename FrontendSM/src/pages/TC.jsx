@@ -3,9 +3,10 @@ import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Search, FileEdit, FileText, Eye, Printer, Trash2, Download } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { getBatches, classes } from '../data/mockData';
+import { getBatches } from '../data/mockData';
 import { dateToWords, classToWords } from '../utils/formatters';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import './TC.css';
@@ -177,6 +178,7 @@ function SubField({ label, value }) {
 
 /* ═══════════════════════════════ MAIN COMPONENT ═══════════════════════════════ */
 export default function TC() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [activeView, setActiveView] = useState('search');
     const [formData, setFormData] = useState({ batch: '', class: '', section: '', keyword: '' });
     const [results, setResults] = useState([]);
@@ -400,14 +402,14 @@ export default function TC() {
                                     <label className="form-label">Class</label>
                                     <select className="form-select" value={formData.class} onChange={e => setFormData({ ...formData, class: e.target.value })}>
                                         <option value="">All Classes</option>
-                                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => <option key={c} value={c}>{c}</option>)}
+                                        {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Section</label>
                                     <select className="form-select" value={formData.section} onChange={e => setFormData({ ...formData, section: e.target.value })}>
                                         <option value="">All Sections</option>
-                                        {['A', 'B', 'C', 'D'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        {getSectionsForClass(formData.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -530,7 +532,7 @@ export default function TC() {
                                 <label className="form-label">First Admission Class</label>
                                 <select className="form-select" value={tcForm.firstAdmissionClass} onChange={u('firstAdmissionClass')}>
                                     <option value="">Select Class</option>
-                                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -591,7 +593,7 @@ export default function TC() {
                                     setTcForm({ ...tcForm, promotionClass: val, promotionClassWords: classToWords(val) });
                                 }}>
                                     <option value="">Select Class</option>
-                                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

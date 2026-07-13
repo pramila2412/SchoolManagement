@@ -1,9 +1,13 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutDashboard, FileText, BarChart2, CalendarDays, Eye } from 'lucide-react';
+import { customAlert, customConfirm } from '../utils/dialogs';
+import { getActiveClasses } from '../data/mockData';
 import './Reports.css';
 
 export default function Reports() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [activeTab, setActiveTab] = useState('dashboard');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [reportForm, setReportForm] = useState({ class: '', section: '', period: '' });
@@ -119,16 +123,14 @@ export default function Reports() {
                                         <label className="form-label">Class</label>
                                         <select className="form-select" value={reportForm.class} onChange={e => setReportForm({...reportForm, class: e.target.value})}>
                                             <option value="">Select Class</option>
-                                            <option value="1">Class I</option>
-                                            <option value="2">Class II</option>
+                                            {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Section</label>
                                         <select className="form-select" value={reportForm.section} onChange={e => setReportForm({...reportForm, section: e.target.value})}>
                                             <option value="">Select Section</option>
-                                            <option value="A">A</option>
-                                            <option value="B">B</option>
+                                            {getSectionsForClass(reportForm?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group">

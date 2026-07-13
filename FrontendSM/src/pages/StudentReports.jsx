@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Download, BarChart3, LineChart, PieChart, Filter, FileText, Table2 } from 'lucide-react';
 import { customAlert } from '../utils/dialogs';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { api } from '../utils/api';
 import './StudentReports.css';
 
@@ -83,6 +84,7 @@ const PieChartViz = ({ data, title }) => {
 };
 
 export default function StudentReports() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [students, setStudents] = useState([]);
     const [filters, setFilters] = useState({
         class: '',
@@ -520,8 +522,8 @@ export default function StudentReports() {
     };
 
     // Get unique values for dropdowns
-    const classes = ['Nursery','LKG','UKG','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
-    const sections = ['A','B','C','D'];
+    const classes = ALL_CLASSES;
+    const sections = getSectionsForClass(filters.class || 'I');
 
     return (
         <div className="student-reports-page animate-fade-in">

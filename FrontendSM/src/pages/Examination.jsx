@@ -1,3 +1,4 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
@@ -10,7 +11,8 @@ import './Examination.css';
 
 const API = '/api/exam';
 
-export const STANDARD_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+
 export const STANDARD_SUBJECTS = ['Mathematics', 'Science', 'English', 'Hindi', 'Social Science', 'Computer', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Accountancy', 'Business Studies', 'Economics'];
 
 function useApi(endpoint) {
@@ -35,6 +37,7 @@ function useApi(endpoint) {
 
 // ======================== EXAM SETUP ========================
 function ExamSetupTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams, refresh } = useApi('/');
     const activeYear = JSON.parse(localStorage.getItem('academic_years') || '[]').find(y => y.active)?.label || '2025-2026';
     const [form, setForm] = useState({ name:'', academicYear: activeYear, type:'Theory', startDate:'', endDate:'', classes:[] });
@@ -104,12 +107,12 @@ function ExamSetupTab() {
                             <div className="form-group"><label className="form-label">Class</label>
                                 <select className="form-select" value={classInput.className} onChange={e=>setClassInput({...classInput,className:e.target.value})}>
                                     <option value="">Select Class</option>
-                                    {STANDARD_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
+                                    {ALL_CLASSES.map(c=><option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group"><label className="form-label">Sections</label>
                                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-                                    {['A','B','C','D'].map(sec => {
+                                    {getSectionsForClass(classInput.className || 'I').map(sec => {
                                         const isSelected = classInput.sections.split(',').includes(sec);
                                         return (
                                             <label key={sec} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: '0.9rem' }}>
@@ -206,6 +209,7 @@ function ExamSetupTab() {
 
 // ======================== TIMETABLE ========================
 function TimetableTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const { data: timetables, refresh } = useApi('/timetable');
     const [form, setForm] = useState({ exam:'', className:'', section:'', entries:[] });
@@ -222,7 +226,7 @@ function TimetableTab() {
                 <h3>Create Exam Timetable</h3>
                 <div className="exam-form"><div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr'}}>
                     <div className="form-group"><label className="form-label">Exam *</label><select className="form-select" value={form.exam} onChange={e=>setForm({...form,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                    <div className="form-group"><label className="form-label">Class *</label><select className="form-select" value={form.className} onChange={e=>setForm({...form,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                    <div className="form-group"><label className="form-label">Class *</label><select className="form-select" value={form.className} onChange={e=>setForm({...form,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                     <div className="form-group"><label className="form-label">Section *</label><select className="form-select" value={form.section} onChange={e=>setForm({...form,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 </div>
                 <div className="exam-section-divider"><Calendar size={16}/> Add Schedule Entry</div>
@@ -251,6 +255,7 @@ function TimetableTab() {
 
 // ======================== HALL TICKETS ========================
 function HallTicketsTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'' });
     const [preview, setPreview] = useState(false);
@@ -261,7 +266,7 @@ function HallTicketsTab() {
                 <h3>Generate Hall Tickets</h3>
                 <div className="exam-form">
                     <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                    <div className="form-row"><div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                    <div className="form-row"><div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div></div>
                     <div className="form-actions"><button className="btn btn-primary" onClick={()=>setPreview(true)}><Eye size={16}/> Preview Hall Ticket</button></div>
                 </div>
@@ -280,6 +285,7 @@ function HallTicketsTab() {
 
 // ======================== MARKS ENTRY ========================
 function MarksEntryTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'', subject:'' });
     const [students, setStudents] = useState([{studentName:'',rollNo:'',theoryMarks:0,practicalMarks:0}]);
@@ -301,7 +307,7 @@ function MarksEntryTab() {
         <div className="animate-fade-in">
             <div className="form-row" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,marginBottom:24,display:'grid'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value,className:'',subject:''})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{(selClass?.subjects?.length>0?selClass.subjects.map(s=>s.name):STANDARD_SUBJECTS).map((s,i)=><option key={i} value={s}>{s}</option>)}</select></div>
             </div>
@@ -318,6 +324,7 @@ function MarksEntryTab() {
 
 // ======================== RESULTS ========================
 function ResultsTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'' });
     const [results, setResults] = useState([]);
@@ -342,7 +349,7 @@ function ResultsTab() {
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={handleProcess} disabled={processing}><ClipboardCheck size={16}/> {processing?'Processing...':'Process Results'}</button>
                 <button className="btn btn-outline" onClick={fetchResults}><Eye size={16}/> View</button>
@@ -358,6 +365,7 @@ function ResultsTab() {
 
 // ======================== REPORT CARDS ========================
 function ReportCardsTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'' });
     const [results, setResults] = useState([]);
@@ -370,7 +378,7 @@ function ReportCardsTab() {
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={fetchResults}><FileText size={16}/> Load Results</button>
             </div>
@@ -392,6 +400,7 @@ function ReportCardsTab() {
 
 // ======================== ANALYTICS ========================
 function AnalyticsTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'' });
     const [analytics, setAnalytics] = useState(null);
@@ -402,7 +411,7 @@ function AnalyticsTab() {
         <div className="animate-fade-in">
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,marginBottom:24,alignItems:'flex-end'}}>
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):STANDARD_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
                 <button className="btn btn-primary" onClick={fetchAnalytics}><BarChart3 size={16}/> Generate</button>
             </div>
@@ -428,6 +437,7 @@ function AnalyticsTab() {
 
 // ======================== SETTINGS ========================
 function SettingsTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { data: grades, refresh } = useApi('/grades');
     const [form, setForm] = useState({ label:'', minPercentage:'', maxPercentage:'', gpa:'' });
     const handleSubmit = async (e) => { e.preventDefault(); await fetch(`${API}/grades`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...form,minPercentage:+form.minPercentage,maxPercentage:+form.maxPercentage,gpa:+form.gpa})}); setForm({label:'',minPercentage:'',maxPercentage:'',gpa:''}); refresh(); };
@@ -472,6 +482,7 @@ const TABS = [
 ];
 
 export default function Examination() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const navigate = useNavigate();
     const location = useLocation();
 

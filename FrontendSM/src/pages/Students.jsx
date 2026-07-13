@@ -1,3 +1,4 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, Plus, Phone, Trash2, Download, Upload } from 'lucide-react';
@@ -5,6 +6,7 @@ import { api } from '../utils/api';
 import { getInitials, getAvatarColor } from '../utils/helpers';
 import { customConfirm, customAlert } from '../utils/dialogs';
 import RoleGuard, { useRole } from '../components/RoleGuard';
+import { getActiveClasses } from '../data/mockData';
 import './Students.css';
 
 export default function StudentsPage() {
@@ -238,13 +240,13 @@ export default function StudentsPage() {
                 <div className="filter-dropdowns">
                     <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)}>
                         <option value="All Classes">All Classes</option>
-                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => (
-                            <option key={c} value={c}>Class {c}</option>
+                        {ALL_CLASSES.map(c => (
+                            <option key={c} value={c}>{c}</option>
                         ))}
                     </select>
                     <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)}>
                         <option value="All Sections">All Sections</option>
-                        {['A', 'B', 'C', 'D'].map(s => (
+                        {getSectionsForClass(classFilter === 'All Classes' ? 'I' : classFilter || 'I').map(s => (
                             <option key={s} value={s}>Section {s}</option>
                         ))}
                     </select>

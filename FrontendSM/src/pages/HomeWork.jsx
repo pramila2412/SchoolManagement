@@ -1,11 +1,14 @@
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Calendar, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { getActiveClasses } from '../data/mockData';
 import './HomeWork.css';
 
 export default function HomeWork() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [activeTab, setActiveTab] = useState('assign'); // 'assign', 'custom', 'reports'
     const [reportSearch, setReportSearch] = useState('');
     const [assignForm, setAssignForm] = useState({ class: '', section: '', date: new Date().toISOString().split('T')[0], description: '' });
@@ -86,18 +89,14 @@ export default function HomeWork() {
                                 <label className="form-label">Class <span className="required">*</span></label>
                                 <select className="form-select" required value={assignForm.class} onChange={e => setAssignForm({ ...assignForm, class: e.target.value })}>
                                     <option value="">Select Class</option>
-                                    <option value="VI">Class VI</option>
-                                    <option value="VII">Class VII</option>
-                                    <option value="VIII">Class VIII</option>
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section <span className="required">*</span></label>
                                 <select className="form-select" required value={assignForm.section} onChange={e => setAssignForm({ ...assignForm, section: e.target.value })}>
                                     <option value="">Select Section</option>
-                                    <option value="A">Section A</option>
-                                    <option value="B">Section B</option>
-                                    <option value="C">Section C</option>
+                                    {getSectionsForClass(assignForm?.class || 'I').map(s => <option key={s} value={s}>Section {s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

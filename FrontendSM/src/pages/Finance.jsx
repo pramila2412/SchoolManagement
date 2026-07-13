@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     BarChart3, IndianRupee, SlidersHorizontal, AlertTriangle, FileText,
@@ -55,7 +56,7 @@ function DashboardTab({ onGenerateInvoice }) {
 
 // ======================== FEE STRUCTURE ========================
 function FeeStructureTab({ structures, setStructures }) {
-    const ALL_CLASSES = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    
     const DEFAULT_FEE_TYPES = ['Admission Fee', 'Annual Fee', 'Examination Fee', 'Monthly Fee'];
     
     const [isAdding, setIsAdding] = useState(false);
@@ -222,7 +223,7 @@ function FeeStructureTab({ structures, setStructures }) {
                         </label>
                         {ALL_CLASSES.map(cls => (
                             <label key={cls} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontSize: '0.88rem', background: data.classes.includes(cls) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
-                                <input type="checkbox" checked={data.classes.includes('All Classes') || data.classes.includes(cls)} disabled={data.classes.includes('All Classes')} onChange={() => toggleClass(cls, setData)} style={{ accentColor: 'var(--accent)' }}/>Class {cls}
+                                <input type="checkbox" checked={data.classes.includes('All Classes') || data.classes.includes(cls)} disabled={data.classes.includes('All Classes')} onChange={() => toggleClass(cls, setData)} style={{ accentColor: 'var(--accent)' }}/>{cls}
                             </label>
                         ))}
                     </div>
@@ -945,6 +946,7 @@ const TABS = [
 ];
 
 export default function Finance() {
+    const { ALL_CLASSES } = useAcademicClassesData();
     const [invoices, setInvoices] = useLocalStorage('finance_invoices', [
         { id: 1, invoiceNo: 'INV-2026-001', billedTo: 'Ajay Transport', type: 'Vendor', issueDate: '2026-03-20', dueDate: '2026-04-05', amount: 45000, status: 'Sent' },
         { id: 2, invoiceNo: 'INV-2026-002', billedTo: 'Ritika Singh', type: 'Student', issueDate: '2026-03-22', dueDate: '2026-03-30', amount: 2500, status: 'Paid' },

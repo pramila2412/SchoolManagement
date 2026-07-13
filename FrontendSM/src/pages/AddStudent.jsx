@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
-import { classes, sections, getBatches, categories } from '../data/mockData';
+import { getBatches, categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
@@ -54,6 +54,27 @@ export default function AddStudent() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [academicClasses, setAcademicClasses] = useState([]);
+
+    useEffect(() => {
+        const fetchClasses = async () => {
+            try {
+                const res = await fetch('/api/academics/classes');
+                if (res.ok) {
+                    const data = await res.json();
+                    setAcademicClasses(data);
+                    localStorage.setItem('academic_classes', JSON.stringify(data.map(c => ({
+                        name: c.className,
+                        sections: c.sections
+                    }))));
+                }
+            } catch (e) {
+                const saved = localStorage.getItem('academic_classes');
+                if (saved) setAcademicClasses(JSON.parse(saved).map(c => ({ className: c.name, sections: c.sections })));
+            }
+        };
+        fetchClasses();
+    }, []);
     
     // For Sibling Feature
     const [isSibling, setIsSibling] = useState(false);
@@ -553,14 +574,14 @@ export default function AddStudent() {
                                 <label className="form-label">Class <span className="required">*</span></label>
                                 <select className={`form-select ${errors.class ? 'error' : ''}`} name="class" value={formData.class} onChange={handleChange}>
                                     <option value="">Select Class</option>
-                                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {academicClasses.map(c => <option key={c._id || c.className} value={c.className}>{c.className}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section <span className="required">*</span></label>
                                 <select className={`form-select ${errors.section ? 'error' : ''}`} name="section" value={formData.section} onChange={handleChange}>
                                     <option value="">Select Section</option>
-                                    {sections.map(s => <option key={s} value={s}>{s}</option>)}
+                                    {(academicClasses.find(c => c.className === formData.class)?.sections || []).map(s => <option key={s.label} value={s.label}>{s.label}</option>)}
                                 </select>
                             </div>
                         </div>

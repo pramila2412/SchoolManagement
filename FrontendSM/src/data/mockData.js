@@ -210,6 +210,36 @@ export const classes = [
 
 export const sections = ['A', 'B', 'C', 'D'];
 
+export const getActiveClasses = () => {
+    try {
+        const saved = localStorage.getItem('academic_classes');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return parsed.map(c => c.name);
+        }
+    } catch(e) {
+        console.error('Failed to parse academic_classes from localStorage', e);
+    }
+    return ['I', 'II', 'III']; // Fallback matching initial state
+};
+
+export const getActiveSections = (className) => {
+    if (!className) return [];
+    try {
+        const saved = localStorage.getItem('academic_classes');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            const targetClass = parsed.find(c => c.name === className);
+            if (targetClass && targetClass.sections) {
+                return targetClass.sections.map(s => s.label);
+            }
+        }
+    } catch(e) {
+        console.error('Failed to parse academic_classes from localStorage', e);
+    }
+    return ['A', 'B']; // Fallback
+};
+
 export const getBatches = () => {
     try {
         const saved = localStorage.getItem('academic_years');

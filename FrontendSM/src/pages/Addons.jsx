@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
-import { classes } from '../data/mockData';
+
 import {
     PlusCircle, Search, Calendar, FileText, Download, Award,
     Image as ImageIcon, Gift, MessageSquare, ClipboardList, BarChart3,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 import { customAlert, customConfirm } from '../utils/dialogs';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import './Addons.css';
 
 // ======================== VISITORS ========================
@@ -757,8 +758,9 @@ function BirthdaysTab() {
     const studentsWithDob = allStudents.filter(s => s.dateOfBirth && s.status !== 'Inactive');
 
     // Get unique classes and sections for filters
-    const allClasses = [...new Set(studentsWithDob.map(s => parseClass(s.class).cls).filter(Boolean))].sort();
-    const allSections = [...new Set(studentsWithDob.map(s => parseClass(s.class).sec).filter(Boolean))].sort();
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
+    const allClasses = ALL_CLASSES;
+    const allSections = getSectionsForClass(classFilter === 'All' ? 'I' : classFilter);
 
     // Apply date filter
     let filtered = studentsWithDob.filter(s => {
@@ -770,12 +772,12 @@ function BirthdaysTab() {
 
     // Apply class filter
     if (classFilter !== 'All') {
-        filtered = filtered.filter(s => parseClass(s.class).cls === classFilter);
+        filtered = filtered.filter(s => s.class === classFilter);
     }
 
     // Apply section filter
     if (sectionFilter !== 'All') {
-        filtered = filtered.filter(s => parseClass(s.class).sec === sectionFilter);
+        filtered = filtered.filter(s => s.section === sectionFilter);
     }
 
     // Sort: today's birthdays first, then by days until birthday
@@ -791,7 +793,8 @@ function BirthdaysTab() {
 
     // Send greeting handler
     const handleSendGreeting = async (student) => {
-        const { cls, sec } = parseClass(student.class);
+        const cls = student.class || '';
+        const sec = student.section || '';
         await customAlert(
             `Birthday greeting sent! 🎂\n\nTo: ${student.name || student.firstName + ' ' + (student.lastName || '')}\nClass: ${cls}-${sec}\nDate of Birth: ${formatDob(student.dateOfBirth)}\n\n${student.phone ? `Parent Phone: ${student.phone}` : ''}${student.parentEmail ? `\nParent Email: ${student.parentEmail}` : ''}`,
             'Greeting Sent', 'success'
@@ -932,7 +935,8 @@ function BirthdaysTab() {
                         {filtered.length > 0 ? filtered.map((s, idx) => {
                             const days = getDaysUntilBirthday(s.dateOfBirth);
                             const isToday = days === 0;
-                            const { cls, sec } = parseClass(s.class);
+                            const cls = s.class || '';
+                            const sec = s.section || '';
                             const studentName = s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim() || '—';
 
                             return (
@@ -1295,7 +1299,7 @@ function MessagesTab() {
                                 <label className="form-label">Select Class *</label>
                                 <select className="form-select" required value={form.targetClass} onChange={e => setForm({...form, targetClass: e.target.value})}>
                                     <option value="">— Select Class —</option>
-                                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                         )}
@@ -2676,6 +2680,7 @@ const TABS = [
 ];
 
 export default function Addons() {
+    const { ALL_CLASSES } = useAcademicClassesData();
     const location = useLocation();
     const navigate = useNavigate();
     

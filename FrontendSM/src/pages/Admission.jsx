@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Users, UserPlus, FileText, ClipboardCheck, Save, PlusCircle,
@@ -15,6 +16,7 @@ import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
+import { getActiveClasses } from '../data/mockData';
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
@@ -207,9 +209,17 @@ function ApplicationTab() {
                     <div className="adm-form">
                         <div className="form-row">
                             <div className="form-group"><label className="form-label">Applying Class <span className="required">*</span></label>
-                                <select className="form-select" value={form.applyingClass} onChange={e => u('applyingClass', e.target.value)}><option value="">Select</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option></select></div>
+                                <select className="form-select" value={form.applyingClass} onChange={e => u('applyingClass', e.target.value)}>
+                                    <option value="">Select</option>
+                                    {ALL_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
                             <div className="form-group"><label className="form-label">Section Preference</label>
-                                <select className="form-select" value={form.sectionPref} onChange={e => u('sectionPref', e.target.value)}><option value="">Any</option><option>A</option><option>B</option><option>C</option></select></div>
+                                <select className="form-select" value={form.sectionPref} onChange={e => u('sectionPref', e.target.value)}>
+                                    <option value="">Any</option>
+                                    {getSectionsForClass(classFilter || filter?.class || form?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
                         </div>
                         <div className="form-group"><label className="form-label">Admission Date <span className="required">*</span></label><input type="date" className="form-input" value={form.admissionDate} onChange={e => u('admissionDate', e.target.value)} /></div>
                     </div>
@@ -645,6 +655,7 @@ function ConfirmationTab() {
 
 // ======================== ID CARD ========================
 function IDCardTab() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const navigate = useNavigate();
     const [classFilter, setClassFilter] = useState('All Classes');
     const [sectionFilter, setSectionFilter] = useState('All Sections');
@@ -859,13 +870,13 @@ function IDCardTab() {
                     <Filter size={18} style={{ color: 'var(--text-light)' }}/>
                     <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ minWidth: 150 }}>
                         <option value="All Classes">All Classes</option>
-                        {['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'].map(c => (
-                            <option key={c} value={c}>Class {c}</option>
+                        {ALL_CLASSES.map(c => (
+                            <option key={c} value={c}>{c}</option>
                         ))}
                     </select>
                     <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} style={{ minWidth: 150 }}>
                         <option value="All Sections">All Sections</option>
-                        {['A', 'B', 'C', 'D'].map(s => (
+                        {getSectionsForClass(classFilter === 'All Classes' ? 'I' : classFilter).map(s => (
                             <option key={s} value={s}>Section {s}</option>
                         ))}
                     </select>
@@ -1035,6 +1046,7 @@ const TABS = [
 ];
 
 export default function Admission() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const location = useLocation();
     const navigate = useNavigate();
     

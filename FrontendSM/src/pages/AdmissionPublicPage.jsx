@@ -25,7 +25,7 @@ const RESULTS_DATA = [
     { roll: '310', cls: '4', name: 'Cody Fisher', date: '23/Jan/2026', time: '11:00 am', panel: '1' },
 ];
 
-const ALL_CLASSES = ['All Classes', 'Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+
 
 const DEFAULTS = {
     pageTitle: 'Admissions',
@@ -59,12 +59,13 @@ const DEFAULTS = {
         email: 'mountzionschool2021@gmail.com',
         officeHours: 'Monday to Saturday, 9:00 AM - 3:00 PM'
     },
-    classesOffered: ['Nursery', 'LKG', 'UKG', 'Class I', 'Class II', 'Class III', 'Class IV', 'Class V', 'Class VI', 'Class VII', 'Class VIII', 'Class IX', 'Class X', 'Class XI', 'Class XII'],
+    classesOffered: [],
     admissionOpen: true,
     academicYear: '2025-26'
 };
 
 export default function AdmissionPublicPage() {
+    const { ALL_CLASSES } = useAcademicClassesData();
     const [data, setData] = useState(DEFAULTS);
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('All Classes');

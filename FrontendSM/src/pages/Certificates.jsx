@@ -16,7 +16,7 @@ import { dateToWords, numberToWords } from '../utils/formatters';
 
 function formatDate(dateStr) {
     if (!dateStr) return '____________';
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-IN', {});
 }
 
 function formatDOBFigures(dateStr) {

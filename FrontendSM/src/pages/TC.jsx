@@ -1,9 +1,11 @@
+import { useAcademicYears } from '../hooks/useAcademicYears';
+import { useAcademicSubjectsData } from '../hooks/useAcademicSubjectsData';
 import { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Search, FileEdit, FileText, Eye, Printer, Trash2, Download } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { getBatches } from '../data/mockData';
+;
 import { dateToWords, classToWords } from '../utils/formatters';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
@@ -178,6 +180,7 @@ function SubField({ label, value }) {
 
 /* ═══════════════════════════════ MAIN COMPONENT ═══════════════════════════════ */
 export default function TC() {
+    const { years } = useAcademicYears();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [activeView, setActiveView] = useState('search');
     const [formData, setFormData] = useState({ batch: '', class: '', section: '', keyword: '' });
@@ -187,7 +190,7 @@ export default function TC() {
     const [tcForm, setTcForm] = useState({ ...DEFAULT_TC_FORM });
     const [generating, setGenerating] = useState(false);
     const [tcList, setTcList] = useLocalStorage('issued_tcs', []);
-    const [academicSubjects] = useLocalStorage('academic_subjects', []);
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const [previewTc, setPreviewTc] = useState(null);
     const [printTc, setPrintTc] = useState(null);
 
@@ -395,7 +398,7 @@ export default function TC() {
                                     <label className="form-label">Batch</label>
                                     <select className="form-select" value={formData.batch} onChange={e => setFormData({ ...formData, batch: e.target.value })}>
                                         <option value="">All Batches</option>
-                                        {getBatches().map(b => <option key={b} value={b}>{b}</option>)}
+                                        {years.map(b => <option key={b} value={b}>{b}</option>)}
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -562,20 +565,14 @@ export default function TC() {
                                 <label className="form-label">Subjects – Compulsory</label>
                                 <select className="form-select" value={tcForm.subjectsCompulsory} onChange={u('subjectsCompulsory')}>
                                     <option value="">Select Subject</option>
-                                    {academicSubjects.length > 0 
-                                        ? academicSubjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                                        : <><option value="Mathematics">Mathematics</option><option value="Science">Science</option><option value="English">English</option><option value="Hindi">Hindi</option><option value="Computer Science">Computer Science</option></>
-                                    }
+                                    {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group span-2">
                                 <label className="form-label">Subjects – Elective</label>
                                 <select className="form-select" value={tcForm.subjectsElective} onChange={u('subjectsElective')}>
                                     <option value="">Select Subject</option>
-                                    {academicSubjects.length > 0 
-                                        ? academicSubjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)
-                                        : <><option value="Mathematics">Mathematics</option><option value="Science">Science</option><option value="English">English</option><option value="Hindi">Hindi</option><option value="Computer Science">Computer Science</option></>
-                                    }
+                                    {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

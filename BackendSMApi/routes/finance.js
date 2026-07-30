@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const FeeInvoice = require('../models/FeeInvoice');
 const FeeCategory = require('../models/FeeCategory');
+const FeeStructure = require('../models/FeeStructure');
 
 // Get all fee categories
 router.get('/categories', async (req, res) => {
@@ -45,6 +46,55 @@ router.put('/invoices/:id', async (req, res) => {
         res.json(updatedInvoice);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// =======================
+// Fee Structures
+// =======================
+
+// Get all fee structures
+router.get('/fee-structures', async (req, res) => {
+    try {
+        const structures = await FeeStructure.find().sort({ createdAt: -1 });
+        res.json(structures);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Create a new fee structure
+router.post('/fee-structures', async (req, res) => {
+    try {
+        const newStructure = new FeeStructure(req.body);
+        const savedStructure = await newStructure.save();
+        res.status(201).json(savedStructure);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Update a fee structure
+router.put('/fee-structures/:id', async (req, res) => {
+    try {
+        const updatedStructure = await FeeStructure.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+        res.json(updatedStructure);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Delete a fee structure
+router.delete('/fee-structures/:id', async (req, res) => {
+    try {
+        await FeeStructure.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Fee structure deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 

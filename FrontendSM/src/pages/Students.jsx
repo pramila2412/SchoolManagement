@@ -6,10 +6,10 @@ import { api } from '../utils/api';
 import { getInitials, getAvatarColor } from '../utils/helpers';
 import { customConfirm, customAlert } from '../utils/dialogs';
 import RoleGuard, { useRole } from '../components/RoleGuard';
-import { getActiveClasses } from '../data/mockData';
 import './Students.css';
 
 export default function StudentsPage() {
+    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('All Classes');
     const [sectionFilter, setSectionFilter] = useState('All Sections');
@@ -42,16 +42,20 @@ export default function StudentsPage() {
 
                 // Merge by ID to prevent duplicates
                 const allStudentsMap = new Map();
-                apiData.forEach(s => allStudentsMap.set(s.id || s.admissionNo, s));
-                normalizedLocal.forEach(s => {
+                
+                // Add local data first (reverse so newest is at the top)
+                normalizedLocal.reverse().forEach(s => {
+                    allStudentsMap.set(s.id || s.admissionNo, s);
+                });
+                
+                // Add API data (already sorted newest first by backend)
+                apiData.forEach(s => {
                     if (!allStudentsMap.has(s.id || s.admissionNo)) {
                         allStudentsMap.set(s.id || s.admissionNo, s);
                     }
                 });
 
-                // Newest students first (reverse the merged array)
-                const mergedArray = Array.from(allStudentsMap.values());
-                setStudents(mergedArray.reverse());
+                setStudents(Array.from(allStudentsMap.values()));
             } catch (err) {
                 console.error("Failed to load students", err);
             } finally {

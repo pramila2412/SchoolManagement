@@ -110,3 +110,9 @@
     .hr-attendance-grid { grid-template-columns: 1fr; }
     .hr-pipeline { flex-direction: column; }
 }
+
+/* Action Button Styles */
+.btn-icon-edit { color: var(--primary); }
+.btn-icon-edit:hover { background: var(--primary) !important; color: white !important; }
+.btn-icon-delete { color: var(--danger); }
+.btn-icon-delete:hover { background: var(--danger) !important; color: white !important; }

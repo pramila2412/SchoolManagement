@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutDashboard, FileText, BarChart2, CalendarDays, Eye } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
-import { getActiveClasses } from '../data/mockData';
+;
 import './Reports.css';
 
 export default function Reports() {

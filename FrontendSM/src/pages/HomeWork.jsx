@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Calendar, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
-import { getActiveClasses } from '../data/mockData';
+;
 import './HomeWork.css';
 
 export default function HomeWork() {
@@ -12,11 +12,7 @@ export default function HomeWork() {
     const [activeTab, setActiveTab] = useState('assign'); // 'assign', 'custom', 'reports'
     const [reportSearch, setReportSearch] = useState('');
     const [assignForm, setAssignForm] = useState({ class: '', section: '', date: new Date().toISOString().split('T')[0], description: '' });
-    const [reports, setReports] = useLocalStorage('homework_reports', [
-        { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Quadratic Equations', date: '2026-03-16', status: 'Assigned' },
-        { id: 2, class: 'VIII', section: 'B', subject: 'Science', topic: 'Plant Reproduction', date: '2026-03-16', status: 'Assigned' },
-        { id: 3, class: 'VI', section: 'C', subject: 'English', topic: 'Reported Speech', date: '2026-03-15', status: 'Assigned' }
-    ]);
+    const [reports, setReports] = useLocalStorage('homework_reports', []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

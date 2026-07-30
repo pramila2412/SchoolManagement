@@ -1,14 +1,16 @@
+import { useAcademicYears } from '../hooks/useAcademicYears';
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
-import { getActiveClasses, getBatches, categories } from '../data/mockData';
+import { categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
 export default function EditStudent() {
+    const { years } = useAcademicYears();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { id } = useParams();
     const navigate = useNavigate();
@@ -86,7 +88,8 @@ export default function EditStudent() {
                     guardianOccupation: data.guardianOccupation || '',
                     contactNo: data.contactNo || '',
                     email: data.email || '',
-                    parentPassword: '',
+                    parentId: data.parentId || '',
+                    parentPassword: data.parentPassword || '',
                     address: data.address || '',
                     rollNo: data.rollNo || '',
                     admissionNo: data.admissionNo || '',
@@ -219,19 +222,7 @@ export default function EditStudent() {
         return !hasMissing && !newErrors.contactNoMsg && !newErrors.emailMsg && !newErrors.firstNameMsg && !newErrors.lastNameMsg;
     };
 
-    const generateParentId = () => {
-        const year = new Date().getFullYear();
-        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-        const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
-        let seq = 1;
-        let parentId;
-        do {
-            parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
-            seq++;
-        } while (existingParIds.includes(parentId));
-        return parentId;
-    };
-
+    
     const handleGenerateParentId = () => {
         const newId = generateParentId();
         setFormData({ ...formData, parentId: newId, parentPassword: 'password123' });
@@ -529,9 +520,9 @@ export default function EditStudent() {
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Used by parent to login</span>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Reset Password</label>
+                                    <label className="form-label">Parent Password</label>
                                     <input type="text" className="form-input" name="parentPassword" value={formData.parentPassword} onChange={handleChange} placeholder="Enter new password" />
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Leave unchanged to keep current password</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>You can change the password if requested by parent</span>
                                 </div>
                             </div>
                         </div>
@@ -547,9 +538,9 @@ export default function EditStudent() {
                         <h3 className="form-section-title">ADMISSION & ACADEMIC</h3>
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label">Batch <span className="required">*</span></label>
+                                <label className="form-label">Academic Year <span className="required">*</span></label>
                                 <select className={`form-select ${errors.batch ? 'error' : ''}`} name="batch" value={formData.batch} onChange={handleChange}>
-                                    {getBatches().map(b => <option key={b} value={b}>{b}</option>)}
+                                    {years.map(b => <option key={b} value={b}>{b}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

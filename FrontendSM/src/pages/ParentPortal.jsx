@@ -180,26 +180,77 @@ function ProfileTab() {
 
 // ======================== ATTENDANCE ========================
 function AttendanceTab() {
+    const { user } = useAuth();
+    const children = user?.children || [];
+    const selected = user?.selectedChild || children[0] || {};
+    
+    const [stats, setStats] = useState({ totalDays: 0, present: 0, absent: 0, late: 0, leave: 0, percentage: 0 });
+    const [calData, setCalData] = useState([]); 
+    const currentDate = new Date();
+    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+    const currentYear = currentDate.getFullYear();
+
+    useEffect(() => {
+        if (!selected.id) return;
+        
+        // 1. Fetch Stats
+        const fetchId = selected.studentId || selected.id;
+        fetch(`/api/attendance/report/student/${fetchId}`)
+            .then(r => r.json())
+            .then(d => { if (d && typeof d.percentage === 'number') setStats(d); })
+            .catch(e => console.error(e));
+
+        // 2. Fetch Monthly records for Calendar
+        if (selected.class) {
+            const cls = selected.class;
+            const sec = selected.section || '';
+            const m = currentDate.getMonth() + 1;
+            
+            fetch(`/api/attendance/report/monthly?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}&month=${m}&year=${currentYear}`)
+                .then(r => r.json())
+                .then(records => {
+                    if (!Array.isArray(records)) return;
+                    
+                    const firstDay = new Date(currentYear, currentDate.getMonth(), 1).getDay();
+                    const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
+                    
+                    const grid = [];
+                    for (let i = 0; i < firstDay; i++) grid.push(null);
+                    
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateStr = new Date(currentYear, currentDate.getMonth(), d, 12).toISOString().split('T')[0];
+                        const dayRecord = records.find(r => r.date && r.date.startsWith(dateStr));
+                        
+                        let status = 'empty';
+                        if (dayRecord) {
+                            const studentEntry = dayRecord.entries.find(e => e.studentId === fetchId);
+                            if (studentEntry) {
+                                status = studentEntry.status.toLowerCase(); 
+                            }
+                        } else if (new Date(currentYear, currentDate.getMonth(), d).getDay() === 0) {
+                            status = 'holiday'; 
+                        }
+                        
+                        grid.push({ d, s: status === 'leave' ? 'absent' : status });
+                    }
+                    setCalData(grid);
+                })
+                .catch(e => console.error(e));
+        }
+    }, [selected, currentYear]);
+
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    // March 2026 sample data
-    const calData = [
-        null, null, null, null, null, null, { d: 1, s: 'holiday' },
-        { d: 2, s: 'present' }, { d: 3, s: 'present' }, { d: 4, s: 'present' }, { d: 5, s: 'present' }, { d: 6, s: 'present' }, { d: 7, s: 'late' }, { d: 8, s: 'holiday' },
-        { d: 9, s: 'present' }, { d: 10, s: 'present' }, { d: 11, s: 'absent' }, { d: 12, s: 'present' }, { d: 13, s: 'present' }, { d: 14, s: 'holiday' }, { d: 15, s: 'holiday' },
-        { d: 16, s: 'present' }, { d: 17, s: 'present' }, { d: 18, s: 'present' }, { d: 19, s: 'present' }, { d: 20, s: 'present' }, { d: 21, s: 'present' }, { d: 22, s: 'holiday' },
-        { d: 23, s: 'present' }, { d: 24, s: 'present' }, { d: 25, s: 'present' }, { d: 26, s: 'absent' }, { d: 27, s: 'present' }, { d: 28, s: 'present' }, { d: 29, s: 'holiday' },
-        { d: 30, s: 'present' }, { d: 31, s: 'present' },
-    ];
+
     return (
         <div className="animate-fade-in">
             <ChildSelector/>
-            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><CalendarCheck size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Attendance — March 2026</h3>
+            <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}><CalendarCheck size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }}/> Attendance — {currentMonth} {currentYear}</h3>
             <div className="pp-att-stats">
-                <div className="pp-att-stat"><h4>Working Days</h4><p>22</p></div>
-                <div className="pp-att-stat"><h4>Present Days</h4><p style={{ color: 'var(--success)' }}>19</p></div>
-                <div className="pp-att-stat"><h4>Absent Days</h4><p style={{ color: 'var(--danger)' }}>2</p></div>
-                <div className="pp-att-stat"><h4>Late</h4><p style={{ color: '#e65100' }}>1</p></div>
-                <div className="pp-att-stat"><h4>Attendance %</h4><p style={{ color: 'var(--success)' }}>92%</p></div>
+                <div className="pp-att-stat"><h4>Working Days</h4><p>{stats.totalDays}</p></div>
+                <div className="pp-att-stat"><h4>Present Days</h4><p style={{ color: 'var(--success)' }}>{stats.present}</p></div>
+                <div className="pp-att-stat"><h4>Absent Days</h4><p style={{ color: 'var(--danger)' }}>{stats.absent + stats.leave}</p></div>
+                <div className="pp-att-stat"><h4>Late</h4><p style={{ color: '#e65100' }}>{stats.late}</p></div>
+                <div className="pp-att-stat"><h4>Attendance %</h4><p style={{ color: 'var(--success)' }}>{stats.percentage}%</p></div>
             </div>
             <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 20 }}>
                 <div className="pp-calendar">

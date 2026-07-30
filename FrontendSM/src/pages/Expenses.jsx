@@ -7,9 +7,7 @@ import './Expenses.css';
 
 export default function Expenses() {
     const [activeTab, setActiveTab] = useState('add');
-    const [expenses, setExpenses] = useLocalStorage('expenses_list', [
-        { id: 1, expenseHead: 'Electricity', name: 'Electricity Board', invoiceNo: 'INV-1029', date: '2026-03-18', amount: '12500.00', description: 'March 2026 Bill' }
-    ]);
+    const [expenses, setExpenses] = useLocalStorage('expenses_list', []);
     const [searchTerm, setSearchTerm] = useState('');
     const [formData, setFormData] = useState({
         expenseHead: '',

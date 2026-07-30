@@ -7,9 +7,9 @@ import {
     FileText, Star, Settings, Download, PlusCircle, Search,
     CheckCircle2, XCircle, Eye, TrendingUp, TrendingDown,
     IndianRupee, ClipboardCheck, UserCheck, AlertTriangle, Mail,
-    Calendar, Upload, Timer, Filter, ShieldCheck, X, Lock, Unlock
+    Calendar, Upload, Timer, Filter, ShieldCheck, X, Lock, Unlock, Edit, Trash2
 } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import { useAuth } from '../context/AuthContext';
 import './HR.css';
@@ -72,13 +72,7 @@ function DashboardTab() {
 function StaffTab() {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [staff, setStaff] = useLocalStorage('mzs_staff', [
-        { id: 'EMP-2024-001', name: 'Rajesh Kumar', role: 'Teacher', dept: 'Mathematics', type: 'Full-time', status: 'Active', joined: '2020-06-15', email: 'rajesh@school.com', phone: '9876543210', dob: '1985-04-12', address: '123 Main St', gender: 'Male' },
-        { id: 'EMP-2024-002', name: 'Priya Sharma', role: 'Admin', dept: 'Administration', type: 'Full-time', status: 'Active', joined: '2019-04-01', email: 'priya@school.com', phone: '8765432109', dob: '1988-08-22', address: '456 Cross St', gender: 'Female' },
-        { id: 'EMP-2024-003', name: 'Suresh Babu', role: 'Driver', dept: 'Transport', type: 'Contract', status: 'Active', joined: '2023-01-10', email: '', phone: '', dob: '', address: '', gender: 'Male' },
-        { id: 'EMP-2024-004', name: 'Anita Verma', role: 'Counsellor', dept: 'Student Welfare', type: 'Part-time', status: 'Active', joined: '2022-08-20', email: '', phone: '', dob: '', address: '', gender: 'Female' },
-        { id: 'EMP-2024-005', name: 'Mohan Das', role: 'Teacher', dept: 'Science', type: 'Full-time', status: 'Active', joined: '2021-07-01', email: '', phone: '', dob: '', address: '', gender: 'Male' },
-    ]);
+    const [staff, setStaff] = useLocalStorage('mzs_staff', []);
     const [searchTerm, setSearchTerm] = useState('');
     const [deptFilter, setDeptFilter] = useState('All Departments');
     const [typeFilter, setTypeFilter] = useState('All Types');
@@ -100,12 +94,24 @@ function StaffTab() {
     const handleSearch = () => {};
 
     const [isAdding, setIsAdding] = useState(searchParams.get('action') === 'add');
+    const [editingStaff, setEditingStaff] = useState(null);
     const [staffForm, setStaffForm] = useState({
         firstName: '', lastName: '', email: '', phone: '', dob: '', gender: 'Male', address: '',
         role: 'Teacher', dept: 'Mathematics', type: 'Full-time', joined: '',
         basicSalary: '', hra: '', ta: '', da: '', pf: '', tds: '', otherDeductions: '',
-        bankName: '', accountName: '', accountNo: '', ifsc: ''
+        bankName: '', accountName: '', accountNo: '', ifsc: '', photoUrl: ''
     });
+
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setStaffForm(prev => ({ ...prev, photoUrl: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Auto-map roles based on employment type
     useEffect(() => {
@@ -121,6 +127,13 @@ function StaffTab() {
     const navigate = useNavigate();
     const closeAdd = () => {
         setIsAdding(false);
+        setEditingStaff(null);
+        setStaffForm({
+            firstName: '', lastName: '', email: '', phone: '', dob: '', gender: 'Male', address: '',
+            role: 'Teacher', dept: 'Mathematics', type: 'Full-time', joined: '',
+            basicSalary: '', hra: '', ta: '', da: '', pf: '', tds: '', otherDeductions: '',
+            bankName: '', accountName: '', accountNo: '', ifsc: '', photoUrl: ''
+        });
         navigate('/hr/staff');
     };
 
@@ -131,15 +144,90 @@ function StaffTab() {
         return `EMP-${year}-${nextNum}`;
     };
 
+    const handleEditStaff = (s) => {
+        const parts = s.name.split(' ');
+        setStaffForm({
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' '),
+            email: s.email || '',
+            phone: s.phone || '',
+            dob: s.dob || '',
+            gender: s.gender || 'Male',
+            address: s.address || '',
+            role: s.role || 'Teacher',
+            dept: s.dept || 'Mathematics',
+            type: s.type || 'Full-time',
+            joined: s.joined || '',
+            basicSalary: s.salaryDetails?.basic || '',
+            hra: s.salaryDetails?.hra || '',
+            ta: s.salaryDetails?.ta || '',
+            da: s.salaryDetails?.da || '',
+            pf: s.salaryDetails?.pf || '',
+            tds: s.salaryDetails?.tds || '',
+            otherDeductions: s.salaryDetails?.other || '',
+            bankName: s.bankDetails?.bankName || '',
+            accountName: s.bankDetails?.accountName || '',
+            accountNo: s.bankDetails?.accountNo || '',
+            ifsc: s.bankDetails?.ifsc || '',
+            photoUrl: s.photoUrl || ''
+        });
+        setEditingStaff(s);
+        setIsAdding(true);
+    };
+
+    const handleDeleteStaff = async (staffMember) => {
+        if (await customConfirm(`Are you sure you want to delete the record for ${staffMember.name}?`)) {
+            setStaff(prev => prev.filter(s => s.id !== staffMember.id));
+            await customAlert("Staff member deleted successfully!", "Success", "success");
+        }
+    };
+
     const handleSaveStaff = async () => {
         if (!staffForm.firstName.trim()) {
-            await customAlert('Please enter the staff member\'s first name.', 'Validation Error', 'error');
+            await customAlert("First Name is required", 'Error', 'error');
             return;
         }
         if (!staffForm.role.trim()) {
-            await customAlert('Please select or enter the role.', 'Validation Error', 'error');
+            await customAlert("Role is required", 'Error', 'error');
             return;
         }
+
+        if (editingStaff) {
+            const updatedStaff = {
+                ...editingStaff,
+                name: `${staffForm.firstName.trim()} ${staffForm.lastName.trim()}`.trim(),
+                email: staffForm.email.trim(),
+                phone: staffForm.phone.trim(),
+                dob: staffForm.dob,
+                gender: staffForm.gender,
+                dept: staffForm.dept,
+                role: staffForm.role.trim(),
+                type: staffForm.type,
+                joined: staffForm.joined || new Date().toISOString().split('T')[0],
+                address: staffForm.address.trim(),
+                photoUrl: staffForm.photoUrl,
+                salaryDetails: {
+                    basic: staffForm.basicSalary,
+                    hra: staffForm.hra,
+                    ta: staffForm.ta,
+                    da: staffForm.da,
+                    pf: staffForm.pf,
+                    tds: staffForm.tds,
+                    other: staffForm.otherDeductions
+                },
+                bankDetails: {
+                    bankName: staffForm.bankName,
+                    accountName: staffForm.accountName,
+                    accountNo: staffForm.accountNo,
+                    ifsc: staffForm.ifsc
+                }
+            };
+            setStaff(prev => prev.map(s => s.id === editingStaff.id ? updatedStaff : s));
+            await customAlert(`Staff member "${updatedStaff.name}" updated successfully!`, 'Success', 'success');
+            closeAdd();
+            return;
+        }
+
         const newStaff = {
             id: generateEmpId(),
             name: `${staffForm.firstName.trim()} ${staffForm.lastName.trim()}`.trim(),
@@ -152,6 +240,7 @@ function StaffTab() {
             type: staffForm.type,
             joined: staffForm.joined || new Date().toISOString().split('T')[0],
             address: staffForm.address.trim(),
+            photoUrl: staffForm.photoUrl,
             status: 'Active',
             salaryDetails: {
                 basic: staffForm.basicSalary,
@@ -196,7 +285,7 @@ function StaffTab() {
 
             {isAdding ? (
                 <div className="hr-form-panel animate-fade-in" style={{ padding: 24 }}>
-                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>Add New Staff Member</h3>
+                    <h3 style={{ marginBottom: 24, color: 'var(--primary)' }}>{editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}</h3>
                     
                     <div style={{ marginBottom: 30, background: '#f8fafc', padding: 20, borderRadius: 8, border: '1px solid #e9ecef' }}>
                         <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid #e9ecef', paddingBottom: 8 }}>Section A: Personal Details</h4>
@@ -208,14 +297,14 @@ function StaffTab() {
                             <div className="form-group"><label className="form-label">Mobile Number *</label><PhoneInput className="form-input" placeholder="Enter mobile number" value={staffForm.phone} onChange={e => setStaffForm({...staffForm, phone: e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Email Address</label><input type="email" className="form-input" placeholder="Enter email address" value={staffForm.email} onChange={e => setStaffForm({...staffForm, email: e.target.value})}/></div>
                             <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Address</label><textarea className="form-input" rows={2} placeholder="Full address" value={staffForm.address} onChange={e => setStaffForm({...staffForm, address: e.target.value})}></textarea></div>
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Staff Photo</label><input type="file" className="form-input" accept="image/*" /></div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Staff Photo</label><input type="file" className="form-input" accept="image/*" onChange={handlePhotoUpload} /></div>
                         </div>
                     </div>
 
                     <div style={{ marginBottom: 30, background: '#f8fafc', padding: 20, borderRadius: 8, border: '1px solid #e9ecef' }}>
                         <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid #e9ecef', paddingBottom: 8 }}>Section B: Job Details</h4>
                         <div className="ado-form form-row-2">
-                            <div className="form-group"><label className="form-label">Employee ID</label><input type="text" className="form-input" value="Auto-generated on save" disabled style={{ background: '#e9ecef' }}/></div>
+                            <div className="form-group"><label className="form-label">Employee ID</label><input type="text" className="form-input" value={editingStaff ? editingStaff.id : "Auto-generated on save"} disabled style={{ background: '#e9ecef' }}/></div>
                             <div className="form-group"><label className="form-label">Employment Type *</label><select className="form-select" value={staffForm.type} onChange={e => setStaffForm({...staffForm, type: e.target.value})}><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
                             <div className="form-group"><label className="form-label">Role *</label><select className="form-select" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value})}>
                                 {staffForm.type === 'Full-time' && <><option>Teacher</option><option>Admin</option><option>Principal</option><option>Accountant</option></>}
@@ -271,7 +360,17 @@ function StaffTab() {
                                     <tr key={s.id}><td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.id}</td><td className="fw-600">{s.name}</td><td>{s.role}</td><td>{s.dept}</td>
                                         <td><span className={`badge ${s.type === 'Full-time' ? 'badge-success' : s.type === 'Contract' ? 'badge-warning' : 'badge-draft'}`}>{s.type}</span></td>
                                         <td>{s.joined}</td><td><span className="badge badge-success">Active</span></td>
-                                        <td><button className="btn-icon" title="View Profile" onClick={() => setSelectedProfile(s)}><Eye size={16}/></button></td></tr>
+                                        <td>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                <button className="btn-icon" title="View Profile" onClick={() => setSelectedProfile(s)}><Eye size={16}/></button>
+                                                {!['Staff', 'Teacher'].includes(user?.role) && (
+                                                    <>
+                                                        <button className="btn-icon btn-icon-edit" title="Edit Staff" onClick={() => handleEditStaff(s)}><Edit size={16}/></button>
+                                                        <button className="btn-icon btn-icon-delete" title="Delete Staff" onClick={() => handleDeleteStaff(s)}><Trash2 size={16}/></button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td></tr>
                                 )) : (
                                     <tr><td colSpan="8" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No staff members match your search criteria</td></tr>
                                 )}</tbody></table>
@@ -415,10 +514,7 @@ function AttendanceTab() {
 function LeaveTab() {
     const { user } = useAuth();
     const [staffList] = useLocalStorage('mzs_staff', []);
-    const [leaveRequests, setLeaveRequests] = useLocalStorage('mzs_leave_req', [
-        { id: 1, staff: 'Suresh Babu', type: 'Casual Leave (CL)', from: '2026-03-28', to: '2026-03-29', days: 2, reason: 'Family function', status: 'Pending', balanceAtTime: 8 },
-        { id: 2, staff: 'Anita Verma', type: 'Sick Leave (SL)', from: '2026-04-01', to: '2026-04-03', days: 3, reason: 'Medical appointment', status: 'Pending', balanceAtTime: 10 },
-    ]);
+    const [leaveRequests, setLeaveRequests] = useLocalStorage('mzs_leave_req', []);
 
     const [isApplying, setIsApplying] = useState(false);
     const [leaveForm, setLeaveForm] = useState({ staff: ['Staff', 'Teacher'].includes(user?.role) ? user?.name : '', type: 'Casual Leave (CL)', from: '', to: '', reason: '' });
@@ -724,16 +820,7 @@ function PayrollTab() {
     const [staffList] = useLocalStorage('mzs_staff', []);
     
     // Salary setup state
-    const [salarySetup, setSalarySetup] = useLocalStorage('mzs_salary_setup', {
-        hraPercent: 40,
-        daPercent: 20,
-        taFixed: 2000,
-        pfPercent: 12,
-        esiPercent: 0.75,
-        ptFixed: 200,
-        payrollCycle: 'Monthly',
-        processingDay: 28
-    });
+    const [salarySetup, setSalarySetup] = useLocalStorage('mzs_salary_setup', {});
 
     const [payrollRecords, setPayrollRecords] = useLocalStorage('mzs_payroll_records', []);
 
@@ -1049,16 +1136,9 @@ function RecruitmentTab() {
     const [staffList, setStaffList] = useLocalStorage('mzs_staff', []);
     
     // Sample Initial Data for Jobs and Applications
-    const [jobs, setJobs] = useLocalStorage('mzs_jobs', [
-        { id: 'JOB-001', title: 'Science Teacher (Physics)', dept: 'Science', vacancies: 1, deadline: '2026-04-15', status: 'Open', desc: 'Teach Physics to high school students.', reqs: 'M.Sc Physics, B.Ed', salary: '40,000 - 50,000' },
-        { id: 'JOB-002', title: 'Administrative Assistant', dept: 'Admin', vacancies: 1, deadline: '2026-04-10', status: 'Open', desc: 'Handle front desk and admin tasks.', reqs: 'Graduate, basic computer skills', salary: '20,000 - 25,000' }
-    ]);
+    const [jobs, setJobs] = useLocalStorage('mzs_jobs', []);
 
-    const [applications, setApplications] = useLocalStorage('mzs_applications', [
-        { id: 'APP-101', jobId: 'JOB-001', name: 'Ramesh Iyer', email: 'ramesh@example.com', phone: '9876543210', date: '2026-03-20', status: 'New', resume: 'resume_ramesh.pdf', feedback: '', interview: null },
-        { id: 'APP-102', jobId: 'JOB-001', name: 'Deepa Nair', email: 'deepa@example.com', phone: '9876543211', date: '2026-03-22', status: 'Interview Scheduled', resume: 'resume_deepa.pdf', feedback: '', interview: { date: '2026-03-28', time: '10:00', mode: 'In-person' } },
-        { id: 'APP-103', jobId: 'JOB-001', name: 'Kavitha Rao', email: 'kavitha@example.com', phone: '9876543212', date: '2026-03-18', status: 'Selected', resume: 'resume_kavitha.pdf', feedback: 'Excellent demo class', interview: { date: '2026-03-25', time: '11:00', mode: 'Video call' } }
-    ]);
+    const [applications, setApplications] = useLocalStorage('mzs_applications', []);
 
     // Form states
     const [jobForm, setJobForm] = useState({ title: '', dept: 'Science', desc: '', reqs: '', salary: '', deadline: '', vacancies: 1 });
@@ -1337,18 +1417,10 @@ function RecruitmentTab() {
 function DocumentsTab() {
     const { user } = useAuth();
     const isStaff = ['Staff', 'Teacher'].includes(user?.role);
-    const [staffList] = useLocalStorage('mzs_staff', [
-        { id: 'EMP-101', name: 'Rajesh Kumar', dept: 'Science' },
-        { id: 'EMP-102', name: 'Priya Sharma', dept: 'Admin' },
-        { id: 'EMP-103', name: 'Suresh Babu', dept: 'Transport' }
-    ]);
+    const [staffList] = useLocalStorage('mzs_staff', []);
     
     // Sample Initial Data for Documents
-    const [documents, setDocuments] = useLocalStorage('mzs_documents', [
-        { id: 'DOC-001', staffId: 'EMP-101', staffName: 'Rajesh Kumar', type: 'ID Proof (Aadhaar)', reference: 'XXXX-XXXX-1234', uploadDate: '2024-06-15', expiryDate: '' },
-        { id: 'DOC-002', staffId: 'EMP-102', staffName: 'Priya Sharma', type: 'Employment Contract', reference: 'CON-2019-002', uploadDate: '2019-04-01', expiryDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0] }, // Expiring in 15 days
-        { id: 'DOC-003', staffId: 'EMP-103', staffName: 'Suresh Babu', type: 'Driving License', reference: 'DL-09-XXXXXX', uploadDate: '2023-01-10', expiryDate: '2028-01-10' }
-    ]);
+    const [documents, setDocuments] = useLocalStorage('mzs_documents', []);
 
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isReplaceMode, setIsReplaceMode] = useState(false);
@@ -1543,17 +1615,9 @@ function DocumentsTab() {
 
 // ======================== PERFORMANCE ========================
 function PerformanceTab() {
-    const [staffList] = useLocalStorage('mzs_staff', [
-        { id: 'EMP-101', name: 'Rajesh Kumar', dept: 'Science' },
-        { id: 'EMP-102', name: 'Priya Sharma', dept: 'Admin' },
-        { id: 'EMP-103', name: 'Suresh Babu', dept: 'Transport' }
-    ]);
+    const [staffList] = useLocalStorage('mzs_staff', []);
 
-    const [reviews, setReviews] = useLocalStorage('mzs_performance', [
-        { id: 'REV-001', staffId: 'EMP-101', staffName: 'Rajesh Kumar', period: 'Apr 2024 - Mar 2025', rating: 'Excellent', remarks: 'Exceeds all expectations consistently', linkedAction: 'Promotion', reviewedBy: 'Principal' },
-        { id: 'REV-002', staffId: 'EMP-102', staffName: 'Priya Sharma', period: 'Apr 2024 - Mar 2025', rating: 'Good', remarks: 'Reliable, well-organized admin processes', linkedAction: 'Standard Increment', reviewedBy: 'HR Manager' },
-        { id: 'REV-003', staffId: 'EMP-103', staffName: 'Suresh Babu', period: 'Apr 2024 - Mar 2025', rating: 'Average', remarks: 'Meets basic requirements; needs punctuality improvement', linkedAction: 'None', reviewedBy: 'HR Manager' }
-    ]);
+    const [reviews, setReviews] = useLocalStorage('mzs_performance', []);
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [reviewForm, setReviewForm] = useState({
@@ -1703,21 +1767,11 @@ function PerformanceTab() {
 
 // ======================== SHIFTS ========================
 function ShiftsTab() {
-    const [staffList] = useLocalStorage('mzs_staff', [
-        { id: 'EMP-101', name: 'Rajesh Kumar', dept: 'Science' },
-        { id: 'EMP-102', name: 'Priya Sharma', dept: 'Admin' },
-        { id: 'EMP-103', name: 'Suresh Babu', dept: 'Transport' }
-    ]);
+    const [staffList] = useLocalStorage('mzs_staff', []);
 
-    const [shifts, setShifts] = useLocalStorage('mzs_shifts', [
-        { id: 'SHIFT-001', name: 'Morning Shift', startTime: '07:30', endTime: '14:30', minHrs: '6.5', gracePeriod: '15' },
-        { id: 'SHIFT-002', name: 'General Shift', startTime: '09:00', endTime: '17:00', minHrs: '7.5', gracePeriod: '15' },
-        { id: 'SHIFT-003', name: 'Afternoon Shift', startTime: '12:00', endTime: '19:00', minHrs: '6.5', gracePeriod: '10' }
-    ]);
+    const [shifts, setShifts] = useLocalStorage('mzs_shifts', []);
 
-    const [assignments, setAssignments] = useLocalStorage('mzs_shift_assignments', [
-        { id: 'ASSGN-001', targetType: 'Department', targetId: 'Admin', targetName: 'Admin Dept', shiftId: 'SHIFT-002', shiftName: 'General Shift', effectiveDate: '2024-04-01', rotation: 'None' }
-    ]);
+    const [assignments, setAssignments] = useLocalStorage('mzs_shift_assignments', []);
 
     const [isAddShiftModalOpen, setIsAddShiftModalOpen] = useState(false);
     const [shiftForm, setShiftForm] = useState({ name: '', startTime: '', endTime: '', minHrs: '', gracePeriod: '15' });
@@ -2117,17 +2171,7 @@ function ReportsTab() {
 
 // ======================== SETTINGS ========================
 function SettingsTab() {
-    const [settings, setSettings] = useLocalStorage('mzs_hr_settings', {
-        empIdFormat: 'EMP-YYYY-NNN',
-        payrollDay: '28th of each month',
-        lateThreshold: 15,
-        attendanceLock: '11:59 PM same day',
-        leaveYearStart: 'April',
-        leaveCarryover: 'Disabled',
-        biometricSync: 'Disabled',
-        payslipEmail: 'Disabled',
-        documentExpiryAlert: 30
-    });
+    const [settings, setSettings] = useLocalStorage('mzs_hr_settings', {});
 
     const [formData, setFormData] = useState(settings);
 
@@ -2429,16 +2473,43 @@ function StaffProfileModal({ staff, onClose }) {
 
                 <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
                     {activeTab === 'overview' && (
-                        <div className="ado-form form-row-2">
-                            <div className="form-group"><label className="form-label">Employee ID</label><p>{staff.id}</p></div>
-                            <div className="form-group"><label className="form-label">Name</label><p>{staff.name}</p></div>
-                            <div className="form-group"><label className="form-label">Role</label><p>{staff.role}</p></div>
-                            <div className="form-group"><label className="form-label">Department</label><p>{staff.dept}</p></div>
-                            <div className="form-group"><label className="form-label">Employment Type</label><p><span className="badge badge-info">{staff.type || 'Full-time'}</span></p></div>
-                            <div className="form-group"><label className="form-label">Date of Joining</label><p>{staff.joined}</p></div>
-                            <div className="form-group"><label className="form-label">Email</label><p>{staff.email || 'N/A'}</p></div>
-                            <div className="form-group"><label className="form-label">Phone</label><p>{staff.phone || 'N/A'}</p></div>
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Address</label><p>{staff.address || 'N/A'}</p></div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Employee ID</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.id}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Name</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.name}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Role</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.role}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Department</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.dept}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Employment Type</div>
+                                <div><span className={`badge ${staff.type === 'Full-time' ? 'badge-success' : staff.type === 'Contract' ? 'badge-warning' : 'badge-draft'}`}>{staff.type || 'Full-time'}</span></div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Date of Joining</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.joined}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Email</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)', wordBreak: 'break-all' }}>{staff.email || 'N/A'}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Phone</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)' }}>{staff.phone || 'N/A'}</div>
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e9ecef', gridColumn: '1 / -1' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Address</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-dark)', lineHeight: 1.5 }}>{staff.address || 'N/A'}</div>
+                            </div>
                         </div>
                     )}
                     

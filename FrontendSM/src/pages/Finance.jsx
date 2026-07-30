@@ -55,9 +55,28 @@ function DashboardTab({ onGenerateInvoice }) {
 }
 
 // ======================== FEE STRUCTURE ========================
-function FeeStructureTab({ structures, setStructures }) {
-    
+function FeeStructureTab() {
+    const { ALL_CLASSES } = useAcademicClassesData();
     const DEFAULT_FEE_TYPES = ['Admission Fee', 'Annual Fee', 'Examination Fee', 'Monthly Fee'];
+    
+    const [structures, setStructures] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchStructures();
+    }, []);
+
+    const fetchStructures = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getFeeStructures();
+            setStructures(data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
     
     const [isAdding, setIsAdding] = useState(false);
     const [classDropdownOpen, setClassDropdownOpen] = useState(false);
@@ -117,13 +136,13 @@ function FeeStructureTab({ structures, setStructures }) {
         setSaving(true);
         try {
             const entry = {
-                _id: 'fs-' + Date.now(),
                 classGroup: newEntry.classGroup,
                 classes: [...newEntry.classes],
                 fees: newEntry.fees.map(f => ({ name: f.name, amount: Number(f.amount) || 0 })),
                 total: calcTotal(newEntry.fees)
             };
-            setStructures([entry, ...structures]);
+            const saved = await api.createFeeStructure(entry);
+            setStructures([saved, ...structures]);
             setIsAdding(false); setClassDropdownOpen(false);
             setNewEntry({...emptyForm, fees: emptyForm.fees.map(f => ({...f}))});
             setNewCustomFeeName('');
@@ -178,29 +197,35 @@ function FeeStructureTab({ structures, setStructures }) {
         if (editData.classes.length === 0) return customAlert('Please select at least one class');
         if (editData.fees.length === 0) return customAlert('Please add at least one fee type');
         if (!editData.fees.some(f => Number(f.amount) > 0)) return customAlert('Please enter at least one fee amount');
-        const updated = structures.map(s => {
-            if (s._id !== editingId) return s;
-            return {
-                ...s,
+        try {
+            const entry = {
                 classGroup: editData.classGroup,
                 classes: [...editData.classes],
                 fees: editData.fees.map(f => ({ name: f.name, amount: Number(f.amount) || 0 })),
                 total: calcTotal(editData.fees)
             };
-        });
-        setStructures(updated);
-        setEditingId(null);
-        setEditData(null);
-        setEditClassDropdownOpen(false);
-        await customAlert('Fee structure updated successfully!');
+            const updated = await api.updateFeeStructure(editingId, entry);
+            setStructures(structures.map(s => s._id === editingId ? updated : s));
+            setEditingId(null);
+            setEditData(null);
+            setEditClassDropdownOpen(false);
+            await customAlert('Fee structure updated successfully!');
+        } catch (err) {
+            await customAlert(err.message || 'Failed to update.');
+        }
     };
     
     // --- Delete structure ---
     const handleDelete = async (id) => {
         const ok = await customConfirm('Are you sure you want to delete this fee structure?');
         if (ok) {
-            setStructures(structures.filter(s => s._id !== id));
-            await customAlert('Fee structure deleted.');
+            try {
+                await api.deleteFeeStructure(id);
+                setStructures(structures.filter(s => s._id !== id));
+                await customAlert('Fee structure deleted.');
+            } catch (err) {
+                await customAlert(err.message || 'Failed to delete.');
+            }
         }
     };
     
@@ -218,12 +243,14 @@ function FeeStructureTab({ structures, setStructures }) {
                 </div>
                 {isOpen && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#fff', border: '1px solid #e9ecef', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', maxHeight: 260, overflowY: 'auto', marginTop: 4, padding: '8px 0' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', borderBottom: '1px solid #f0f0f5', background: data.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
-                            <input type="checkbox" checked={data.classes.includes('All Classes')} onChange={() => toggleClass('All Classes', setData)} style={{ accentColor: 'var(--accent)' }}/>All Classes
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', borderBottom: '1px solid #f0f0f5', margin: 0, background: data.classes.includes('All Classes') ? 'rgba(28,167,166,0.08)' : 'transparent' }}>
+                            <input type="checkbox" checked={data.classes.includes('All Classes')} onChange={() => toggleClass('All Classes', setData)} style={{ margin: 0, width: '16px', height: '16px', flexShrink: 0, accentColor: 'var(--accent)' }}/>
+                            <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>All Classes</span>
                         </label>
                         {ALL_CLASSES.map(cls => (
-                            <label key={cls} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px', cursor: 'pointer', fontSize: '0.88rem', background: data.classes.includes(cls) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
-                                <input type="checkbox" checked={data.classes.includes('All Classes') || data.classes.includes(cls)} disabled={data.classes.includes('All Classes')} onChange={() => toggleClass(cls, setData)} style={{ accentColor: 'var(--accent)' }}/>{cls}
+                            <label key={cls} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10, padding: '8px 16px', cursor: 'pointer', fontSize: '0.88rem', margin: 0, background: data.classes.includes(cls) ? 'rgba(28,167,166,0.06)' : 'transparent' }}>
+                                <input type="checkbox" checked={data.classes.includes('All Classes') || data.classes.includes(cls)} disabled={data.classes.includes('All Classes')} onChange={() => toggleClass(cls, setData)} style={{ margin: 0, width: '16px', height: '16px', flexShrink: 0, accentColor: 'var(--accent)' }}/>
+                                <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>{cls}</span>
                             </label>
                         ))}
                     </div>
@@ -947,19 +974,7 @@ const TABS = [
 
 export default function Finance() {
     const { ALL_CLASSES } = useAcademicClassesData();
-    const [invoices, setInvoices] = useLocalStorage('finance_invoices', [
-        { id: 1, invoiceNo: 'INV-2026-001', billedTo: 'Ajay Transport', type: 'Vendor', issueDate: '2026-03-20', dueDate: '2026-04-05', amount: 45000, status: 'Sent' },
-        { id: 2, invoiceNo: 'INV-2026-002', billedTo: 'Ritika Singh', type: 'Student', issueDate: '2026-03-22', dueDate: '2026-03-30', amount: 2500, status: 'Paid' },
-    ]);
-    const [feeStructures, setFeeStructures] = useLocalStorage('finance_fee_structures', [
-        { _id: '1', classGroup: 'Nursery, LKG & UKG', classes: ['Nursery', 'LKG', 'UKG'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 2000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 1500 }], total: 5500 },
-        { _id: '2', classGroup: 'STD. 1 to 2', classes: ['I', 'II'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 3000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 2000 }], total: 7000 },
-        { _id: '3', classGroup: 'STD. 3 to 4', classes: ['III', 'IV'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 3000 }, { name: 'Examination Fee', amount: 2000 }, { name: 'Monthly Fee', amount: 2400 }], total: 7400 },
-        { _id: '4', classGroup: 'STD. 5 to 7', classes: ['V', 'VI', 'VII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3050 }, { name: 'Monthly Fee', amount: 2700 }], total: 21200 },
-        { _id: '5', classGroup: 'STD. 8', classes: ['VIII'], fees: [{ name: 'Admission Fee', amount: 7500 }, { name: 'Annual Fee', amount: 7950 }, { name: 'Examination Fee', amount: 3650 }, { name: 'Monthly Fee', amount: 3300 }], total: 22400 },
-        { _id: '6', classGroup: 'STD. 9 & 10', classes: ['IX', 'X'], fees: [{ name: 'Admission Fee', amount: 8000 }, { name: 'Annual Fee', amount: 9150 }, { name: 'Examination Fee', amount: 4250 }, { name: 'Monthly Fee', amount: 3300 }], total: 24700 },
-        { _id: '7', classGroup: 'STD. 11 & 12', classes: ['XI', 'XII'], fees: [{ name: 'Admission Fee', amount: 0 }, { name: 'Annual Fee', amount: 8550 }, { name: 'Examination Fee', amount: 4000 }, { name: 'Monthly Fee', amount: 3300 }], total: 15850 },
-    ]);
+    const [invoices, setInvoices] = useLocalStorage('finance_invoices', []);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
     const navigate = useNavigate();
@@ -1025,7 +1040,7 @@ export default function Finance() {
                     <Routes>
                         <Route path="/" element={<Navigate to="dashboard" replace />} />
                         <Route path="dashboard" element={<DashboardTab onGenerateInvoice={handleGenerateInvoice}/>} />
-                        <Route path="fee/structure" element={<FeeStructureTab structures={feeStructures} setStructures={setFeeStructures}/>} />
+                        <Route path="fee/structure" element={<FeeStructureTab/>} />
                         <Route path="fee/collection" element={<FeeCollectionTab/>} />
                         <Route path="payments/online" element={<OnlinePaymentsTab/>} />
                         <Route path="fee/defaulters" element={<DefaultersTab/>} />

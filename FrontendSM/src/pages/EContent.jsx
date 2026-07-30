@@ -1,19 +1,18 @@
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
+import { useAcademicSubjectsData } from '../hooks/useAcademicSubjectsData';
 import { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, FileText, Upload, Video, FileDigit, Trash2 } from 'lucide-react';
 import { customAlert, customConfirm } from '../utils/dialogs';
-import { getActiveClasses } from '../data/mockData';
+;
 import './EContent.css';
 
 export default function EContent() {
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const [activeTab, setActiveTab] = useState('add'); // 'add', 'custom', 'view'
-    const [eContentList, setEContentList] = useLocalStorage('econtent_list', [
-        { id: 1, class: 'VII', section: 'A', subject: 'Mathematics', topic: 'Algebra Basics', type: 'Video', date: '2026-03-16' },
-        { id: 2, class: 'VIII', section: 'B', subject: 'English', topic: 'Tenses', type: 'PDF', date: '2026-03-15' },
-    ]);
+    const [eContentList, setEContentList] = useLocalStorage('econtent_list', []);
     const [addForm, setAddForm] = useState({ class: '', section: '', subject: '', topic: '' });
 
     const handleSubmit = async (e) => {
@@ -113,8 +112,7 @@ export default function EContent() {
                                 <label className="form-label">Subject <span className="required">*</span></label>
                                 <select className="form-select" required value={addForm.subject} onChange={e => setAddForm({ ...addForm, subject: e.target.value })}>
                                     <option value="">Select Subject</option>
-                                    <option value="Math">Math</option>
-                                    <option value="Science">Science</option>
+                                    {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

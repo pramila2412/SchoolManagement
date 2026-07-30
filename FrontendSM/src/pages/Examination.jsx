@@ -1,4 +1,5 @@
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
+import { useAcademicSubjectsData } from '../hooks/useAcademicSubjectsData';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
@@ -13,7 +14,6 @@ const API = '/api/exam';
 
 
 
-export const STANDARD_SUBJECTS = ['Mathematics', 'Science', 'English', 'Hindi', 'Social Science', 'Computer', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Accountancy', 'Business Studies', 'Economics'];
 
 function useApi(endpoint) {
     const [data, setData] = useState([]);
@@ -285,7 +285,8 @@ function HallTicketsTab() {
 
 // ======================== MARKS ENTRY ========================
 function MarksEntryTab() {
-    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
+    const { ALL_CLASSES } = useAcademicClassesData();
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { data: exams } = useApi('/');
     const [sel, setSel] = useState({ exam:'', className:'', section:'', subject:'' });
     const [students, setStudents] = useState([{studentName:'',rollNo:'',theoryMarks:0,practicalMarks:0}]);
@@ -309,7 +310,7 @@ function MarksEntryTab() {
                 <div className="form-group"><label className="form-label">Exam</label><select className="form-select" value={sel.exam} onChange={e=>setSel({...sel,exam:e.target.value,className:'',subject:''})}><option value="">Select</option>{exams.map(e=><option key={e._id} value={e._id}>{e.name}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Class</label><select className="form-select" value={sel.className} onChange={e=>setSel({...sel,className:e.target.value,subject:''})}><option value="">Select</option>{(selExam?.classes?.length>0?selExam.classes.map(c=>c.className):ALL_CLASSES).map((c,i)=><option key={i} value={c}>{c}</option>)}</select></div>
                 <div className="form-group"><label className="form-label">Section</label><select className="form-select" value={sel.section} onChange={e=>setSel({...sel,section:e.target.value})}><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
-                <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{(selClass?.subjects?.length>0?selClass.subjects.map(s=>s.name):STANDARD_SUBJECTS).map((s,i)=><option key={i} value={s}>{s}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Subject</label><select className="form-select" value={sel.subject} onChange={e=>setSel({...sel,subject:e.target.value})}><option value="">Select</option>{(selClass?.subjects?.length>0?selClass.subjects.map(s=>s.name):ALL_SUBJECTS).map((s,i)=><option key={i} value={s}>{s}</option>)}</select></div>
             </div>
             {sel.subject && <div className="result-summary-cards"><div className="result-summary-card"><label>Max Theory</label><p>{activeSubject.theoryMarks||activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Max Practical</label><p>{activeSubject.practicalMarks||0}</p></div><div className="result-summary-card"><label>Total</label><p>{activeSubject.totalMarks}</p></div><div className="result-summary-card"><label>Pass</label><p>{activeSubject.passingMarks}</p></div></div>}
             <div className="marks-grid-wrapper table-responsive"><table className="data-table"><thead><tr><th>#</th><th>Student Name</th><th>Roll No</th><th>Theory</th><th>Practical</th><th>Total</th></tr></thead>

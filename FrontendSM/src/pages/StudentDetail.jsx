@@ -158,12 +158,16 @@ export default function StudentDetail() {
                 }
                 setStudent(data);
                 
-                // Fetch parent portal credentials and potential local data override from localStorage
-                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-                const localMatch = localData.find(s => s.admissionNo === data.admissionNo || s.id === data.id);
-                if (localMatch) {
-                    setPortalAuth({ id: localMatch.parentId, password: localMatch.parentPassword });
-                    setStudent(prev => ({ ...prev, photoUrl: prev.photoUrl || localMatch.photoUrl }));
+                if (data.parentId && data.parentPassword) {
+                    setPortalAuth({ id: data.parentId, password: data.parentPassword });
+                } else {
+                    // Fallback to local storage only if not in DB
+                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
+                    const localMatch = localData.find(s => s.admissionNo === data.admissionNo || s.id === data.id);
+                    if (localMatch) {
+                        setPortalAuth({ id: localMatch.parentId, password: localMatch.parentPassword });
+                        setStudent(prev => ({ ...prev, photoUrl: prev.photoUrl || localMatch.photoUrl }));
+                    }
                 }
 
                 // Fetch certificates
@@ -406,7 +410,7 @@ export default function StudentDetail() {
                                 </p>
                                 <div className="detail-list bg-light" style={{ padding: 16, borderRadius: 'var(--radius-sm)' }}>
                                     <div className="detail-item" style={{ borderBottom: 'none' }}>
-                                        <span className="detail-label">Parent ID (Username)</span>
+                                        <span className="detail-label">Parent ID</span>
                                         <span className="detail-value fw-600 font-monospace">{portalAuth.id}</span>
                                     </div>
                                     <div className="detail-item" style={{ borderBottom: 'none' }}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
+import { useAcademicSubjectsData } from '../hooks/useAcademicSubjectsData';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
     Calendar, BookOpen, Users, Clock, FileText, ClipboardCheck,
@@ -12,14 +13,11 @@ import {
 import { customAlert, customConfirm } from '../utils/dialogs';
 import './Academics.css';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { classes as MOCK_CLASSES, sections as MOCK_SECTIONS } from '../data/mockData';
+;
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
-    const [years, setYears] = useLocalStorage('academic_years', [
-        { id: 1, label: '2025-2026', startDate: '2025-04-01', endDate: '2026-03-31', active: true },
-        { id: 2, label: '2024-2025', startDate: '2024-04-01', endDate: '2025-03-31', active: false },
-    ]);
+    const [years, setYears] = useLocalStorage('academic_years', []);
     
     const [form, setForm] = useState({ label: '', startDate: '', endDate: '', active: false });
 
@@ -654,16 +652,7 @@ function TimetableTab() {
     const [sel, setSel] = useState({ class: 'I', section: 'A' });
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
-    const [timetables, setTimetables] = useLocalStorage('academic_timetables', [
-        {
-            class: 'I', section: 'A', status: 'Draft',
-            schedule: [
-                { period: 1, time: '08:30-09:15', Monday: 'Mathematics', Tuesday: 'English', Wednesday: 'Science', Thursday: 'Hindi', Friday: 'Mathematics', Saturday: '—' },
-                { period: 2, time: '09:15-10:00', Monday: 'English', Tuesday: 'Mathematics', Wednesday: 'Hindi', Thursday: 'Science', Friday: 'English', Saturday: '—' },
-                { period: 3, time: '10:15-11:00', Monday: 'Science', Tuesday: 'Hindi', Wednesday: 'Mathematics', Thursday: 'English', Friday: 'Computer Science', Saturday: '—' }
-            ]
-        }
-    ]);
+    const [timetables, setTimetables] = useLocalStorage('academic_timetables', []);
     const [assignments] = useLocalStorage('academic_teacher_assignments', []);
 
     const currentTimetable = timetables.find(t => t.class === sel.class && t.section === sel.section) || {
@@ -846,12 +835,10 @@ function TimetableTab() {
 
 // ======================== SYLLABUS ========================
 function SyllabusTab() {
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [expandedCh, setExpandedCh] = useState([1]);
-    const [syllabus, setSyllabus] = useLocalStorage('academic_syllabus', [
-        { id: 1, class: 'I', subject: 'Mathematics', chapter: 1, title: 'Algebra', hours: 8, topics: [{ name: 'Linear Equations', obj: 'Solve simple linear equations' }, { name: 'Quadratic Formula', obj: 'Find roots using formula' }], attachment: null },
-        { id: 2, class: 'II', subject: 'Mathematics', chapter: 2, title: 'Geometry', hours: 10, topics: [{ name: 'Triangles', obj: 'Understand basic properties' }], attachment: { name: 'geometry_guide.pdf' } },
-    ]);
+    const [syllabus, setSyllabus] = useLocalStorage('academic_syllabus', []);
     const [filterClass, setFilterClass] = useState('I');
     const [filterSubject, setFilterSubject] = useState('Mathematics');
 
@@ -914,7 +901,7 @@ function SyllabusTab() {
                     </div>
                     <div className="form-group"><label className="form-label">Subject</label>
                         <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
-                            <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                            {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
                 </div>
@@ -995,12 +982,10 @@ function SyllabusTab() {
 
 // ======================== LESSON PLAN ========================
 function LessonPlanTab() {
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const [syllabus] = useLocalStorage('academic_syllabus', []);
-    const [plans, setPlans] = useLocalStorage('academic_lesson_plans', [
-        { id: 1, class: 'I', subject: 'Mathematics', title: 'Introduction to Linear Equations', chapter: 'Algebra', topic: 'Linear Equations', method: 'Lecture', date: '2026-03-20', status: 'Completed' },
-        { id: 2, class: 'I', subject: 'Mathematics', title: 'Solving Quadratic Equations', chapter: 'Algebra', topic: 'Quadratic Formula', method: 'Activity', date: '2026-03-22', status: 'Planned' },
-    ]);
+    const [plans, setPlans] = useLocalStorage('academic_lesson_plans', []);
     const [filterClass, setFilterClass] = useState('I');
     const [filterSubject, setFilterSubject] = useState('Mathematics');
 
@@ -1055,7 +1040,7 @@ function LessonPlanTab() {
                         {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                     </select>
                     <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
-                        <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                        {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                 {!showCreate && <button className="btn btn-primary" onClick={() => setShowCreate(true)}><PlusCircle size={16}/> Create Lesson Plan</button>}
@@ -1153,19 +1138,12 @@ function LessonPlanTab() {
 
 // ======================== ASSIGNMENTS ========================
 function AssignmentsTab() {
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
-    const [assignments, setAssignments] = useLocalStorage('academic_assignments', [
-        { id: 1, title: 'Algebra Practice Set 1', class: 'I', section: 'A', subject: 'Mathematics', dueDate: '2026-03-28T10:00', status: 'Published', submissions: 28, total: 35, desc: 'Solve exercises 1-10 on page 42.' },
-        { id: 2, title: 'Essay on Environment', class: 'II', section: 'A', subject: 'English', dueDate: '2026-03-30T15:00', status: 'Draft', submissions: 0, total: 32, desc: 'Write a 200 word essay.' },
-    ]);
+    const [assignments, setAssignments] = useLocalStorage('academic_assignments', []);
 
     // Submissions mock data
-    const [allSubmissions, setAllSubmissions] = useLocalStorage('academic_submissions', [
-        { id: 101, assignmentId: 1, studentId: 'S001', studentName: 'Aarav Sharma', status: 'Submitted', file: 'aarav_algebra.pdf', submitDate: '2026-03-27T14:30', marks: null, feedback: '' },
-        { id: 102, assignmentId: 1, studentId: 'S002', studentName: 'Diya Patel', status: 'Pending', file: null, submitDate: null, marks: null, feedback: '' },
-        { id: 103, assignmentId: 1, studentId: 'S003', studentName: 'Rohan Singh', status: 'Late', file: 'rohan_math_hw.jpg', submitDate: '2026-03-28T11:45', marks: null, feedback: '' },
-        { id: 104, assignmentId: 1, studentId: 'S004', studentName: 'Ananya Verma', status: 'Graded', file: 'ananya_hw1.pdf', submitDate: '2026-03-26T09:10', marks: 32, feedback: 'Good work, but check question 5.' },
-    ]);
+    const [allSubmissions, setAllSubmissions] = useLocalStorage('academic_submissions', []);
     
     const [filterClass, setFilterClass] = useState('I');
     const [filterSubject, setFilterSubject] = useState('Mathematics');
@@ -1289,7 +1267,7 @@ function AssignmentsTab() {
                         {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                     </select>
                     <select className="form-select" style={{ width: 160 }} value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
-                        <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                        {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                 {!showCreate && <button className="btn btn-primary" onClick={() => setShowCreate(true)}><PlusCircle size={16}/> Create Assignment</button>}
@@ -1307,7 +1285,7 @@ function AssignmentsTab() {
                             <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}>{getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
-                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                                {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select></div>
                         <div className="form-group"><label className="form-label">Assignment Title <span className="required">*</span></label>
                             <input type="text" className="form-input" required placeholder="e.g. Chapter 1 Exercises" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
@@ -1385,120 +1363,13 @@ function AssignmentsTab() {
 
 // ======================== ATTENDANCE ========================
 // ======================== ATTENDANCE ========================
-function AttendanceTab() {
-    const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
-    
-    // Using a more structured dummy data that can be filtered by class/section
-    const [allStudents, setAllStudents] = useLocalStorage('academic_attendance_records', [
-        { id: 1, class: 'I', section: 'A', name: 'Aarav Sharma', rollNo: '01', status: 'P', remarks: '' },
-        { id: 2, class: 'I', section: 'A', name: 'Diya Patel', rollNo: '02', status: 'P', remarks: '' },
-        { id: 3, class: 'I', section: 'A', name: 'Kavya Gupta', rollNo: '03', status: 'A', remarks: 'Fever' },
-        { id: 4, class: 'I', section: 'A', name: 'Rohan Singh', rollNo: '04', status: 'P', remarks: '' },
-        { id: 5, class: 'I', section: 'B', name: 'Ananya Verma', rollNo: '05', status: 'L', remarks: 'Family function' },
-        { id: 6, class: 'I', section: 'B', name: 'Ishaan Roy', rollNo: '06', status: 'P', remarks: '' },
-    ]);
-    
-    const [filterClass, setFilterClass] = useState('I');
-    const [filterSection, setFilterSection] = useState('A');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-    // Derived state for current view
-    const currentStudents = allStudents.filter(s => s.class === filterClass && s.section === filterSection);
-
-    const markAll = (status) => {
-        setAllStudents(prev => prev.map(s => (s.class === filterClass && s.section === filterSection) ? { ...s, status, remarks: status === 'P' ? '' : s.remarks } : s));
-    };
-
-    const toggle = (id, status) => {
-        setAllStudents(prev => prev.map(s => s.id === id ? { ...s, status, remarks: status === 'P' ? '' : s.remarks } : s));
-    };
-
-    const updateRemarks = (id, remarks) => {
-        setAllStudents(prev => prev.map(s => s.id === id ? { ...s, remarks } : s));
-    };
-
-    const handleSave = () => {
-        customAlert('Attendance saved successfully!', 'Success', 'success');
-    };
-
-    const counts = { 
-        P: currentStudents.filter(s => s.status === 'P').length, 
-        A: currentStudents.filter(s => s.status === 'A').length, 
-        L: currentStudents.filter(s => s.status === 'L').length 
-    };
-
-    return (
-        <div className="animate-fade-in">
-            <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div className="form-group"><label className="form-label">Class</label>
-                        <select className="form-select" style={{ width: 140 }} value={filterClass} onChange={e => setFilterClass(e.target.value)}>
-                            {ALL_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
-                        </select>
-                    </div>
-                    <div className="form-group"><label className="form-label">Section</label>
-                        <select className="form-select" style={{ width: 100 }} value={filterSection} onChange={e => setFilterSection(e.target.value)}>
-                            {getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                    <div className="form-group"><label className="form-label">Date</label>
-                        <input type="date" className="form-input" style={{ width: 160 }} value={date} onChange={e => setDate(e.target.value)} />
-                    </div>
-                </div>
-                <button className="btn btn-outline" onClick={() => markAll('P')}><CheckCircle2 size={16}/> Mark All Present</button>
-            </div>
-            
-            <div className="acad-stats-row" style={{ marginBottom: 16 }}>
-                <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--success-light)' }}><CheckCircle2 size={24} style={{ color: 'var(--success)' }}/></div><div className="acad-stat-info"><h4>{counts.P}</h4><p>Present</p></div></div>
-                <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--danger-light)' }}><XCircle size={24} style={{ color: 'var(--danger)' }}/></div><div className="acad-stat-info"><h4>{counts.A}</h4><p>Absent</p></div></div>
-                <div className="acad-stat-card"><div className="acad-stat-icon" style={{ background: 'var(--warning-light)' }}><Calendar size={24} style={{ color: 'var(--warning)' }}/></div><div className="acad-stat-info"><h4>{counts.L}</h4><p>Leave</p></div></div>
-            </div>
-            
-            <div className="table-responsive">
-                <table className="data-table">
-                    <thead><tr><th>Roll No</th><th>Student Name</th><th>Present</th><th>Absent</th><th>Leave</th><th>Remarks</th></tr></thead>
-                    <tbody>
-                        {currentStudents.length > 0 ? currentStudents.map(s => (
-                            <tr key={s.id}>
-                                <td>{s.rollNo}</td>
-                                <td className="fw-600">{s.name}</td>
-                                {['P', 'A', 'L'].map(st => (
-                                    <td key={st}>
-                                        <input type="radio" name={`att-${s.id}`} checked={s.status === st} onChange={() => toggle(s.id, st)} style={{ accentColor: st === 'P' ? 'var(--success)' : st === 'A' ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', width: 18, height: 18 }}/>
-                                    </td>
-                                ))}
-                                <td>
-                                    <input 
-                                        type="text" 
-                                        className="form-input" 
-                                        style={{ width: '100%', padding: '4px 8px', fontSize: '0.85rem', opacity: s.status === 'P' ? 0.3 : 1 }} 
-                                        placeholder={s.status === 'P' ? 'N/A' : 'Add remarks (optional)'} 
-                                        value={s.remarks} 
-                                        onChange={e => updateRemarks(s.id, e.target.value)}
-                                        disabled={s.status === 'P'}
-                                    />
-                                </td>
-                            </tr>
-                        )) : (
-                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No students found for this class and section.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-primary" onClick={handleSave}><Save size={16}/> Save Attendance</button>
-            </div>
-        </div>
-    );
-}
 
 // ======================== PERFORMANCE ========================
 function PerformanceTab() {
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
-    const [assessments, setAssessments] = useLocalStorage('academic_assessments', [
-        { id: 1, name: 'Unit Test 1', class: 'I', section: 'A', subject: 'Mathematics', maxMarks: 50, date: '2026-02-15', marks: { 'S001': 45, 'S002': 38, 'S003': 30 } },
-        { id: 2, name: 'Mid-Term Class Test', class: 'II', section: 'B', subject: 'Science', maxMarks: 100, date: '2026-03-01', marks: {} },
-    ]);
+    const [assessments, setAssessments] = useLocalStorage('academic_assessments', []);
 
     const DUMMY_STUDENTS = [
         { id: 'S001', name: 'Aarav Sharma', roll: '01' },
@@ -1594,7 +1465,7 @@ function PerformanceTab() {
                             <select className="form-select" required value={form.section} onChange={e => setForm({...form, section: e.target.value})}>{getSectionsForClass(sel?.class || form?.class || filter?.class || 'I').map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
-                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Computer Science</option>
+                                {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select></div>
                         
                         <div className="form-group"><label className="form-label">Date of Assessment <span className="required">*</span></label>
@@ -1647,12 +1518,9 @@ function PerformanceTab() {
 // ======================== STUDY MATERIALS ========================
 // ======================== STUDY MATERIALS ========================
 function StudyMaterialsTab() {
+    const { ALL_SUBJECTS } = useAcademicSubjectsData();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
-    const [materials, setMaterials] = useLocalStorage('academic_materials', [
-        { id: 1, title: 'Algebra Notes Ch.1', class: 'Grade 3', subject: 'Mathematics', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Mrs. Sharma', date: '2026-03-15', url: null, fileName: 'algebra_notes.pdf' },
-        { id: 2, title: 'Plant Biology Video', class: 'Grade 2', subject: 'Science', type: 'Video Link', visibility: 'Specific Section', uploadedBy: 'Mr. Roy', date: '2026-03-18', url: 'https://youtube.com/watch?v=123', fileName: null },
-        { id: 3, title: 'English Grammar PPT', class: 'Grade 1', subject: 'English', type: 'Presentation', visibility: 'All Students', uploadedBy: 'Ms. Gupta', date: '2026-03-20', url: null, fileName: 'grammar.pptx' },
-    ]);
+    const [materials, setMaterials] = useLocalStorage('academic_materials', []);
     const [isUploading, setIsUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [form, setForm] = useState({ title: '', class: '', subject: '', type: 'Notes / PDF', visibility: 'All Students', uploadedBy: 'Admin', videoUrl: '' });
@@ -1709,7 +1577,7 @@ function StudyMaterialsTab() {
                         <div className="form-group"><label className="form-label">Subject <span className="required">*</span></label>
                             <select className="form-select" required value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}>
                                 <option value="">Select Subject</option>
-                                <option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Social Science</option><option>Computer Science</option>
+                                {ALL_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select></div>
                         <div className="form-group"><label className="form-label">Visibility <span className="required">*</span></label>
                             <select className="form-select" required value={form.visibility} onChange={e => setForm({...form, visibility: e.target.value})}>
@@ -1799,13 +1667,7 @@ function StudyMaterialsTab() {
 
 // ======================== PROMOTION ========================
 function PromotionTab() {
-    const [students, setStudents] = useLocalStorage('academic_promotion_students', [
-        { id: 1, name: 'Aarav Sharma', rollNo: '01', result: 'Pass', attendance: '92%', selected: true, status: 'Pending' },
-        { id: 2, name: 'Diya Patel', rollNo: '02', result: 'Pass', attendance: '88%', selected: true, status: 'Pending' },
-        { id: 3, name: 'Kavya Gupta', rollNo: '03', result: 'Fail', attendance: '65%', selected: false, status: 'Pending' },
-        { id: 4, name: 'Rohan Singh', rollNo: '04', result: 'Pass', attendance: '78%', selected: true, status: 'Pending' },
-        { id: 5, name: 'Ananya Verma', rollNo: '05', result: 'Borderline', attendance: '72%', selected: false, status: 'Pending' },
-    ]);
+    const [students, setStudents] = useLocalStorage('academic_promotion_students', []);
     const [retentionModal, setRetentionModal] = useState({ open: false, student: null, reason: 'Failed Academically', remarks: '' });
 
     const toggleSelect = (id) => setStudents(prev => prev.map(s => s.id === id && s.status === 'Pending' ? { ...s, selected: !s.selected } : s));
@@ -2322,16 +2184,7 @@ function PublicContentTab() {
 
 // ======================== SETTINGS ========================
 function SettingsTab() {
-    const [config, setConfig] = useLocalStorage('academic_settings', {
-        gradingScale: 'A+, A, B+, B, C, D, F',
-        passingMarks: 35,
-        attendanceThreshold: 75,
-        periodDuration: 45,
-        workingDays: 'Mon–Sat',
-        timetableLock: 'Unlocked',
-        latePolicy: 'Accept',
-        promoSuggest: 'Enabled'
-    });
+    const [config, setConfig] = useLocalStorage('academic_settings', {});
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -2418,7 +2271,6 @@ const TABS = [
     { id: 'syllabus', label: 'Syllabus', icon: BookMarked },
     { id: 'lesson-plan', label: 'Lesson Plan', icon: PencilLine },
     { id: 'assignments', label: 'Assignments', icon: ClipboardCheck },
-    { id: 'attendance', label: 'Attendance', icon: CalendarCheck },
     { id: 'performance', label: 'Performance', icon: BarChart3 },
     { id: 'materials', label: 'Materials', icon: FolderOpen },
     { id: 'promotion', label: 'Promotion', icon: ArrowUpRight },
@@ -2440,7 +2292,7 @@ export default function Academics() {
             return !hidden.includes(t.id);
         }
         if (currentRole === 'Student') {
-            const hidden = ['year', 'classes', 'subjects', 'teachers', 'lesson-plan', 'attendance', 'performance', 'promotion', 'settings', 'public-content', 'reports'];
+            const hidden = ['year', 'classes', 'subjects', 'teachers', 'lesson-plan', 'performance', 'promotion', 'settings', 'public-content', 'reports'];
             return !hidden.includes(t.id);
         }
         return true;
@@ -2487,7 +2339,6 @@ export default function Academics() {
                         <Route path="syllabus" element={<SyllabusTab />} />
                         <Route path="lesson-plan" element={<LessonPlanTab />} />
                         <Route path="assignments" element={<AssignmentsTab />} />
-                        <Route path="attendance" element={<AttendanceTab />} />
                         <Route path="performance" element={<PerformanceTab />} />
                         <Route path="materials" element={<StudyMaterialsTab />} />
                         <Route path="promotion" element={<PromotionTab />} />

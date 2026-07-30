@@ -2,7 +2,7 @@ import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getActiveClasses } from '../data/mockData';
+;
 import {
     LayoutDashboard, Megaphone, MessageSquare, Users, FileUp, Mail,
     Video, CheckSquare, Clipboard, Activity, Settings, Save, PlusCircle,

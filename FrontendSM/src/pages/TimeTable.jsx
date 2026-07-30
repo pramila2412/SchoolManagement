@@ -7,20 +7,9 @@ import './TimeTable.css';
 
 export default function TimeTable() {
     const [activeTab, setActiveTab] = useState('view'); // 'view', 'generate', 'substitution'
-    const [timetable, setTimetable] = useLocalStorage('timetable_schedule', {
-        class: 'VII-A',
-        schedule: [
-            { period: 1, time: '08:30 - 09:15', monday: 'Math', tuesday: 'English', wednesday: 'Science', thursday: 'SST', friday: 'Hindi' },
-            { period: 2, time: '09:15 - 10:00', monday: 'Science', tuesday: 'Math', wednesday: 'English', thursday: 'Hindi', friday: 'SST' },
-            { period: 3, time: '10:00 - 10:45', monday: 'English', tuesday: 'Science', wednesday: 'Math', thursday: 'Computer', friday: 'Games' },
-            { period: 4, time: '11:00 - 11:45', monday: 'Hindi', tuesday: 'SST', wednesday: 'Computer', thursday: 'Math', friday: 'Science' },
-        ]
-    });
+    const [timetable, setTimetable] = useLocalStorage('timetable_schedule', {});
 
-    const [substitutions, setSubstitutions] = useLocalStorage('timetable_substitutions', [
-        { id: 1, absentTeacher: 'Mr. Sharma', class: 'VII-A', period: 1, substitute: 'Ms. Verma', status: 'Approved' },
-        { id: 2, absentTeacher: 'Mrs. Gupta', class: 'VIII-B', period: 3, substitute: 'Mr. Roy', status: 'Pending' }
-    ]);
+    const [substitutions, setSubstitutions] = useLocalStorage('timetable_substitutions', []);
 
     const handleDeleteSubstitution = async (id) => {
         if (await customConfirm("Delete this substitution record?")) {

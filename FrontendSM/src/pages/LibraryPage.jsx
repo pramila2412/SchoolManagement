@@ -8,21 +8,14 @@ export default function LibraryPage() {
     const [activeTab, setActiveTab] = useState('books'); // 'books', 'distributed'
     const [bookSearch, setBookSearch] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
-    const [books, setBooks] = useLocalStorage('library_books', [
-        { id: 1, title: 'Concept of Physics Vol 1', author: 'H.C. Verma', category: 'Science', shelf: 'S-12', accNo: 'B-1024', status: 'Available' },
-        { id: 2, title: 'Higher Engineering Mathematics', author: 'B.S. Grewal', category: 'Math', shelf: 'M-05', accNo: 'B-1085', status: 'Issued' },
-        { id: 3, title: 'Wings of Fire', author: 'A.P.J. Abdul Kalam', category: 'Biography', shelf: 'G-01', accNo: 'B-1120', status: 'Available' }
-    ]);
+    const [books, setBooks] = useLocalStorage('library_books', []);
     const filteredBooks = books.filter(b => {
         const matchSearch = !bookSearch || `${b.title} ${b.author} ${b.accNo}`.toLowerCase().includes(bookSearch.toLowerCase());
         const matchCat = !categoryFilter || b.category === categoryFilter;
         return matchSearch && matchCat;
     });
 
-    const [issuedBooks, setIssuedBooks] = useLocalStorage('library_issued', [
-        { id: 1, bookTitle: 'Higher Engineering Mathematics', issuedTo: 'Rahul Kumar', type: 'Student', class: 'XII-A', issueDate: '2026-03-10', dueDate: '2026-03-25' },
-        { id: 2, bookTitle: 'History of India', issuedTo: 'Ms. Anita', type: 'Staff', class: '-', issueDate: '2026-03-05', dueDate: '2026-03-20' }
-    ]);
+    const [issuedBooks, setIssuedBooks] = useLocalStorage('library_issued', []);
 
     return (
         <div className="library-page animate-fade-in">

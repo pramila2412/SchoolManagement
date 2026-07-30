@@ -4,7 +4,7 @@ import {
     Users, PhoneCall, BookOpen, Send, AlertTriangle, Save, Plus,
     LayoutDashboard, Package, CalendarClock, FileText, BarChart3,
     LogIn, LogOut, CheckCircle, Clock, Eye, Edit, X, Search,
-    ArrowRight, Phone, HelpCircle, Trash2, Printer
+    ArrowRight, Phone, HelpCircle, Trash2, Printer, UserCheck
 } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
@@ -15,7 +15,7 @@ import './FrontOffice.css';
 const API = '/api/frontoffice';
 
 /* ─── tiny helpers ─── */
-const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const fmt = d => d ? new Date(d).toLocaleDateString('en-IN', {}) : '—';
 const fmtTime = d => d ? new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
 const Badge = ({ text, variant = 'info' }) => <span className={`badge badge-${variant}`}>{text}</span>;
 const statusColor = s => ({ 'Checked In':'warning','Pending':'warning','Scheduled':'info','New':'info','Assigned':'info',
@@ -24,14 +24,29 @@ const statusColor = s => ({ 'Checked In':'warning','Pending':'warning','Schedule
     'Converted':'success','Escalated':'danger','Confirmed':'success','Dispatched':'info','Received':'warning','Delivered':'success',
 }[s] || 'info');
 
-export default function FrontOffice() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get('tab') || 'dashboard';
-    const { ALL_CLASSES } = useAcademicClassesData();
-    const [activeTab, setActiveTab] = useState(tabFromUrl);
+const TABS_MAP = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: 'dashboard' },
+    { id: 'visitors', label: 'Visitors', icon: Users, path: 'visitors' },
+    { id: 'calls', label: 'Call Log', icon: PhoneCall, path: 'calls' },
+    { id: 'enquiries', label: 'Enquiries', icon: HelpCircle, path: 'enquiries' },
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle, path: 'complaints' },
+    { id: 'postal', label: 'Postal', icon: Package, path: 'postal' },
+    { id: 'appointments', label: 'Appointments', icon: CalendarClock, path: 'appointments' },
+    { id: 'documents', label: 'Documents', icon: FileText, path: 'documents' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, path: 'reports' }
+];
 
-    useEffect(() => { setActiveTab(searchParams.get('tab') || 'dashboard'); }, [searchParams]);
-    const switchTab = t => { setSearchParams({ tab: t }); setActiveTab(t); };
+export default function FrontOffice() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { ALL_CLASSES } = useAcademicClassesData();
+    
+    const currentPath = location.pathname.split('/').filter(Boolean).pop();
+    const activeTab = TABS_MAP.some(t => t.id === currentPath) ? currentPath : 'dashboard';
+
+    const handleNavigate = (path) => {
+        navigate(path);
+    };
 
     return (
         <div className="frontoffice-page animate-fade-in">

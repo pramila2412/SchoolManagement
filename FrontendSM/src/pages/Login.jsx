@@ -68,106 +68,43 @@ export default function LoginPage() {
             return;
         }
 
+        
         setLoading(true);
         try {
-            // Mocking API for Parent/Admin based on LoginType
-            // Dynamic Parent Login check from mzs_students
-            // If they entered a PAR- ID, auto-switch to parent logic even if they are on Admin tab
+            // Check if this is a parent login automatically based on PAR- prefix
             const isParentLogin = loginType === 'parent' || email.trim().toUpperCase().startsWith('PAR-');
-            
-            if (isParentLogin) {
-                if (loginType !== 'parent') setLoginType('parent');
-                const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-                const loginStr = email.trim().toLowerCase();
-                
-                // Find all children belonging to this parent ID or parentEmail
-                const parentChildren = globalStudents.filter(s => 
-                    (s.parentId && s.parentId.toLowerCase() === loginStr) || 
-                    (s.parentEmail && s.parentEmail.toLowerCase() === loginStr)
-                );
+            if (isParentLogin && loginType !== 'parent') setLoginType('parent');
 
-                if (parentChildren.length > 0) {
-                    // Accept the specific password OR 'password123' as a master fallback for testing
-                    const matchByPass = parentChildren.find(s => s.parentPassword === password || password === 'password123');
-                    
-                    if (matchByPass) {
-                        login({ 
-                            name: parentChildren[0].parentName || 'Parent / Guardian',
-                            id: parentChildren[0].parentId,
-                            parentId: parentChildren[0].parentId,
-                            parentEmail: parentChildren[0].parentEmail,
-                            role: 'Parent', 
-                            children: parentChildren.map(s => ({
-                                name: s.name,
-                                firstName: s.firstName,
-                                lastName: s.lastName,
-                                id: s.admissionNo || s.id, // Fallback to id if admissionNo is missing
-                                class: s.class,
-                                rollNo: s.rollNo,
-                                dateOfBirth: s.dateOfBirth,
-                                gender: s.gender,
-                                bloodGroup: s.bloodGroup,
-                                phone: s.phone,
-                                guardianPhone: s.guardianPhone,
-                                address: s.address,
-                                photoUrl: s.photoUrl,
-                                motherName: s.motherName
-                            })),
-                            firstLogin: matchByPass.firstLogin || false
-                        });
-                        setAttempts(0);
-                        return;
-                    }
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email.trim(), password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.message || 'Invalid credentials');
+                setAttempts(prev => prev + 1);
+                if (attempts + 1 >= 5) {
+                    setLockout(Date.now() + 15 * 60000); // 15 mins
+                    setError('Account locked. Please try again in 15 minutes.');
                 }
-
-                handleFailedAttempt();
+                setLoading(false);
                 return;
             }
 
-            // Check System Users from localStorage first
-            const savedUsers = localStorage.getItem('mzs_system_users');
-            if (savedUsers) {
-                const systemUsers = JSON.parse(savedUsers);
-                const portalUser = systemUsers.find(u => u.email === email && u.access === 'Enabled');
-                
-                if (portalUser) {
-                    // Check custom password if set, otherwise fallback to role-based default
-                    const validPassword = portalUser.password || 
-                        (portalUser.role.toLowerCase().includes('teacher') ? 'teacher123' : 
-                         portalUser.role.toLowerCase().includes('accountant') ? 'finance123' : 'admin123');
-                    
-                    if (password === validPassword) {
-                        login(portalUser);
-                        setAttempts(0);
-                        return;
-                    }
-                }
-            }
-
-            // Fallback: local credential check when backend is offline
-            const mockUsers = [
-                { email: 'superadmin@mountzion.edu', password: 'admin123', name: 'Super Admin', role: 'Super Admin' },
-                { email: 'admin@mountzion.edu', password: 'admin123', name: 'Dr. Sarah (Admin)', role: 'Admin' },
-                { email: 'teacher@mountzion.edu', password: 'teacher123', name: 'Rajesh (Teacher)', role: 'Teacher' },
-                { email: 'staff@mountzion.edu', password: 'staff123', name: 'Vijay (Staff)', role: 'Staff' },
-                { email: 'cms@mountzion.edu', password: 'cms123', name: 'CMS Admin', role: 'CMS Admin' }
-            ];
-
-            const found = mockUsers.find(u => u.email === email && u.password === password);
-            if (found) {
-                login(found);
-                setAttempts(0);
-            } else {
-                handleFailedAttempt();
-            }
-        } catch {
+            // Success
+            login(data.user, data.token);
+            setAttempts(0);
+        } catch (err) {
+            console.error('Login error:', err);
             setError('System error. Please try again later.');
         } finally {
             setLoading(false);
         }
     };
-
-    const handleFailedAttempt = () => {
+const handleFailedAttempt = () => {
         const nextAttempts = attempts + 1;
         setAttempts(nextAttempts);
         if (nextAttempts >= 5) {

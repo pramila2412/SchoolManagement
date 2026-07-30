@@ -16,11 +16,7 @@ import './Addons.css';
 
 // ======================== VISITORS ========================
 function VisitorsTab() {
-    const [visitors, setVisitors] = useLocalStorage('addons_visitors', [
-        { id: 1, name: 'Suresh Kumar', phone: '9876543210', purpose: 'Parent Visit', person: 'Principal', timeIn: '09:00 AM', timeOut: '10:30 AM', date: '2026-03-25' },
-        { id: 2, name: 'Amazon Delivery', phone: '9988776655', purpose: 'Delivery', person: 'Admin Office', timeIn: '10:15 AM', timeOut: '10:20 AM', date: '2026-03-25' },
-        { id: 3, name: 'Anita Singh', phone: '9876543211', purpose: 'Meeting', person: 'Class Teacher Gr-3', timeIn: '11:00 AM', timeOut: '-', date: '2026-03-25' }
-    ]);
+    const [visitors, setVisitors] = useLocalStorage('addons_visitors', []);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ name: '', phone: '', purpose: 'Meeting', person: '', date: new Date().toISOString().split('T')[0], timeIn: '' });
 
@@ -95,7 +91,7 @@ function GalleryTab() {
         { id: 3, name: 'Independence Day Celebration', description: 'Flag hoisting and cultural programme on 15th August.', category: 'Events', audience: 'All Users', status: 'Active', images: [] },
         { id: 4, name: 'Campus Aerial View', description: 'Drone shots of the school campus and facilities.', category: 'Campus', audience: 'Staff Only', status: 'Draft', images: [] }
     ];
-    const [albums, setAlbums] = useLocalStorage('addons_gallery_v2', defaultAlbums);
+    const [albums, setAlbums] = useLocalStorage('addons_gallery_v2', []);
     const [showForm, setShowForm] = useState(false);
     const [editingAlbum, setEditingAlbum] = useState(null);
     const [openAlbum, setOpenAlbum] = useState(null);
@@ -425,7 +421,7 @@ function AlumniTab() {
         { id: 4, name: 'Rahul Gupta', batch: '2018', course: 'Science', profession: 'Doctor', employer: 'AIIMS', location: 'Patna', phone: '9876512345', email: 'rahul.gupta@gmail.com', address: '23, Boring Road, Patna 800001', photo: '' },
         { id: 5, name: 'Sneha Kumari', batch: '2021', course: 'Commerce', profession: 'Bank PO', employer: 'SBI', location: 'Purnea', phone: '9765432100', email: 'sneha.k@gmail.com', address: '56, Station Road, Purnea 854301', photo: '' }
     ];
-    const [alumni, setAlumni] = useLocalStorage('addons_alumni_v2', defaultAlumni);
+    const [alumni, setAlumni] = useLocalStorage('addons_alumni_v2', []);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [viewProfile, setViewProfile] = useState(null);
@@ -683,12 +679,7 @@ function BirthdaysTab() {
     const [classFilter, setClassFilter] = useState('All');
     const [sectionFilter, setSectionFilter] = useState('All');
     const [showNotifConfig, setShowNotifConfig] = useState(false);
-    const [notifSettings, setNotifSettings] = useLocalStorage('addons_birthday_notifications', {
-        dailyAdminAlert: true,
-        classTeacherAlert: true,
-        studentPortalHighlight: true,
-        parentSms: false
-    });
+    const [notifSettings, setNotifSettings] = useLocalStorage('addons_birthday_notifications', {});
     const [notifDismissed, setNotifDismissed] = useState(false);
 
     const today = new Date();
@@ -1009,7 +1000,7 @@ function MessagesTab() {
         { id: 4, title: 'Science Lab Safety Orientation', content: 'Students of Class IX and X are required to attend a mandatory science lab safety orientation on Monday, June 9th.\n\nVenue: Physics Lab\nTime: 2:00 PM - 3:30 PM\n\nPlease wear lab coats.', to: 'Specific Class', targetClass: 'IX', sender: 'HOD Science', date: '2026-06-02', time: '02:00 PM', priority: 'Important', delivered: 85, read: 60, isRead: false, replies: [] },
         { id: 5, title: 'Library Book Return Notice', content: 'Dear Students,\n\nAll library books issued during May must be returned by June 10, 2026. Failure to return will result in a fine and restriction on future borrowing.\n\nLibrary Hours: 9 AM - 4 PM', to: 'All Students', sender: 'Librarian', date: '2026-06-01', time: '08:30 AM', priority: 'Normal', delivered: 450, read: 300, isRead: true, replies: [] }
     ];
-    const [messages, setMessages] = useLocalStorage('addons_messages_v2', defaultMessages);
+    const [messages, setMessages] = useLocalStorage('addons_messages_v2', []);
     const [showCompose, setShowCompose] = useState(false);
     const [viewMessage, setViewMessage] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
@@ -1371,49 +1362,11 @@ function MessagesTab() {
 
 // ======================== FORMS ========================
 function FormsTab() {
-    const defaultForms = [
-        { id: 1, name: 'Annual Transport Feedback', description: 'Collect parent feedback on school transport service quality and safety.', type: 'Feedback', audience: 'Parents', status: 'Active', createdAt: '2026-03-01',
-            fields: [
-                { id: 1, type: 'Text', label: 'Parent Name', placeholder: 'Enter your name', required: true, options: '' },
-                { id: 2, type: 'Dropdown', label: 'Overall Rating', placeholder: '', required: true, options: 'Excellent,Good,Average,Poor' },
-                { id: 3, type: 'Paragraph', label: 'Suggestions', placeholder: 'Share your suggestions...', required: false, options: '' }
-            ],
-            submissions: [
-                { id: 101, submittedBy: 'Rajesh Sharma', submittedAt: '2026-03-20 09:15 AM', data: { 'Parent Name': 'Rajesh Sharma', 'Overall Rating': 'Good', 'Suggestions': 'Please improve pickup timing in the morning.' } },
-                { id: 102, submittedBy: 'Priya Gupta', submittedAt: '2026-03-21 10:30 AM', data: { 'Parent Name': 'Priya Gupta', 'Overall Rating': 'Excellent', 'Suggestions': 'Very satisfied with the service.' } },
-                { id: 103, submittedBy: 'Amit Patel', submittedAt: '2026-03-22 02:45 PM', data: { 'Parent Name': 'Amit Patel', 'Overall Rating': 'Average', 'Suggestions': '' } }
-            ]
-        },
-        { id: 2, name: 'Teacher Device Request', description: 'Staff can request laptops, tablets, or projectors for classroom use.', type: 'Custom', audience: 'Staff', status: 'Active', createdAt: '2026-02-15',
-            fields: [
-                { id: 1, type: 'Text', label: 'Teacher Name', placeholder: 'Full name', required: true, options: '' },
-                { id: 2, type: 'Dropdown', label: 'Device Type', placeholder: '', required: true, options: 'Laptop,Tablet,Projector,Printer' },
-                { id: 3, type: 'Paragraph', label: 'Justification', placeholder: 'Why do you need this device?', required: true, options: '' },
-                { id: 4, type: 'Date', label: 'Required By', placeholder: '', required: false, options: '' }
-            ],
-            submissions: [
-                { id: 201, submittedBy: 'Mr. Sharma', submittedAt: '2026-03-22 11:00 AM', data: { 'Teacher Name': 'Mr. Sharma', 'Device Type': 'Laptop', 'Justification': 'Need for online class preparation', 'Required By': '2026-04-01' } }
-            ]
-        },
-        { id: 3, name: 'Science Fair Registration', description: 'Student registration form for the inter-school science exhibition.', type: 'Event Sign-up', audience: 'Students', status: 'Closed', createdAt: '2026-01-10',
-            fields: [
-                { id: 1, type: 'Text', label: 'Student Name', placeholder: 'Enter name', required: true, options: '' },
-                { id: 2, type: 'Email', label: 'Email', placeholder: 'student@email.com', required: true, options: '' },
-                { id: 3, type: 'Dropdown', label: 'Category', placeholder: '', required: true, options: 'Physics,Chemistry,Biology,Mathematics,Computer Science' },
-                { id: 4, type: 'Text', label: 'Project Title', placeholder: 'Enter project title', required: true, options: '' },
-                { id: 5, type: 'Paragraph', label: 'Abstract', placeholder: 'Brief description of your project...', required: false, options: '' }
-            ],
-            submissions: [
-                { id: 301, submittedBy: 'Aarav Sharma', submittedAt: '2026-01-15 09:00 AM', data: { 'Student Name': 'Aarav Sharma', 'Email': 'aarav@school.com', 'Category': 'Physics', 'Project Title': 'Solar Energy Model', 'Abstract': 'A working model demonstrating solar power generation.' } },
-                { id: 302, submittedBy: 'Diya Patel', submittedAt: '2026-01-16 10:30 AM', data: { 'Student Name': 'Diya Patel', 'Email': 'diya@school.com', 'Category': 'Biology', 'Project Title': 'Plant Growth Study', 'Abstract': 'Effect of music on plant growth.' } }
-            ]
-        }
-    ];
     const FIELD_TYPES = ['Text', 'Number', 'Email', 'Dropdown', 'Checkbox', 'Radio', 'Date', 'File Upload', 'Paragraph'];
     const FORM_TYPES = ['Survey', 'Registration', 'Feedback', 'Event Sign-up', 'Custom'];
     const AUDIENCES = ['All Users', 'Students', 'Parents', 'Staff', 'Teachers'];
 
-    const [forms, setForms] = useLocalStorage('addons_forms_v2', defaultForms);
+    const [forms, setForms] = useLocalStorage('addons_forms_v2', []);
     const [showBuilder, setShowBuilder] = useState(false);
     const [editingFormId, setEditingFormId] = useState(null);
     const [viewFormId, setViewFormId] = useState(null);
@@ -1790,17 +1743,11 @@ function FormsTab() {
 
 // ======================== DOWNLOADS ========================
 function DownloadsTab() {
-    const defaultDocs = [
-        { id: 1, title: 'Syllabus Class X (2026-27)', description: 'Updated CBSE syllabus for all subjects', category: 'Syllabus', audience: 'Students', filename: 'Syllabus_Class10_2026.pdf', size: '2.4 MB', uploadDate: '2026-03-20', publishDate: '2026-03-20', expiryDate: '2027-03-31', dls: 145, version: 1 },
-        { id: 2, title: 'Annual Holiday Calendar 2026', description: 'List of all school holidays and vacations', category: 'Circular', audience: 'All Users', filename: 'Holiday_Calendar_2026.pdf', size: '1.1 MB', uploadDate: '2026-01-05', publishDate: '2026-01-05', expiryDate: '2026-12-31', dls: 890, version: 2 },
-        { id: 3, title: 'Bus Route Map & Timings', description: 'Transport routes for the new academic session', category: 'Other', audience: 'Parents', filename: 'Transport_Route_Map.png', size: '4.5 MB', uploadDate: '2026-02-15', publishDate: '2026-02-15', expiryDate: '', dls: 320, version: 1 },
-        { id: 4, title: 'Medical Leave Form', description: 'Standard form to request medical leave', category: 'Form', audience: 'Staff', filename: 'Medical_Leave_Form.docx', size: '0.5 MB', uploadDate: '2026-04-01', publishDate: '2026-04-01', expiryDate: '', dls: 45, version: 1 }
-    ];
     
     const CATEGORIES = ['All', 'Circular', 'Form', 'Syllabus', 'Result', 'Timetable', 'Other'];
     const AUDIENCES = ['All Users', 'Students', 'Parents', 'Staff'];
 
-    const [docs, setDocs] = useLocalStorage('addons_downloads_v2', defaultDocs);
+    const [docs, setDocs] = useLocalStorage('addons_downloads_v2', []);
     const [showUpload, setShowUpload] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
@@ -2051,33 +1998,12 @@ function DownloadsTab() {
 // ======================== CERTIFICATES ========================
 // ======================== REGISTRATION ========================
 function RegistrationTab() {
-    const defaultEvents = [
-        { id: 1, title: 'Summer Coding Camp', description: 'A 2-week intensive coding bootcamp for beginners.', type: 'Workshop', deadline: '2026-05-01', capacity: 50, audience: 'Students', status: 'Open', createdAt: '2026-03-01',
-            fields: [
-                { id: 1, type: 'Text', label: 'Student Name', placeholder: '', required: true, options: '' },
-                { id: 2, type: 'Dropdown', label: 'Programming Experience', placeholder: '', required: true, options: 'None,Beginner,Intermediate' }
-            ],
-            registrants: [
-                { id: 101, submittedBy: 'Aarav Sharma', submittedAt: '2026-03-20 09:15 AM', status: 'Registered', data: { 'Student Name': 'Aarav Sharma', 'Programming Experience': 'None' } }
-            ]
-        },
-        { id: 2, title: 'Inter-School Debate', description: 'Annual debate competition.', type: 'Event', deadline: '2026-04-10', capacity: 2, audience: 'Students', status: 'Closed', createdAt: '2026-02-15',
-            fields: [
-                { id: 1, type: 'Text', label: 'Participant Name', placeholder: '', required: true, options: '' }
-            ],
-            registrants: [
-                { id: 201, submittedBy: 'Ananya Verma', submittedAt: '2026-03-10 10:00 AM', status: 'Registered', data: { 'Participant Name': 'Ananya Verma' } },
-                { id: 202, submittedBy: 'Karan Mehra', submittedAt: '2026-03-11 11:30 AM', status: 'Registered', data: { 'Participant Name': 'Karan Mehra' } },
-                { id: 203, submittedBy: 'Sneha Reddy', submittedAt: '2026-03-12 02:15 PM', status: 'Waitlisted', data: { 'Participant Name': 'Sneha Reddy' } }
-            ]
-        }
-    ];
 
     const EVENT_TYPES = ['Event', 'Workshop', 'Activity', 'General'];
     const AUDIENCES = ['All Users', 'Students', 'Parents', 'Staff'];
     const FIELD_TYPES = ['Text', 'Number', 'Email', 'Dropdown', 'Checkbox', 'Radio', 'Date', 'File Upload', 'Paragraph'];
 
-    const [events, setEvents] = useLocalStorage('addons_registrations_v2', defaultEvents);
+    const [events, setEvents] = useLocalStorage('addons_registrations_v2', []);
     const [showBuilder, setShowBuilder] = useState(false);
     const [viewEventId, setViewEventId] = useState(null);
     const [editingEventId, setEditingEventId] = useState(null);

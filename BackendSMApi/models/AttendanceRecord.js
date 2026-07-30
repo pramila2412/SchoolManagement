@@ -12,7 +12,6 @@ const attendanceRecordSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     class: { type: String, required: true },
     section: { type: String, required: true },
-    period: String,
     entries: [entrySchema],
     markedBy: { type: String, default: 'Admin' },
 }, { timestamps: true });

@@ -1,7 +1,8 @@
+import { useAcademicYears } from '../hooks/useAcademicYears';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save, PlusCircle } from 'lucide-react';
-import { getBatches, categories } from '../data/mockData';
+import { categories } from '../data/mockData';
 import { api } from '../utils/api';
 import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
@@ -19,6 +20,7 @@ const getActiveBatch = () => {
 };
 
 export default function AddStudent() {
+    const { years } = useAcademicYears();
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState('');
@@ -171,27 +173,7 @@ export default function AddStudent() {
         }
     };
 
-    // Generate Parent ID in PAR-YYYY-XXXXX format
-    const generateParentId = () => {
-        const year = new Date().getFullYear();
-        const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-        const existingParIds = globalStudents.map(s => s.parentId).filter(Boolean);
-        let seq = existingParIds.length + 1;
-        let parentId;
-        do {
-            parentId = `PAR-${year}-${String(seq).padStart(5, '0')}`;
-            seq++;
-        } while (existingParIds.includes(parentId));
-        return parentId;
-    };
 
-    // Generate random 8-char alphanumeric password
-    const generatePassword = () => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-        let pass = '';
-        for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        return pass;
-    };
 
     const validate = () => {
         const newErrors = {};
@@ -341,6 +323,8 @@ export default function AddStudent() {
                 parentId = parent.parentId;
                 parentPassword = parent.parentPassword;
             } else {
+                const generateParentId = () => 'PAR' + Math.floor(Math.random() * 90000 + 10000);
+                const generatePassword = () => Math.random().toString(36).slice(-8);
                 parentId = generateParentId();
                 parentPassword = generatePassword();
             }
@@ -565,9 +549,9 @@ export default function AddStudent() {
                         <h3 className="form-section-title">ADMISSION & ACADEMIC</h3>
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label">Batch <span className="required">*</span></label>
+                                <label className="form-label">Academic Year <span className="required">*</span></label>
                                 <select className={`form-select ${errors.batch ? 'error' : ''}`} name="batch" value={formData.batch} onChange={handleChange}>
-                                    {getBatches().map(b => <option key={b} value={b}>{b}</option>)}
+                                    {years.map(b => <option key={b} value={b}>{b}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

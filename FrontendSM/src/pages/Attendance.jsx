@@ -4,10 +4,19 @@ import { Link } from 'react-router-dom';
 import { Edit2, Eye, Check, X, Clock, Save, RotateCcw, BarChart2, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { customAlert } from '../utils/dialogs';
-import { getActiveClasses } from '../data/mockData';
+;
 import './Attendance.css';
 
 const API = '/api';
+
+const getFormattedDate = (offsetDays = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
 
 export default function Attendance() {
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
@@ -15,42 +24,54 @@ export default function Attendance() {
     const isTeacher = user?.role === 'Teacher';
 
     const [activeTab, setActiveTab] = useState('mark');
-    const [formData, setFormData] = useState({ class: '', section: '', period: 'Period 1', date: new Date().toISOString().split('T')[0] });
+    const [formData, setFormData] = useState({ class: '', section: '', date: getFormattedDate(0) });
     const [showListing, setShowListing] = useState(false);
     const [students, setStudents] = useState([]);
+    const [alreadyMarked, setAlreadyMarked] = useState(false);
     const [saving, setSaving] = useState(false);
     const [reportData, setReportData] = useState([]);
 
-    // Calculate 2-day restriction for Teachers
+    // Lock attendance for Teachers if it has already been marked
     let isReadOnly = false;
-    if (isTeacher && formData.date) {
-        const selectedDate = new Date(formData.date);
-        selectedDate.setHours(0,0,0,0);
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const diffTime = today.getTime() - selectedDate.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays > 2) {
-            isReadOnly = true;
-        }
+    if (isTeacher && alreadyMarked) {
+        isReadOnly = true;
     }
 
     const handleView = async (e) => {
         e.preventDefault();
         if (!formData.class || !formData.section) return await customAlert('Select class and section');
+        
+        const todayStr = getFormattedDate(0);
+        const minDateStr = getFormattedDate(-7);
+        
+        if (formData.date > todayStr) {
+            return await customAlert('Cannot mark attendance for future dates.');
+        }
+        if (formData.date < minDateStr) {
+            return await customAlert('Cannot mark attendance older than one week.');
+        }
+
         try {
             // Load students
-            const res = await fetch(`${API}/attendance/students?class=${encodeURIComponent(formData.class)}&section=${formData.section}`);
+            const res = await fetch(`${API}/attendance/students?class=${encodeURIComponent(formData.class)}&section=${encodeURIComponent(formData.section)}`);
             const list = await res.json();
+            
+            if (!Array.isArray(list)) {
+                console.error("List is not an array:", list);
+                return await customAlert('Failed to load students. Backend returned invalid format.');
+            }
+
             // Check if attendance exists for this date
-            const attRes = await fetch(`${API}/attendance?date=${formData.date}&class=${encodeURIComponent(formData.class)}&section=${formData.section}`);
+            const attRes = await fetch(`${API}/attendance?date=${formData.date}&class=${encodeURIComponent(formData.class)}&section=${encodeURIComponent(formData.section)}`);
             const existing = await attRes.json();
-            if (existing.length > 0 && existing[0].entries) {
+            if (Array.isArray(existing) && existing.length > 0 && existing[0].entries) {
                 const entryMap = {};
                 existing[0].entries.forEach(e => { entryMap[e.studentId] = e.status; });
                 setStudents(list.map(s => ({ ...s, status: entryMap[s.studentId] || 'Unmarked' })));
+                setAlreadyMarked(true);
             } else {
                 setStudents(list.map(s => ({ ...s, status: 'Unmarked' })));
+                setAlreadyMarked(false);
             }
             setShowListing(true);
         } catch (err) {
@@ -66,8 +87,9 @@ export default function Attendance() {
             await fetch(`${API}/attendance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ date: formData.date, class: formData.class, section: formData.section, period: formData.period, entries })
+                body: JSON.stringify({ date: formData.date, class: formData.class, section: formData.section, entries })
             });
+            setAlreadyMarked(true);
             await customAlert('Attendance saved!');
         } catch (err) { await customAlert('Failed to save'); }
         finally { setSaving(false); }
@@ -121,17 +143,11 @@ export default function Attendance() {
                                             {getSectionsForClass(formData?.class || 'I').map(s=><option key={s} value={s}>{s}</option>)}
                                         </select>
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Period</label>
-                                        <select className="form-select" value={formData.period} onChange={e=>setFormData({...formData,period:e.target.value})}>
-                                            {[...Array(8)].map((_,i)=><option key={i} value={`Period ${i+1}`}>Period {i+1}</option>)}
-                                        </select>
-                                    </div>
                                 </div>
                                 <div className="form-row date-row">
                                     <div className="form-group">
                                         <label className="form-label">Date</label>
-                                        <input type="date" className="form-input" value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} />
+                                        <input type="date" className="form-input" min={getFormattedDate(-7)} max={getFormattedDate(0)} value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} />
                                     </div>
                                 </div>
                                 <div className="form-actions">
@@ -191,7 +207,7 @@ export default function Attendance() {
                                 {students.length>0 && (
                                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:24}}>
                                         <div>
-                                            {isReadOnly && <span style={{color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 500}}>Teachers can only edit attendance within the last 2 days.</span>}
+                                            {isReadOnly && <span style={{color: 'var(--danger)', fontSize: '0.9rem', fontWeight: 500}}>Attendance is locked and cannot be edited by teachers once saved.</span>}
                                         </div>
                                         <button className="btn btn-primary" onClick={handleSave} disabled={saving || isReadOnly} style={{display:'flex',alignItems:'center',gap:8,padding:'12px 24px'}}>
                                             <Save size={18}/> {saving?'Saving...':'Save Attendance'}

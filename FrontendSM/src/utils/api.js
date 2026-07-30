@@ -1,16 +1,23 @@
 const API_BASE_URL = '/api';
 
+const getHeaders = (extraHeaders = {}) => {
+    const token = localStorage.getItem('authToken');
+    const headers = { ...extraHeaders };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+};
+
 export const api = {
     // Dashboard
     getDashboardStats: async () => {
-        const res = await fetch(`${API_BASE_URL}/dashboard/stats`);
+        const res = await fetch(`${API_BASE_URL}/dashboard/stats`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch stats');
         return res.json();
     },
 
     // Students
     getStudents: async () => {
-        const res = await fetch(`${API_BASE_URL}/students?status=All`);
+        const res = await fetch(`${API_BASE_URL}/students?status=All`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch students');
         return res.json();
     },
@@ -18,25 +25,29 @@ export const api = {
         let url = `${API_BASE_URL}/students?`;
         if (classFilter && classFilter !== 'All Classes') url += `class=${encodeURIComponent(classFilter)}&`;
         if (sectionFilter && sectionFilter !== 'All Sections') url += `section=${encodeURIComponent(sectionFilter)}&`;
-        if (classFilter !== 'All Classes' && !classFilter.includes('Class')) {
-           // Ensure format matches DB
-           // Reference DB seems to use "Grade 1" or "Nursery" or just numbers.
-           // `routes/students.js` does direct match `if (cls) filter.class = cls;`
-           // Based on Admission form it's `Grade X` but Students page uses `Nursery`, `I`, `X` etc.
-        }
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch filtered students');
         return res.json();
     },
     getStudentById: async (id) => {
-        const res = await fetch(`${API_BASE_URL}/students/${id}`);
+        const res = await fetch(`${API_BASE_URL}/students/${id}`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch student');
+        return res.json();
+    },
+    deleteStudent: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/students/${id}`, { method: 'DELETE', headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to delete student');
+        return res.json();
+    },
+    hardDeleteStudent: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/students/${id}/hard`, { method: 'DELETE', headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to permanently delete student');
         return res.json();
     },
     createStudent: async (data) => {
         const res = await fetch(`${API_BASE_URL}/students`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) {
@@ -48,7 +59,7 @@ export const api = {
     updateStudent: async (id, data) => {
         const res = await fetch(`${API_BASE_URL}/students/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) {
@@ -60,44 +71,75 @@ export const api = {
 
     // Finance
     getFeeCategories: async () => {
-        const res = await fetch(`${API_BASE_URL}/finance/categories`);
+        const res = await fetch(`${API_BASE_URL}/finance/categories`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch fee categories');
         return res.json();
     },
     createFeeCategory: async (data) => {
         const res = await fetch(`${API_BASE_URL}/finance/categories`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to create fee category');
         return res.json();
     },
     getInvoices: async () => {
-        const res = await fetch(`${API_BASE_URL}/finance/invoices`);
+        const res = await fetch(`${API_BASE_URL}/finance/invoices`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch invoices');
         return res.json();
     },
     updateInvoiceStatus: async (id, status) => {
         const res = await fetch(`${API_BASE_URL}/finance/invoices/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ status }),
         });
         if (!res.ok) throw new Error('Failed to update invoice');
         return res.json();
     },
+    getFeeStructures: async () => {
+        const res = await fetch(`${API_BASE_URL}/finance/fee-structures`, { headers: getHeaders() });
+        if (!res.ok) throw new Error('Failed to fetch fee structures');
+        return res.json();
+    },
+    createFeeStructure: async (data) => {
+        const res = await fetch(`${API_BASE_URL}/finance/fee-structures`, {
+            method: 'POST',
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to create fee structure');
+        return res.json();
+    },
+    updateFeeStructure: async (id, data) => {
+        const res = await fetch(`${API_BASE_URL}/finance/fee-structures/${id}`, {
+            method: 'PUT',
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('Failed to update fee structure');
+        return res.json();
+    },
+    deleteFeeStructure: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/finance/fee-structures/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to delete fee structure');
+        return res.json();
+    },
 
     // Concessions
     getConcessions: async () => {
-        const res = await fetch(`${API_BASE_URL}/concessions`);
+        const res = await fetch(`${API_BASE_URL}/concessions`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch concessions');
         return res.json();
     },
     createConcession: async (data) => {
         const res = await fetch(`${API_BASE_URL}/concessions`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to create concession');
@@ -106,6 +148,7 @@ export const api = {
     deleteConcession: async (id) => {
         const res = await fetch(`${API_BASE_URL}/concessions/${id}`, {
             method: 'DELETE',
+            headers: getHeaders()
         });
         if (!res.ok) throw new Error('Failed to delete concession');
         return res.json();
@@ -115,21 +158,21 @@ export const api = {
     submitAdmissionApplication: async (data) => {
         const res = await fetch(`${API_BASE_URL}/admission/apply`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to submit application');
         return res.json();
     },
     getAdmissionApplications: async () => {
-        const res = await fetch(`${API_BASE_URL}/admission/applications`);
+        const res = await fetch(`${API_BASE_URL}/admission/applications`, { headers: getHeaders() });
         if (!res.ok) throw new Error('Failed to fetch applications');
         return res.json();
     },
     updateAdmissionApplicationStatus: async (id, data) => {
         const res = await fetch(`${API_BASE_URL}/admission/applications/${id}/status`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data),
         });
         if (!res.ok) throw new Error('Failed to update application status');
@@ -138,7 +181,7 @@ export const api = {
     updateAdmissionApplicationDocuments: async (id, documents) => {
         const res = await fetch(`${API_BASE_URL}/admission/applications/${id}/documents`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ documents }),
         });
         if (!res.ok) throw new Error('Failed to update application documents');

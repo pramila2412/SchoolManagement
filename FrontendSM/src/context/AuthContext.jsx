@@ -58,15 +58,19 @@ export function AuthProvider({ children }) {
         };
     }, [user]);
 
-    const login = (userData) => {
+    const login = (userData, token) => {
         setUser(userData);
         localStorage.setItem('authUser', JSON.stringify(userData));
+        if (token) {
+            localStorage.setItem('authToken', token);
+        }
         localStorage.setItem('authLastActivity', Date.now().toString());
     };
 
     const logout = () => {
         setUser(null);
         localStorage.removeItem('authUser');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('authLastActivity');
     };
 

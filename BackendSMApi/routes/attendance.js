@@ -28,15 +28,14 @@ router.get('/', async (req, res) => {
 // Save / update attendance
 router.post('/', async (req, res) => {
     try {
-        const { date, class: cls, section, period, entries } = req.body;
+        const { date, class: cls, section, entries } = req.body;
         const existing = await AttendanceRecord.findOne({ date: new Date(date), class: cls, section });
         if (existing) {
             existing.entries = entries;
-            existing.period = period;
             await existing.save();
             return res.json(existing);
         }
-        const record = await AttendanceRecord.create({ date: new Date(date), class: cls, section, period, entries });
+        const record = await AttendanceRecord.create({ date: new Date(date), class: cls, section, entries });
         res.status(201).json(record);
     } catch (e) { res.status(400).json({ error: e.message }); }
 });

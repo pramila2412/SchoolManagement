@@ -16,17 +16,12 @@ import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 import { customAlert, customConfirm } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
-import { getActiveClasses } from '../data/mockData';
+;
 import './Admission.css';
 
 // ======================== ENQUIRY ========================
 function EnquiryTab() {
-    const [enquiries, setEnquiries] = useLocalStorage('admission_enquiries', [
-        { id: 1, studentName: 'Rahul Kumar', parentName: 'Mr. Suresh Kumar', phone: '9876543210', email: 'suresh@email.com', class: 'Grade 1', source: 'Walk-in', status: 'New', date: '2026-03-20' },
-        { id: 2, studentName: 'Priya Singh', parentName: 'Mrs. Anita Singh', phone: '9876543211', email: 'anita@email.com', class: 'Grade 3', source: 'Online', status: 'Contacted', date: '2026-03-18' },
-        { id: 3, studentName: 'Arjun Patel', parentName: 'Mr. Rajesh Patel', phone: '9876543212', email: 'rajesh@email.com', class: 'Grade 2', source: 'Referral', status: 'Follow-up', date: '2026-03-15' },
-        { id: 4, studentName: 'Meera Joshi', parentName: 'Mrs. Kavita Joshi', phone: '9876543213', email: 'kavita@email.com', class: 'Grade 1', source: 'Phone', status: 'Converted', date: '2026-03-10' },
-    ]);
+    const [enquiries, setEnquiries] = useLocalStorage('admission_enquiries', []);
     const [form, setForm] = useState({ studentName: '', parentName: '', phone: '', email: '', class: '', source: 'Walk-in', notes: '' });
     const [showForm, setShowForm] = useState(false);
 
@@ -237,15 +232,7 @@ function ApplicationTab() {
 
 // ======================== DOCUMENTS ========================
 function DocumentsTab() {
-    const [docs, setDocs] = useLocalStorage('admission_documents', [
-        { name: 'Birth Certificate', format: 'PDF / JPG / PNG', mandatory: true, status: 'Verified' },
-        { name: 'Student Photograph', format: 'JPG / PNG', mandatory: true, status: 'Uploaded' },
-        { name: 'ID Proof (Parent)', format: 'PDF / JPG', mandatory: true, status: 'Pending' },
-        { name: 'Transfer Certificate', format: 'PDF / JPG', mandatory: false, status: 'Not Uploaded' },
-        { name: 'Address Proof', format: 'PDF / JPG', mandatory: false, status: 'Not Uploaded' },
-        { name: 'Previous Marksheet', format: 'PDF / JPG', mandatory: false, status: 'Uploaded' },
-        { name: 'Caste Certificate', format: 'PDF / JPG', mandatory: false, status: 'Not Uploaded' },
-    ]);
+    const [docs, setDocs] = useLocalStorage('admission_documents', []);
     const statusBadge = (s) => s === 'Verified' ? 'badge-success' : s === 'Uploaded' ? 'badge-info' : s === 'Pending' ? 'badge-warning' : 'badge-draft';
     const handleUpload = (idx) => { const input = document.createElement('input'); input.type='file'; input.accept='.pdf,.jpg,.jpeg,.png'; input.onchange = async () => { if(input.files[0]) { setDocs(prev => prev.map((d,i) => i===idx ? {...d, status:'Uploaded'} : d)); await customAlert(`"${docs[idx].name}" uploaded successfully!`); } }; input.click(); };
     const handleVerify = async (idx) => { setDocs(prev => prev.map((d,i) => i===idx ? {...d, status:'Verified'} : d)); await customAlert(`"${docs[idx].name}" has been verified.`); };
@@ -483,10 +470,7 @@ function ReviewTab() {
 
 // ======================== FEES ========================
 function FeesTab() {
-    const [feeRecords, setFeeRecords] = useLocalStorage('admission_fee_records', [
-        { id: 1, name: 'Arjun Patel', class: 'Grade 2-A', admissionFee: 5000, tuitionFee: 25000, transportFee: 8000, total: 38000, paid: 38000, status: 'Paid' },
-        { id: 2, name: 'Rahul Kumar', class: 'Grade 1-A', admissionFee: 5000, tuitionFee: 22000, transportFee: 0, total: 27000, paid: 5000, status: 'Partial' },
-    ]);
+    const [feeRecords, setFeeRecords] = useLocalStorage('admission_fee_records', []);
     const handleRecordPayment = async (f) => { const bal = f.total - f.paid; if(bal <= 0) return await customAlert('No balance due.'); if(await customConfirm(`Record full payment of ₹${bal.toLocaleString()} for ${f.name}?`)) setFeeRecords(prev => prev.map(r => r.id === f.id ? {...r, paid: r.total, status: 'Paid'} : r)); };
     const handleDownloadReceipt = (f) => { const txt = `MOUNT ZION SCHOOL\nFEE RECEIPT\n${'='.repeat(40)}\nStudent: ${f.name}\nClass: ${f.class}\nAdmission Fee: ₹${f.admissionFee}\nTuition Fee: ₹${f.tuitionFee}\nTransport Fee: ₹${f.transportFee}\nTotal: ₹${f.total}\nPaid: ₹${f.paid}\nBalance: ₹${f.total - f.paid}\nStatus: ${f.status}\nDate: ${new Date().toLocaleDateString('en-IN')}\n${'='.repeat(40)}`; const blob = new Blob([txt],{type:'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Receipt_${f.name.replace(/\s/g,'_')}.txt`; a.click(); };
 
@@ -512,13 +496,8 @@ function FeesTab() {
 // ======================== CONFIRMATION ========================
 function ConfirmationTab() {
     const navigate = useNavigate();
-    const [confirmed, setConfirmed] = useLocalStorage('admission_confirmed', [
-        { id: 1, admNo: 'ADM-2026-0001', name: 'Arjun Patel', class: 'Grade 2-A', rollNo: 1, date: '2026-03-16', feePaid: true },
-        { id: 2, admNo: 'ADM-2026-0002', name: 'Meera Joshi', class: 'Grade 1-B', rollNo: 5, date: '2026-03-11', feePaid: true },
-    ]);
-    const [pending, setPending] = useLocalStorage('admission_pending', [
-        { id: 3, name: 'Rahul Kumar', class: 'Grade 1', status: 'Approved', feePaid: true, parentEmail: 'rahul.parent@email.com' },
-    ]);
+    const [confirmed, setConfirmed] = useLocalStorage('admission_confirmed', []);
+    const [pending, setPending] = useLocalStorage('admission_pending', []);
 
     const handleConfirmStudent = async (student) => {
         if (!student.feePaid) {
@@ -657,16 +636,27 @@ function ConfirmationTab() {
 function IDCardTab() {
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const navigate = useNavigate();
+    const [personType, setPersonType] = useState('Students');
     const [classFilter, setClassFilter] = useState('All Classes');
     const [sectionFilter, setSectionFilter] = useState('All Sections');
     const [students, setStudents] = useState([]);
+    const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloadingId, setDownloadingId] = useState(null);
     const [bulkDownloading, setBulkDownloading] = useState(false);
 
     useEffect(() => {
-        fetchStudents();
-    }, [classFilter, sectionFilter]);
+        if (personType === 'Students') {
+            fetchStudents();
+        }
+    }, [classFilter, sectionFilter, personType]);
+
+    useEffect(() => {
+        if (personType === 'Staff') {
+            const localStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
+            setStaffList(localStaff.reverse());
+        }
+    }, [personType]);
 
     const fetchStudents = async () => {
         setLoading(true);
@@ -680,81 +670,164 @@ function IDCardTab() {
         }
     };
 
-    const getPrintableCard = (student) => {
-        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.name || 'Student';
-        const photoUrl = student.photoUrl || '';
-        const studentClass = student.class || '';
-        const section = student.section || '';
-        const fatherName = student.parentName || student.fatherName || 'N/A';
-        const motherName = student.motherName || 'N/A';
-        const address = student.address || 'N/A';
-        const contact = student.contactNo || student.guardianPhone || student.phone || 'N/A';
+    const getPrintableCard = (person, isStaff = false) => {
+        const fullName = isStaff ? (person.name || 'Staff') : (`${person.firstName || ''} ${person.lastName || ''}`.trim() || person.name || 'Student');
+        const photoUrl = person.photoUrl || '';
+        const role = person.role || 'Staff';
+        const studentClass = person.class || '';
+        const section = person.section || '';
+        const fatherName = person.parentName || person.fatherName || 'N/A';
+        const motherName = person.motherName || 'N/A';
+        const address = person.address || 'N/A';
+        const contact = person.contactNo || person.guardianPhone || person.phone || 'N/A';
+
+        const fallbackInitial = isStaff ? (person.name ? person.name[0] : 'S') : ((person.firstName||person.name||'S')[0]);
 
         const card = document.createElement('div');
-        card.style.cssText = 'width:420px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;position:absolute;left:-9999px;top:-9999px;';
+        card.style.cssText = isStaff 
+            ? 'width:340px;height:540px;background:#ffffff;position:absolute;left:-9999px;top:-9999px;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;align-items:center;overflow:hidden;border:1px solid #ccc;border-radius:10px;'
+            : 'width:420px;background:#ffffff;position:absolute;left:-9999px;top:-9999px;font-family:Arial,Helvetica,sans-serif;';
 
-        const signatureSVG = `<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" 
-                stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" />
-            <text x="75" y="38" font-family="Brush Script MT, cursive" font-size="28" fill="#1a3d5c" style="font-style: italic;">Anand Albert</text>
-        </svg>`;
+        const signatureSVG = '<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg"><path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" /><text x="75" y="38" font-family="Brush Script MT, cursive" font-size="28" fill="#1a3d5c" style="font-style: italic;">Anand Albert</text></svg>';
 
-        card.innerHTML = `
-            <div style="background:#002549;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
-                <div style="width:80px;height:80px;flex-shrink:0;margin-right:12px;">
-                    <img src="/logo-transparent.png" style="width:80px;height:80px;object-fit:contain;" crossorigin="anonymous" />
+        let photoHTML = '';
+        if (isStaff) {
+            if (photoUrl) {
+                photoHTML = '<img src="' + photoUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" crossorigin="anonymous" />';
+            } else {
+                photoHTML = '<div style="width:100%;height:100%;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:45px;font-weight:bold;color:#aaa;">' + fallbackInitial + '</div>';
+            }
+        } else {
+            if (photoUrl) {
+                photoHTML = '<img src="' + photoUrl + '" style="width:145px;height:175px;object-fit:cover;border:2px solid #E31E24;display:inline-block;" crossorigin="anonymous" />';
+            } else {
+                photoHTML = '<div style="width:145px;height:175px;border:2px solid #E31E24;display:inline-flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:50px;font-weight:bold;color:#aaa;margin:0 auto;">' + fallbackInitial + '</div>';
+            }
+        }
+
+        if (isStaff) {
+            const topBackground = `
+                <div style="position:absolute;top:-50px;left:-50px;width:400px;height:250px;background:radial-gradient(ellipse at top left, rgba(41,128,185,0.4) 0%, rgba(255,255,255,0) 70%);z-index:0;"></div>
+                <div style="position:absolute;top:-50px;right:-50px;width:300px;height:200px;background:radial-gradient(ellipse at top right, rgba(231,76,60,0.3) 0%, rgba(255,255,255,0) 70%);z-index:0;"></div>
+            `;
+
+            card.innerHTML = `
+                ${topBackground}
+                <div style="position:relative;z-index:1;width:100%;padding:20px 15px 10px 15px;box-sizing:border-box;">
+                    <!-- Header -->
+                    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:15px;">
+                        <img src="/logo-transparent.png" style="width:50px;height:50px;margin-right:8px;" crossorigin="anonymous" />
+                        <div style="text-align:center;">
+                            <div style="font-size:18px;font-weight:900;color:#c0392b;margin:0;line-height:1;font-family:'Arial Black',Impact,sans-serif;letter-spacing:0.5px;">MOUNT ZION SCHOOL</div>
+                            <div style="font-size:10px;color:#222;font-weight:700;margin-top:2px;">(Affiliated to CBSE up to 10+2 Level)</div>
+                            <div style="font-size:10px;color:#222;font-weight:700;">Sion Nagar, Purnea - 854301</div>
+                            <div style="font-size:9px;color:#222;font-weight:700;margin-top:1px;">Affiliation No: 330241 &nbsp;&nbsp;&nbsp; School No: 65235</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Photo -->
+                    <div style="margin:0 auto 15px auto;width:130px;height:130px;border-radius:50%;border:3px solid #f39c12;padding:3px;background:#fff;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                        ${photoHTML.replace('object-fit:cover;', 'object-fit:cover;display:block;')}
+                    </div>
                 </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:24px;font-weight:900;color:#ffffff;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
-                    <div style="font-size:12px;color:#ffffff;font-weight:700;margin-top:3px;">(Affiliated to CBSE up to 10+2 Level)</div>
-                    <div style="font-size:12px;color:#ffffff;font-weight:700;">Sion Nagar, Purnea - 854301</div>
-                    <div style="font-size:11px;color:#ffffff;font-weight:600;margin-top:3px;">Affiliation No. 330241 &nbsp;&nbsp;&nbsp; School No. 65235</div>
+
+                <!-- Name Banner -->
+                <div style="position:relative;z-index:1;width:100%;height:40px;background:linear-gradient(to right, #6bb9f0, #3498db, #6bb9f0);display:flex;align-items:center;justify-content:center;border-top:1px solid #2980b9;border-bottom:1px solid #2980b9;box-sizing:border-box;">
+                    <div style="font-size:22px;font-weight:bold;color:#ffffff;text-shadow:-1px -1px 0 #444, 1px -1px 0 #444, -1px 1px 0 #444, 1px 1px 0 #444;font-family:Tahoma, Verdana, sans-serif;transform:translateY(-9px);margin:0;padding:0;letter-spacing:0.5px;">${fullName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</div>
                 </div>
-            </div>
 
-            <div style="text-align:center;padding:25px 0 12px 0;">
-                ${photoUrl
-                    ? `<img src="${photoUrl}" style="width:145px;height:175px;object-fit:cover;border:2px solid #E31E24;display:inline-block;" crossorigin="anonymous" />`
-                    : `<div style="width:145px;height:175px;border:2px solid #E31E24;display:inline-flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:50px;font-weight:bold;color:#aaa;margin:0 auto;">${(student.firstName||'S')[0]}${(student.lastName||'')[0] || ''}</div>`
-                }
-            </div>
+                <!-- Details Section -->
+                <div style="position:relative;z-index:1;width:100%;padding:20px 25px;box-sizing:border-box;flex-grow:1;display:flex;flex-direction:column;">
+                    
+                    <!-- Watermark specific to this section -->
+                    <div style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);opacity:0.1;width:180px;height:180px;z-index:0;">
+                        <img src="/logo-transparent.png" style="width:100%;height:100%;object-fit:contain;" crossorigin="anonymous" />
+                    </div>
 
-            <div style="text-align:center;font-size:24px;font-weight:900;color:#E31E24;padding:8px 10px 18px 10px;text-transform:uppercase;letter-spacing:0.5px;">
-                ${fullName}
-            </div>
-
-            <div style="padding:0 30px 15px 30px;">
-                <table style="width:100%;border-collapse:collapse;font-size:16px;">
-                    <tr>
-                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;width:150px;">Class :</td>
-                        <td style="padding:5px 0;font-weight:bold;color:#111;">${studentClass}${section ? ' - ' + section : ''}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Father Name :</td>
-                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${fatherName}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Mother Name :</td>
-                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${motherName}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Address :</td>
-                        <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${address}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Contact :</td>
-                        <td style="padding:5px 0;font-weight:bold;color:#111;">${contact}</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div style="padding:10px 30px 25px 30px;text-align:right;">
-                <div style="display:inline-block;text-align:center;">
-                    ${signatureSVG}
-                    <div style="font-size:18px;color:#E31E24;margin-top:2px;font-weight:bold;">Principal</div>
+                    <table style="font-size:15px;border-collapse:collapse;z-index:1;position:relative;margin:0 auto;">
+                        <tr>
+                            <td style="color:#800000;font-weight:bold;padding:6px 10px 6px 0;vertical-align:top;text-align:left;white-space:nowrap;">Designation.</td>
+                            <td style="color:#800000;font-weight:bold;padding:6px 5px;vertical-align:top;text-align:center;">:</td>
+                            <td style="color:#000;font-weight:bold;text-transform:uppercase;padding:6px 0 6px 5px;text-align:left;">${role}</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#800000;font-weight:bold;padding:6px 10px 6px 0;vertical-align:top;text-align:left;white-space:nowrap;">Address</td>
+                            <td style="color:#800000;font-weight:bold;padding:6px 5px;vertical-align:top;text-align:center;">:</td>
+                            <td style="color:#000;font-weight:bold;text-transform:uppercase;padding:6px 0 6px 5px;line-height:1.4;text-align:left;">${address.replace(/,\s*/g, '<br/>')}</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#800000;font-weight:bold;padding:6px 10px 6px 0;vertical-align:top;text-align:left;white-space:nowrap;">Contact</td>
+                            <td style="color:#800000;font-weight:bold;padding:6px 5px;vertical-align:top;text-align:center;">:</td>
+                            <td style="color:#000;font-weight:bold;padding:6px 0 6px 5px;text-align:left;">${contact}</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top:auto;text-align:right;position:relative;z-index:1;">
+                        <div style="display:inline-block;text-align:center;position:relative;right:-10px;">
+                            ${signatureSVG}
+                            <div style="font-size:13px;color:#333;font-weight:bold;margin-top:-8px;">Principal</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
+
+                <!-- Bottom Bar -->
+                <div style="width:100%;height:15px;background:#3498db;z-index:1;border-top:2px solid #2980b9;"></div>
+            `;
+        } else {
+            card.innerHTML = `
+                <div style="background:#002549;padding:15px;display:flex;align-items:center;min-height:95px;box-sizing:border-box;">
+                    <div style="width:80px;height:80px;flex-shrink:0;margin-right:12px;">
+                        <img src="/logo-transparent.png" style="width:80px;height:80px;object-fit:contain;" crossorigin="anonymous" />
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:24px;font-weight:900;color:#ffffff;white-space:nowrap;line-height:1;text-transform:uppercase;font-family:Arial,sans-serif;">MOUNT ZION SCHOOL</div>
+                        <div style="font-size:12px;color:#ffffff;font-weight:700;margin-top:3px;">(Affiliated to CBSE up to 10+2 Level)</div>
+                        <div style="font-size:12px;color:#ffffff;font-weight:700;">Sion Nagar, Purnea - 854301</div>
+                        <div style="font-size:11px;color:#ffffff;font-weight:600;margin-top:3px;">Affiliation No. 330241 &nbsp;&nbsp;&nbsp; School No. 65235</div>
+                    </div>
+                </div>
+
+                <div style="text-align:center;padding:25px 0 12px 0;">
+                    ${photoHTML}
+                </div>
+
+                <div style="text-align:center;font-size:24px;font-weight:900;color:#E31E24;padding:8px 10px 18px 10px;text-transform:uppercase;letter-spacing:0.5px;">
+                    ${fullName}
+                </div>
+
+                <div style="padding:0 30px 15px 30px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:16px;">
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold;color:#E31E24;width:150px;">Class :</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;">${studentClass}${section ? ' - ' + section : ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Father Name :</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${fatherName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Mother Name :</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${motherName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Address :</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${address}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Contact :</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;">${contact}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style="padding:10px 30px 25px 30px;text-align:right;">
+                    <div style="display:inline-block;text-align:center;">
+                        ${signatureSVG}
+                        <div style="font-size:18px;color:#E31E24;margin-top:2px;font-weight:bold;">Principal</div>
+                    </div>
+                </div>
+            `;
+        }
 
         return card;
     };
@@ -778,10 +851,10 @@ function IDCardTab() {
         }
     };
 
-    const downloadIndividualCard = async (student) => {
-        setDownloadingId(student.id);
+    const downloadIndividualCard = async (person, isStaff = false) => {
+        setDownloadingId(person.id);
         try {
-            const clone = getPrintableCard(student);
+            const clone = getPrintableCard(person, isStaff);
             if (!clone) return;
             document.body.appendChild(clone);
             
@@ -792,17 +865,18 @@ function IDCardTab() {
                 return new Promise(resolve => { img.onload = img.onerror = resolve; });
             }));
             
-            const canvas = await html2canvas(clone, { scale: 3, useCORS: true, logging: false });
+            const canvas = await html2canvas(clone, { scale: 2, useCORS: true, logging: false });
             document.body.removeChild(clone);
 
-            const imgData = canvas.toDataURL('image/png');
+            const imgData = canvas.toDataURL('image/jpeg', 0.8);
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'px',
                 format: [canvas.width, canvas.height]
             });
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save(`${student.firstName}_${student.lastName}_IDCard.pdf`);
+            pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+            const fileName = isStaff ? `${(person.name||'Staff').replace(/\s+/g,'_')}_IDCard.pdf` : `${person.firstName}_${person.lastName}_IDCard.pdf`;
+            pdf.save(fileName);
         } catch (error) {
             console.error("Error generating ID card PDF", error);
             await customAlert("Failed to generate ID card.");
@@ -837,12 +911,12 @@ function IDCardTab() {
                     return new Promise(resolve => { img.onload = img.onerror = resolve; });
                 }));
                 
-                const canvas = await html2canvas(clone, { scale: 3, useCORS: true, logging: false });
+                const canvas = await html2canvas(clone, { scale: 2, useCORS: true, logging: false });
                 document.body.removeChild(clone);
 
-                const imgData = canvas.toDataURL('image/png');
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
                 
                 const pdfBlob = pdf.output('blob');
                 zip.file(`${student.firstName}_${student.lastName}_${student.admissionNo}.pdf`, pdfBlob);
@@ -868,18 +942,27 @@ function IDCardTab() {
             <div className="filters-bar" style={{ marginBottom: 24, padding: '16px 20px', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                 <div className="filter-dropdowns" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <Filter size={18} style={{ color: 'var(--text-light)' }}/>
-                    <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ minWidth: 150 }}>
-                        <option value="All Classes">All Classes</option>
-                        {ALL_CLASSES.map(c => (
-                            <option key={c} value={c}>{c}</option>
-                        ))}
+                    <select className="filter-select" value={personType} onChange={e => setPersonType(e.target.value)} style={{ minWidth: 150 }}>
+                        <option value="Students">Students</option>
+                        <option value="Staff">Staff</option>
                     </select>
-                    <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} style={{ minWidth: 150 }}>
-                        <option value="All Sections">All Sections</option>
-                        {getSectionsForClass(classFilter === 'All Classes' ? 'I' : classFilter).map(s => (
-                            <option key={s} value={s}>Section {s}</option>
-                        ))}
-                    </select>
+
+                    {personType === 'Students' && (
+                        <>
+                            <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ minWidth: 150 }}>
+                                <option value="All Classes">All Classes</option>
+                                {ALL_CLASSES.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} style={{ minWidth: 150 }}>
+                                <option value="All Sections">All Sections</option>
+                                {getSectionsForClass(classFilter === 'All Classes' ? 'I' : classFilter).map(s => (
+                                    <option key={s} value={s}>Section {s}</option>
+                                ))}
+                            </select>
+                        </>
+                    )}
                 </div>
                 <div>
                     <button 
@@ -893,73 +976,137 @@ function IDCardTab() {
                 </div>
             </div>
 
-            {loading ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-light)' }}>Loading students...</div>
-            ) : students.length === 0 ? (
-                <div className="adm-empty">
-                    <Users size={48}/>
-                    <p style={{ marginTop: 16 }}>No students found for the selected class and section.</p>
-                </div>
+            {personType === 'Students' ? (
+                loading ? (
+                    <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-light)' }}>Loading students...</div>
+                ) : students.length === 0 ? (
+                    <div className="adm-empty">
+                        <Users size={48}/>
+                        <p style={{ marginTop: 16 }}>No students found for the selected class and section.</p>
+                    </div>
+                ) : (
+                    <div className="idcard-grid">
+                        {students.map(student => (
+                            <div className="idcard-student-card" id={`idcard-${student.id}`} key={student.id}>
+                                <div className="idcard-header-bar"></div>
+                                
+                                <div className="idcard-avatar" style={{ background: getAvatarColor(student.firstName + student.lastName) }}>
+                                    {student.photoUrl ? (
+                                        <img src={student.photoUrl} alt="Profile" />
+                                    ) : (
+                                        getInitials(student.firstName, student.lastName)
+                                    )}
+                                </div>
+                                
+                                <div className="idcard-name">
+                                    {student.firstName} {student.lastName}
+                                </div>
+                                
+                                <div className="idcard-info">
+                                    <div><span className="idcard-label">Admn No:</span> <span className="idcard-value">{student.admissionNo}</span></div>
+                                    <div><span className="idcard-label">D.O.B:</span> <span className="idcard-value">{formatDate(student.dateOfBirth)}</span></div>
+                                    <div style={{ alignItems: 'flex-start' }}>
+                                        <span className="idcard-label" style={{ marginTop: '2px' }}>Parent:</span> 
+                                        <span className="idcard-value" style={{ textAlign: 'right' }}>
+                                            {student.parentName || student.fatherName || 'Guardian'}<br/>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: 500 }}>☎ {student.contactNo || student.guardianPhone || student.phone || 'N/A'}</span>
+                                        </span>
+                                    </div>
+                                    <div style={{ alignItems: 'flex-start' }}>
+                                        <span className="idcard-label" style={{ marginTop: '2px' }}>Address:</span> 
+                                        <span className="idcard-value" style={{ textAlign: 'right', maxWidth: '150px', lineHeight: '1.3', fontSize: '0.75rem', fontWeight: 500 }}>
+                                            {student.address || 'Address not provided'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="idcard-badges">
+                                    <span className="badge-class">{student.class}</span>
+                                    <span className="badge-section">Section {student.section}</span>
+                                </div>
+                                
+                                <div className="idcard-actions" data-html2canvas-ignore="true">
+                                    <button className="idcard-action-btn edit-btn" title="Edit Student" onClick={() => handleEditStudent(student)}>
+                                        <Edit3 size={16} />
+                                    </button>
+                                    <button 
+                                        className="idcard-action-btn download-btn" 
+                                        title="Download ID Card"
+                                        onClick={() => downloadIndividualCard(student, false)}
+                                        disabled={downloadingId === student.id}
+                                    >
+                                        {downloadingId === student.id ? <Clock size={16}/> : <Download size={16} />} 
+                                    </button>
+                                    <button className="idcard-action-btn delete-btn" title="Delete record" onClick={() => handleDeleteStudent(student)}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )
             ) : (
-                <div className="idcard-grid">
-                    {students.map(student => (
-                        <div className="idcard-student-card" id={`idcard-${student.id}`} key={student.id}>
-                            <div className="idcard-header-bar"></div>
-                            
-                            <div className="idcard-avatar" style={{ background: getAvatarColor(student.firstName + student.lastName) }}>
-                                {student.photoUrl ? (
-                                    <img src={student.photoUrl} alt="Profile" />
-                                ) : (
-                                    getInitials(student.firstName, student.lastName)
-                                )}
-                            </div>
-                            
-                            <div className="idcard-name">
-                                {student.firstName} {student.lastName}
-                            </div>
-                            
-                            <div className="idcard-info">
-                                <div><span className="idcard-label">Admn No:</span> <span className="idcard-value">{student.admissionNo}</span></div>
-                                <div><span className="idcard-label">D.O.B:</span> <span className="idcard-value">{formatDate(student.dateOfBirth)}</span></div>
-                                <div style={{ alignItems: 'flex-start' }}>
-                                    <span className="idcard-label" style={{ marginTop: '2px' }}>Parent:</span> 
-                                    <span className="idcard-value" style={{ textAlign: 'right' }}>
-                                        {student.parentName || student.fatherName || 'Guardian'}<br/>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: 500 }}>☎ {student.contactNo || student.guardianPhone || student.phone || 'N/A'}</span>
-                                    </span>
+                staffList.length === 0 ? (
+                    <div className="adm-empty">
+                        <Users size={48}/>
+                        <p style={{ marginTop: 16 }}>No staff found.</p>
+                    </div>
+                ) : (
+                    <div className="idcard-grid">
+                        {staffList.map(staffMember => (
+                            <div className="idcard-student-card" id={`idcard-${staffMember.id}`} key={staffMember.id}>
+                                <div className="idcard-header-bar" style={{ background: 'var(--primary)' }}></div>
+                                
+                                <div className="idcard-avatar" style={{ background: getAvatarColor(staffMember.name) }}>
+                                    {staffMember.photoUrl ? (
+                                        <img src={staffMember.photoUrl} alt="Profile" />
+                                    ) : (
+                                        (staffMember.name || 'S')[0]
+                                    )}
                                 </div>
-                                <div style={{ alignItems: 'flex-start' }}>
-                                    <span className="idcard-label" style={{ marginTop: '2px' }}>Address:</span> 
-                                    <span className="idcard-value" style={{ textAlign: 'right', maxWidth: '150px', lineHeight: '1.3', fontSize: '0.75rem', fontWeight: 500 }}>
-                                        {student.address || 'Address not provided'}
-                                    </span>
+                                
+                                <div className="idcard-name">
+                                    {staffMember.name}
+                                </div>
+                                
+                                <div className="idcard-info">
+                                    <div><span className="idcard-label">Emp ID:</span> <span className="idcard-value">{staffMember.id}</span></div>
+                                    <div><span className="idcard-label">D.O.B:</span> <span className="idcard-value">{formatDate(staffMember.dob)}</span></div>
+                                    <div style={{ alignItems: 'flex-start' }}>
+                                        <span className="idcard-label" style={{ marginTop: '2px' }}>Role:</span> 
+                                        <span className="idcard-value" style={{ textAlign: 'right' }}>
+                                            {staffMember.role}<br/>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: 500 }}>{staffMember.dept}</span>
+                                        </span>
+                                    </div>
+                                    <div style={{ alignItems: 'flex-start' }}>
+                                        <span className="idcard-label" style={{ marginTop: '2px' }}>Contact:</span> 
+                                        <span className="idcard-value" style={{ textAlign: 'right' }}>
+                                            {staffMember.phone}
+                                        </span>
+                                    </div>
+                                    <div style={{ alignItems: 'flex-start' }}>
+                                        <span className="idcard-label" style={{ marginTop: '2px' }}>Address:</span> 
+                                        <span className="idcard-value" style={{ textAlign: 'right', maxWidth: '150px', lineHeight: '1.3', fontSize: '0.75rem', fontWeight: 500 }}>
+                                            {staffMember.address || 'Address not provided'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="idcard-actions" data-html2canvas-ignore="true">
+                                    <button 
+                                        className="idcard-action-btn download-btn" 
+                                        title="Download Staff ID Card"
+                                        onClick={() => downloadIndividualCard(staffMember, true)}
+                                        disabled={downloadingId === staffMember.id}
+                                    >
+                                        {downloadingId === staffMember.id ? <Clock size={16}/> : <Download size={16} />} 
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div className="idcard-badges">
-                                <span className="badge-class">{student.class}</span>
-                                <span className="badge-section">Section {student.section}</span>
-                            </div>
-                            
-                            <div className="idcard-actions" data-html2canvas-ignore="true">
-                                <button className="idcard-action-btn edit-btn" title="Edit Student" onClick={() => handleEditStudent(student)}>
-                                    <Edit3 size={16} />
-                                </button>
-                                <button 
-                                    className="idcard-action-btn download-btn" 
-                                    title="Download ID Card"
-                                    onClick={() => downloadIndividualCard(student)}
-                                    disabled={downloadingId === student.id}
-                                >
-                                    {downloadingId === student.id ? <Clock size={16}/> : <Download size={16} />} 
-                                </button>
-                                <button className="idcard-action-btn delete-btn" title="Delete record" onClick={() => handleDeleteStudent(student)}>
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )
             )}
         </div>
     );

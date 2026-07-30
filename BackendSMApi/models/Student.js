@@ -11,6 +11,9 @@ const studentSchema = new mongoose.Schema({
     category: { type: String, default: 'General' },
 
     // Parent / Guardian
+    parentId: { type: String, unique: true, sparse: true },
+    parentPassword: { type: String },
+    studentPassword: { type: String },
     fatherName: { type: String, required: true },
     motherName: String,
     guardianPhone: String,

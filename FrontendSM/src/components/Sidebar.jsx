@@ -204,7 +204,6 @@ export const SIDEBAR_MODULES = [
             { name: 'Syllabus', path: '/academics/syllabus' },
             { name: 'Lesson Plans', path: '/academics/lesson-plan' },
             { name: 'Assignments', path: '/academics/assignments' },
-            { name: 'Attendance', path: '/academics/attendance' },
             { name: 'Performance', path: '/academics/performance' },
             { name: 'Study Materials', path: '/academics/materials' },
             { name: 'Promotion', path: '/academics/promotion' },

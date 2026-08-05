@@ -8,7 +8,15 @@ import autoprefixer from 'autoprefixer'
 export default defineConfig({
   plugins: [react()],
   build: {
-    target: 'es2015'
+    target: 'es2015',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['lucide-react', 'framer-motion']
+        }
+      }
+    }
   },
   resolve: {
     alias: {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import ScrollToTop from './components/ScrollToTop';
@@ -7,43 +7,49 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import GlobalDialog from './components/GlobalDialog';
 import { RouteRoleGuard } from './components/RoleGuard';
-import LoginPage from './pages/Login';
-import LandingPage from './pages/LandingPage';
-import AboutPage from './pages/AboutPage';
-import AdmissionPublicPage from './pages/AdmissionPublicPage';
-import CurriculumPage from './pages/CurriculumPage';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import GalleryPublicPage from './pages/GalleryPublicPage';
-import ContactPublicPage from './pages/ContactPublicPage';
-import CoCurricularPage from './pages/CoCurricularPage';
-import Dashboard from './pages/Dashboard';
-import StudentsPage from './pages/Students';
-import AddStudent from './pages/AddStudent';
-import EditStudent from './pages/EditStudent';
-import StudentDetail from './pages/StudentDetail';
-import StudentReports from './pages/StudentReports';
-import StudentSettings from './pages/StudentSettings';
-import PlaceholderPage from './pages/PlaceholderPage';
-import Academics from './pages/Academics';
-import Admission from './pages/Admission';
-import Addons from './pages/Addons';
-import Finance from './pages/Finance';
-import HR from './pages/HR';
-import ParentPortal from './pages/ParentPortal';
-import AdminParentPortal from './pages/AdminParentPortal';
-import ChildSelectorPage from './pages/ChildSelectorPage';
-import SiteSettings from './components/SiteSettings';
+const LoginPage = lazy(() => import('./pages/Login'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const AdmissionPublicPage = lazy(() => import('./pages/AdmissionPublicPage'));
+const CurriculumPage = lazy(() => import('./pages/CurriculumPage'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const GalleryPublicPage = lazy(() => import('./pages/GalleryPublicPage'));
+const ContactPublicPage = lazy(() => import('./pages/ContactPublicPage'));
+const CoCurricularPage = lazy(() => import('./pages/CoCurricularPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const StudentsPage = lazy(() => import('./pages/Students'));
+const AddStudent = lazy(() => import('./pages/AddStudent'));
+const EditStudent = lazy(() => import('./pages/EditStudent'));
+const StudentDetail = lazy(() => import('./pages/StudentDetail'));
+const StudentReports = lazy(() => import('./pages/StudentReports'));
+const StudentSettings = lazy(() => import('./pages/StudentSettings'));
+const PlaceholderPage = lazy(() => import('./pages/PlaceholderPage'));
+const Academics = lazy(() => import('./pages/Academics'));
+const Admission = lazy(() => import('./pages/Admission'));
+const Addons = lazy(() => import('./pages/Addons'));
+const Finance = lazy(() => import('./pages/Finance'));
+const HR = lazy(() => import('./pages/HR'));
+const ParentPortal = lazy(() => import('./pages/ParentPortal'));
+const AdminParentPortal = lazy(() => import('./pages/AdminParentPortal'));
+const ChildSelectorPage = lazy(() => import('./pages/ChildSelectorPage'));
+const SiteSettings = lazy(() => import('./components/SiteSettings'));
 
-import Attendance from './pages/Attendance';
-import Certificates from './pages/Certificates';
-import Reports from './pages/Reports';
-import Announcements from './pages/Announcements';
-import TC from './pages/TC';
-import Transport from './pages/Transport';
-import Examination from './pages/Examination';
-import FrontOffice from './pages/FrontOffice';
-import Collaborate from './pages/Collaborate';
+const Attendance = lazy(() => import('./pages/Attendance'));
+const Certificates = lazy(() => import('./pages/Certificates'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Announcements = lazy(() => import('./pages/Announcements'));
+const TC = lazy(() => import('./pages/TC'));
+const Transport = lazy(() => import('./pages/Transport'));
+const Examination = lazy(() => import('./pages/Examination'));
+const FrontOffice = lazy(() => import('./pages/FrontOffice'));
+const Collaborate = lazy(() => import('./pages/Collaborate'));
+
+const PageLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '40px' }}>
+    <div>Loading...</div>
+  </div>
+);
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -73,6 +79,7 @@ function AppLayout() {
       <Sidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <main className="main-content">
         <div className="page-content">
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={
               user.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
@@ -199,6 +206,7 @@ function AppLayout() {
             
             <Route path="*" element={<PlaceholderPage />} />
           </Routes>
+          </Suspense>
         </div>
       </main>
     </div>
@@ -208,6 +216,7 @@ function AppLayout() {
 function AppContent() {
   const { user } = useAuth();
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/" element={user ? <ProtectedRoute><AppLayout /></ProtectedRoute> : <LandingPage />} />
       <Route path="/about" element={<AboutPage />} />
@@ -241,6 +250,7 @@ function AppContent() {
         </ProtectedRoute>
       } />
     </Routes>
+    </Suspense>
   );
 }
 

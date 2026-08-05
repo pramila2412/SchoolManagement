@@ -332,6 +332,7 @@ export default function LandingPage() {
                                             <img
                                                 src={fac.image}
                                                 alt={fac.title}
+                                                loading="lazy"
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                             />
                                             <div className="facility-overlay">
@@ -378,7 +379,7 @@ export default function LandingPage() {
                             displayImages.map((item, idx) => (
                                 <div key={item._id || idx} className={`gallery-cell gallery-cell-${idx + 1}`} style={{ position: 'relative' }}>
                                     {item.url ? (
-                                        <img src={item.url} alt={item.title} />
+                                        <img src={item.url} alt={item.title} loading="lazy" />
                                     ) : (
                                         <div className="empty-bento-content" style={{
                                             display: 'flex',
@@ -445,7 +446,7 @@ export default function LandingPage() {
 
                         <div className="about-image-side">
                             <div className="principal-image-box">
-                                <img src={siteConfig.about.image} alt="About Us" />
+                                <img src={siteConfig.about.image} alt="About Us" loading="lazy" />
                             </div>
                         </div>
                     </div>
@@ -475,6 +476,7 @@ export default function LandingPage() {
                                         <img
                                             src={validNews[newsIndex]}
                                             alt={`News ${newsIndex + 1}`}
+                                            loading="lazy"
                                         />
                                     </motion.div>
                                 )}
@@ -532,6 +534,7 @@ export default function LandingPage() {
                                             <img
                                                 src={img}
                                                 alt="Achievement"
+                                                loading="lazy"
                                                 style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#f8fafc' }}
                                             />
                                         </div>
@@ -585,7 +588,7 @@ export default function LandingPage() {
                                 <div className="testimonial-footer">
                                     <div className="testimonial-author">
                                         <div className="author-photo-wrapper">
-                                            <img src={siteConfig.testimonials[testimonialIndex].image} alt={siteConfig.testimonials[testimonialIndex].author} />
+                                            <img src={siteConfig.testimonials[testimonialIndex].image} alt={siteConfig.testimonials[testimonialIndex].author} loading="lazy" />
                                         </div>
                                         <div className="author-info">
                                             <h4>{siteConfig.testimonials[testimonialIndex].author}</h4>

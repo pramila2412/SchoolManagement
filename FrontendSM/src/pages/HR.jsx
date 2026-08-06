@@ -17,7 +17,13 @@ import './HR.css';
 // ======================== DASHBOARD ========================
 function DashboardTab() {
     const navigate = useNavigate();
-    const [staff] = useLocalStorage('mzs_staff', []);
+    const [staff, setStaff] = useState([]);
+    useEffect(() => {
+        fetch('/api/staff')
+            .then(res => res.json())
+            .then(data => setStaff(data))
+            .catch(console.error);
+    }, []);
     
     // KPI Logic
     const totalStaff = staff.filter(s => s.status === 'Active').length || 128;
@@ -72,7 +78,13 @@ function DashboardTab() {
 function StaffTab() {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [staff, setStaff] = useLocalStorage('mzs_staff', []);
+    const [staff, setStaff] = useState([]);
+    useEffect(() => {
+        fetch('/api/staff')
+            .then(res => res.json())
+            .then(data => setStaff(data))
+            .catch(console.error);
+    }, []);
     const [searchTerm, setSearchTerm] = useState('');
     const [deptFilter, setDeptFilter] = useState('All Departments');
     const [typeFilter, setTypeFilter] = useState('All Types');
@@ -97,10 +109,11 @@ function StaffTab() {
     const [editingStaff, setEditingStaff] = useState(null);
     const [staffForm, setStaffForm] = useState({
         firstName: '', lastName: '', email: '', phone: '', dob: '', gender: 'Male', address: '',
-        role: 'Teacher', dept: 'Mathematics', type: 'Full-time', joined: '',
+        role: '', dept: '', type: '', joined: '',
         basicSalary: '', hra: '', ta: '', da: '', pf: '', tds: '', otherDeductions: '',
         bankName: '', accountName: '', accountNo: '', ifsc: '', photoUrl: ''
     });
+    const [errors, setErrors] = useState({});
 
     const handlePhotoUpload = (e) => {
         const file = e.target.files[0];
@@ -128,9 +141,10 @@ function StaffTab() {
     const closeAdd = () => {
         setIsAdding(false);
         setEditingStaff(null);
+        setErrors({});
         setStaffForm({
             firstName: '', lastName: '', email: '', phone: '', dob: '', gender: 'Male', address: '',
-            role: 'Teacher', dept: 'Mathematics', type: 'Full-time', joined: '',
+            role: '', dept: '', type: '', joined: '',
             basicSalary: '', hra: '', ta: '', da: '', pf: '', tds: '', otherDeductions: '',
             bankName: '', accountName: '', accountNo: '', ifsc: '', photoUrl: ''
         });
@@ -154,9 +168,9 @@ function StaffTab() {
             dob: s.dob || '',
             gender: s.gender || 'Male',
             address: s.address || '',
-            role: s.role || 'Teacher',
-            dept: s.dept || 'Mathematics',
-            type: s.type || 'Full-time',
+            role: s.role || '',
+            dept: s.dept || '',
+            type: s.type || '',
             joined: s.joined || '',
             basicSalary: s.salaryDetails?.basic || '',
             hra: s.salaryDetails?.hra || '',
@@ -177,18 +191,31 @@ function StaffTab() {
 
     const handleDeleteStaff = async (staffMember) => {
         if (await customConfirm(`Are you sure you want to delete the record for ${staffMember.name}?`)) {
-            setStaff(prev => prev.filter(s => s.id !== staffMember.id));
-            await customAlert("Staff member deleted successfully!", "Success", "success");
+            try {
+                const res = await fetch(`/api/staff/${staffMember.id || staffMember._id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    setStaff(prev => prev.filter(s => s.id !== staffMember.id));
+                    await customAlert("Staff member deleted successfully!", "Success", "success");
+                } else {
+                    await customAlert("Failed to delete staff member.", "Error", "error");
+                }
+            } catch (err) {
+                await customAlert("Error deleting staff member.", "Error", "error");
+            }
         }
     };
 
     const handleSaveStaff = async () => {
-        if (!staffForm.firstName.trim()) {
-            await customAlert("First Name is required", 'Error', 'error');
-            return;
-        }
-        if (!staffForm.role.trim()) {
-            await customAlert("Role is required", 'Error', 'error');
+        const newErrors = {};
+        if (!staffForm.firstName?.trim()) newErrors.firstName = "First Name is required";
+        if (!staffForm.phone?.trim()) newErrors.phone = "Mobile Number is required";
+        if (!staffForm.type?.trim()) newErrors.type = "Employment Type is required";
+        if (!staffForm.role?.trim()) newErrors.role = "Role is required";
+        if (!staffForm.dept?.trim()) newErrors.dept = "Department is required";
+        
+        setErrors(newErrors);
+        
+        if (Object.keys(newErrors).length > 0) {
             return;
         }
 
@@ -204,7 +231,7 @@ function StaffTab() {
                 role: staffForm.role.trim(),
                 type: staffForm.type,
                 joined: staffForm.joined || new Date().toISOString().split('T')[0],
-                address: staffForm.address.trim(),
+                address: staffForm.address ? staffForm.address.trim() : '',
                 photoUrl: staffForm.photoUrl,
                 salaryDetails: {
                     basic: staffForm.basicSalary,
@@ -222,9 +249,23 @@ function StaffTab() {
                     ifsc: staffForm.ifsc
                 }
             };
-            setStaff(prev => prev.map(s => s.id === editingStaff.id ? updatedStaff : s));
-            await customAlert(`Staff member "${updatedStaff.name}" updated successfully!`, 'Success', 'success');
-            closeAdd();
+            try {
+                const res = await fetch(`/api/staff/${editingStaff.id || editingStaff._id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedStaff)
+                });
+                if (res.ok) {
+                    const savedStaff = await res.json();
+                    setStaff(prev => prev.map(s => s.id === editingStaff.id ? savedStaff : s));
+                    await customAlert(`Staff member "${updatedStaff.name}" updated successfully!`, 'Success', 'success');
+                    closeAdd();
+                } else {
+                    await customAlert("Failed to update staff.", 'Error', 'error');
+                }
+            } catch (e) {
+                await customAlert("Error updating staff.", 'Error', 'error');
+            }
             return;
         }
 
@@ -239,7 +280,7 @@ function StaffTab() {
             role: staffForm.role.trim(),
             type: staffForm.type,
             joined: staffForm.joined || new Date().toISOString().split('T')[0],
-            address: staffForm.address.trim(),
+            address: staffForm.address ? staffForm.address.trim() : '',
             photoUrl: staffForm.photoUrl,
             status: 'Active',
             salaryDetails: {
@@ -258,9 +299,23 @@ function StaffTab() {
                 ifsc: staffForm.ifsc
             }
         };
-        setStaff(prev => [...prev, newStaff]);
-        await customAlert(`Staff member "${newStaff.name}" added successfully! (ID: ${newStaff.id})`, 'Success', 'success');
-        closeAdd();
+        try {
+            const res = await fetch('/api/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newStaff)
+            });
+            if (res.ok) {
+                const savedStaff = await res.json();
+                setStaff(prev => [...prev, savedStaff]);
+                await customAlert(`Staff member "${newStaff.name}" added successfully! (ID: ${newStaff.id})`, 'Success', 'success');
+                closeAdd();
+            } else {
+                await customAlert("Failed to add staff.", 'Error', 'error');
+            }
+        } catch (e) {
+            await customAlert("Error saving staff.", 'Error', 'error');
+        }
     };
 
     const allDepts = [...new Set(staff.map(s => s.dept))];
@@ -290,14 +345,22 @@ function StaffTab() {
                     <div style={{ marginBottom: 30, background: '#f8fafc', padding: 20, borderRadius: 8, border: '1px solid #e9ecef' }}>
                         <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid #e9ecef', paddingBottom: 8 }}>Section A: Personal Details</h4>
                         <div className="ado-form form-row-2">
-                            <div className="form-group"><label className="form-label">First Name *</label><input type="text" className="form-input" placeholder="First Name" value={staffForm.firstName} onChange={e => setStaffForm({...staffForm, firstName: e.target.value})}/></div>
+                            <div className="form-group"><label className="form-label">First Name <span style={{ color: 'var(--danger)' }}>*</span></label><input type="text" className={`form-input ${errors.firstName ? 'error-border' : ''}`} placeholder="First Name" value={staffForm.firstName} onChange={e => {setStaffForm({...staffForm, firstName: e.target.value}); setErrors({...errors, firstName: null});}}/>{errors.firstName && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.firstName}</small>}</div>
                             <div className="form-group"><label className="form-label">Last Name</label><input type="text" className="form-input" placeholder="Last Name" value={staffForm.lastName} onChange={e => setStaffForm({...staffForm, lastName: e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Date of Birth</label><input type="date" className="form-input" max={new Date().toISOString().split('T')[0]} value={staffForm.dob} onChange={e => setStaffForm({...staffForm, dob: e.target.value})}/></div>
                             <div className="form-group"><label className="form-label">Gender</label><select className="form-select" value={staffForm.gender} onChange={e => setStaffForm({...staffForm, gender: e.target.value})}><option>Male</option><option>Female</option><option>Other</option></select></div>
-                            <div className="form-group"><label className="form-label">Mobile Number *</label><PhoneInput className="form-input" placeholder="Enter mobile number" value={staffForm.phone} onChange={e => setStaffForm({...staffForm, phone: e.target.value})}/></div>
+                            <div className="form-group"><label className="form-label">Mobile Number <span style={{ color: 'var(--danger)' }}>*</span></label><PhoneInput className={`form-input ${errors.phone ? 'error-border' : ''}`} placeholder="Enter mobile number" value={staffForm.phone} onChange={e => {setStaffForm({...staffForm, phone: e.target.value}); setErrors({...errors, phone: null});}}/>{errors.phone && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.phone}</small>}</div>
                             <div className="form-group"><label className="form-label">Email Address</label><input type="email" className="form-input" placeholder="Enter email address" value={staffForm.email} onChange={e => setStaffForm({...staffForm, email: e.target.value})}/></div>
                             <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Address</label><textarea className="form-input" rows={2} placeholder="Full address" value={staffForm.address} onChange={e => setStaffForm({...staffForm, address: e.target.value})}></textarea></div>
-                            <div className="form-group" style={{ gridColumn: 'span 2' }}><label className="form-label">Staff Photo</label><input type="file" className="form-input" accept="image/*" onChange={handlePhotoUpload} /></div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                <label className="form-label">Staff Photo</label>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                    {staffForm.photoUrl && (
+                                        <img src={staffForm.photoUrl} alt="Preview" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%', border: '1px solid #ccc' }} />
+                                    )}
+                                    <input type="file" className="form-input" accept="image/*" onChange={handlePhotoUpload} style={{ flex: 1 }} />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -305,13 +368,14 @@ function StaffTab() {
                         <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid #e9ecef', paddingBottom: 8 }}>Section B: Job Details</h4>
                         <div className="ado-form form-row-2">
                             <div className="form-group"><label className="form-label">Employee ID</label><input type="text" className="form-input" value={editingStaff ? editingStaff.id : "Auto-generated on save"} disabled style={{ background: '#e9ecef' }}/></div>
-                            <div className="form-group"><label className="form-label">Employment Type *</label><select className="form-select" value={staffForm.type} onChange={e => setStaffForm({...staffForm, type: e.target.value})}><option>Full-time</option><option>Part-time</option><option>Contract</option></select></div>
-                            <div className="form-group"><label className="form-label">Role *</label><select className="form-select" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value})}>
+                            <div className="form-group"><label className="form-label">Employment Type <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.type ? 'error-border' : ''}`} value={staffForm.type} onChange={e => {setStaffForm({...staffForm, type: e.target.value}); setErrors({...errors, type: null});}}><option value="">Select Type</option><option>Full-time</option><option>Part-time</option><option>Contract</option></select>{errors.type && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.type}</small>}</div>
+                            <div className="form-group"><label className="form-label">Role <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.role ? 'error-border' : ''}`} value={staffForm.role} onChange={e => {setStaffForm({...staffForm, role: e.target.value}); setErrors({...errors, role: null});}}>
+                                <option value="">Select Role</option>
                                 {staffForm.type === 'Full-time' && <><option>Teacher</option><option>Admin</option><option>Principal</option><option>Accountant</option></>}
                                 {staffForm.type === 'Part-time' && <><option>Visiting Teacher</option><option>Counsellor</option></>}
                                 {staffForm.type === 'Contract' && <><option>Driver</option><option>Security</option><option>Housekeeping</option></>}
-                            </select></div>
-                            <div className="form-group"><label className="form-label">Department *</label><select className="form-select" value={staffForm.dept} onChange={e => setStaffForm({...staffForm, dept: e.target.value})}><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select></div>
+                            </select>{errors.role && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.role}</small>}</div>
+                            <div className="form-group"><label className="form-label">Department <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.dept ? 'error-border' : ''}`} value={staffForm.dept} onChange={e => {setStaffForm({...staffForm, dept: e.target.value}); setErrors({...errors, dept: null});}}><option value="">Select Department</option><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select>{errors.dept && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.dept}</small>}</div>
                             <div className="form-group"><label className="form-label">Date of Joining</label><input type="date" className="form-input" value={staffForm.joined} onChange={e => setStaffForm({...staffForm, joined: e.target.value})}/></div>
                         </div>
                     </div>
@@ -338,7 +402,7 @@ function StaffTab() {
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                         <button className="btn btn-outline" onClick={closeAdd}>Cancel</button>
-                        <button className="btn btn-primary" onClick={handleSaveStaff}>Save & Create Profile</button>
+                        <button className="btn btn-primary" onClick={handleSaveStaff}>{editingStaff ? 'Update Profile' : 'Save & Create Profile'}</button>
                     </div>
                 </div>
             ) : (
@@ -384,7 +448,8 @@ function StaffTab() {
 // ======================== ATTENDANCE ========================
 function AttendanceTab() {
     const { user } = useAuth();
-    const [staffList] = useLocalStorage('mzs_staff', []);
+    const [staffList, setStaffList] = useState([]);
+    useEffect(() => { fetch('/api/staff').then(r=>r.json()).then(d=>setStaffList(d)).catch(console.error); }, []);
     const [attendanceRecords, setAttendanceRecords] = useLocalStorage('mzs_attendance', []);
     const [attendanceLocks, setAttendanceLocks] = useLocalStorage('mzs_attendance_locks', {});
     
@@ -513,7 +578,8 @@ function AttendanceTab() {
 // ======================== LEAVE MANAGEMENT ========================
 function LeaveTab() {
     const { user } = useAuth();
-    const [staffList] = useLocalStorage('mzs_staff', []);
+    const [staffList, setStaffList] = useState([]);
+    useEffect(() => { fetch('/api/staff').then(r=>r.json()).then(d=>setStaffList(d)).catch(console.error); }, []);
     const [leaveRequests, setLeaveRequests] = useLocalStorage('mzs_leave_req', []);
 
     const [isApplying, setIsApplying] = useState(false);

@@ -653,8 +653,17 @@ function IDCardTab() {
 
     useEffect(() => {
         if (personType === 'Staff') {
-            const localStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
-            setStaffList(localStaff.reverse());
+            setLoading(true);
+            fetch('/api/staff')
+                .then(res => res.json())
+                .then(data => {
+                    setStaffList(data.reverse());
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error("Failed to load staff", err);
+                    setLoading(false);
+                });
         }
     }, [personType]);
 

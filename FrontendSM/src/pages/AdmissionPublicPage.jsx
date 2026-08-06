@@ -6,6 +6,7 @@ import PublicHeader from '../components/PublicHeader';
 import PublicFooter from '../components/PublicFooter';
 import SEO from '../components/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAcademicClassesData } from '../hooks/useAcademicClassesData';
 import './AdmissionPublicPage.css';
 import './LandingPage.css';
 

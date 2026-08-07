@@ -189,6 +189,16 @@ function StaffTab() {
         setIsAdding(true);
     };
 
+    useEffect(() => {
+        const editId = searchParams.get('edit');
+        if (editId && staff.length > 0 && !editingStaff) {
+            const s = staff.find(st => st.id === editId || st._id === editId);
+            if (s) {
+                handleEditStaff(s);
+            }
+        }
+    }, [searchParams, staff, editingStaff]);
+
     const handleDeleteStaff = async (staffMember) => {
         if (await customConfirm(`Are you sure you want to delete the record for ${staffMember.name}?`)) {
             try {

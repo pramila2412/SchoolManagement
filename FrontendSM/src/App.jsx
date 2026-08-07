@@ -24,7 +24,7 @@ const EditStudent = lazy(() => import('./pages/EditStudent'));
 const StudentDetail = lazy(() => import('./pages/StudentDetail'));
 const StudentReports = lazy(() => import('./pages/StudentReports'));
 const StudentSettings = lazy(() => import('./pages/StudentSettings'));
-const PlaceholderPage = lazy(() => import('./pages/PlaceholderPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const Academics = lazy(() => import('./pages/Academics'));
 const Admission = lazy(() => import('./pages/Admission'));
 const Addons = lazy(() => import('./pages/Addons'));
@@ -204,7 +204,7 @@ function AppLayout() {
               </RouteRoleGuard>
             } />
             
-            <Route path="*" element={<PlaceholderPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </Suspense>
         </div>

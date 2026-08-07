@@ -67,7 +67,10 @@ const admissionPageSchema = new mongoose.Schema({
 
     // Admission open status
     admissionOpen: { type: Boolean, default: true },
-    academicYear: { type: String, default: '2025-26' }
+    academicYear: { type: String, default: '2025-26' },
+
+    // ID Card Signature
+    idCardSignature: { type: String, default: '' }
 
 }, { timestamps: true });
 

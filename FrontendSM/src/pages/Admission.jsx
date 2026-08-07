@@ -644,6 +644,18 @@ function IDCardTab() {
     const [loading, setLoading] = useState(false);
     const [downloadingId, setDownloadingId] = useState(null);
     const [bulkDownloading, setBulkDownloading] = useState(false);
+    const [signatureImage, setSignatureImage] = useState(null);
+
+    useEffect(() => {
+        fetch('/api/admission-page')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.idCardSignature) {
+                    setSignatureImage(data.idCardSignature);
+                }
+            })
+            .catch(err => console.error("Failed to load signature", err));
+    }, []);
 
     useEffect(() => {
         if (personType === 'Students') {
@@ -697,7 +709,9 @@ function IDCardTab() {
             ? 'width:340px;height:540px;background:#ffffff;position:absolute;left:-9999px;top:-9999px;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;align-items:center;overflow:hidden;border:1px solid #ccc;border-radius:10px;'
             : 'width:420px;background:#ffffff;position:absolute;left:-9999px;top:-9999px;font-family:Arial,Helvetica,sans-serif;';
 
-        const signatureSVG = '<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg"><path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" /><text x="75" y="38" font-family="Brush Script MT, cursive" font-size="28" fill="#1a3d5c" style="font-style: italic;">Anand Albert</text></svg>';
+        const signatureHTML = signatureImage
+            ? `<img src="${signatureImage}" style="max-width:140px; height:40px; object-fit:contain; display:inline-block; mix-blend-mode: multiply;" crossorigin="anonymous" />`
+            : '<svg width="140" height="40" viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg"><path d="M20,35 C25,20 35,15 45,25 C55,35 45,40 40,30 C35,20 45,15 55,20 C65,25 60,35 75,22 C85,10 95,20 90,30 C85,40 105,25 115,20 C125,15 135,25 145,22" stroke="#1a3d5c" stroke-width="1.8" fill="none" stroke-linecap="round" /><text x="75" y="38" font-family="Brush Script MT, cursive" font-size="28" fill="#1a3d5c" style="font-style: italic;">Anand Albert</text></svg>';
 
         let photoHTML = '';
         if (isStaff) {
@@ -762,7 +776,7 @@ function IDCardTab() {
                         <tr>
                             <td style="color:#800000;font-weight:bold;padding:6px 10px 6px 0;vertical-align:top;text-align:left;white-space:nowrap;">Address</td>
                             <td style="color:#800000;font-weight:bold;padding:6px 5px;vertical-align:top;text-align:center;">:</td>
-                            <td style="color:#000;font-weight:bold;text-transform:uppercase;padding:6px 0 6px 5px;line-height:1.4;text-align:left;">${address.replace(/,\s*/g, '<br/>')}</td>
+                            <td style="color:#000;font-weight:bold;text-transform:uppercase;padding:6px 0 6px 5px;line-height:1.4;text-align:left;font-size:11px;">${address.replace(/,\s*/g, '<br/>')}</td>
                         </tr>
                         <tr>
                             <td style="color:#800000;font-weight:bold;padding:6px 10px 6px 0;vertical-align:top;text-align:left;white-space:nowrap;">Contact</td>
@@ -773,7 +787,7 @@ function IDCardTab() {
                     
                     <div style="margin-top:auto;text-align:right;position:relative;z-index:1;">
                         <div style="display:inline-block;text-align:center;position:relative;right:-10px;">
-                            ${signatureSVG}
+                            ${signatureHTML}
                             <div style="font-size:13px;color:#333;font-weight:bold;margin-top:-8px;">Principal</div>
                         </div>
                     </div>
@@ -820,7 +834,7 @@ function IDCardTab() {
                         </tr>
                         <tr>
                             <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Address :</td>
-                            <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;">${address}</td>
+                            <td style="padding:5px 0;font-weight:bold;color:#111;text-transform:uppercase;font-size:12px;line-height:1.2;">${address}</td>
                         </tr>
                         <tr>
                             <td style="padding:5px 0;font-weight:bold;color:#E31E24;">Contact :</td>
@@ -831,8 +845,8 @@ function IDCardTab() {
 
                 <div style="padding:10px 30px 25px 30px;text-align:right;">
                     <div style="display:inline-block;text-align:center;">
-                        ${signatureSVG}
-                        <div style="font-size:18px;color:#E31E24;margin-top:2px;font-weight:bold;">Principal</div>
+                        ${signatureHTML}
+                        <div style="font-size:18px;color:#E31E24;margin-top:-8px;font-weight:bold;">Principal</div>
                     </div>
                 </div>
             `;
@@ -856,6 +870,22 @@ function IDCardTab() {
                 await customAlert("Student record deleted successfully.", "Success", "success");
             } catch (err) {
                 await customAlert("Failed to delete student record.", "Error", "error");
+            }
+        }
+    };
+
+    const handleEditStaff = (staffMember) => {
+        navigate(`/hr/staff?edit=${staffMember.id || staffMember._id}`);
+    };
+
+    const handleDeleteStaff = async (staffMember) => {
+        if (await customConfirm(`Are you sure you want to delete the record for ${staffMember.name}?`)) {
+            try {
+                await fetch(`/api/staff/${staffMember.id || staffMember._id}`, { method: 'DELETE' });
+                setStaffList(prev => prev.filter(s => (s.id || s._id) !== (staffMember.id || staffMember._id)));
+                await customAlert("Staff record deleted successfully.", "Success", "success");
+            } catch (err) {
+                await customAlert("Failed to delete staff record.", "Error", "error");
             }
         }
     };
@@ -951,20 +981,20 @@ function IDCardTab() {
             <div className="filters-bar" style={{ marginBottom: 24, padding: '16px 20px', background: 'var(--card-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                 <div className="filter-dropdowns" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <Filter size={18} style={{ color: 'var(--text-light)' }}/>
-                    <select className="filter-select" value={personType} onChange={e => setPersonType(e.target.value)} style={{ minWidth: 150 }}>
+                    <select className="filter-select" value={personType} onChange={e => setPersonType(e.target.value)}>
                         <option value="Students">Students</option>
                         <option value="Staff">Staff</option>
                     </select>
 
                     {personType === 'Students' && (
                         <>
-                            <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ minWidth: 150 }}>
+                            <select className="filter-select" value={classFilter} onChange={e => setClassFilter(e.target.value)}>
                                 <option value="All Classes">All Classes</option>
                                 {ALL_CLASSES.map(c => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
                             </select>
-                            <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} style={{ minWidth: 150 }}>
+                            <select className="filter-select" value={sectionFilter} onChange={e => setSectionFilter(e.target.value)}>
                                 <option value="All Sections">All Sections</option>
                                 {getSectionsForClass(classFilter === 'All Classes' ? 'I' : classFilter).map(s => (
                                     <option key={s} value={s}>Section {s}</option>
@@ -973,7 +1003,52 @@ function IDCardTab() {
                         </>
                     )}
                 </div>
-                <div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <label className="btn btn-outline" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                        <Upload size={16} /> Signature
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = async (event) => {
+                                    const base64 = event.target.result;
+                                    setSignatureImage(base64);
+                                    try {
+                                        const res = await fetch('/api/admission-page');
+                                        const data = await res.json();
+                                        data.idCardSignature = base64;
+                                        await fetch('/api/admission-page', {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(data)
+                                        });
+                                    } catch (err) {
+                                        console.error("Failed to save signature", err);
+                                    }
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        }} />
+                    </label>
+                    {signatureImage && (
+                        <button className="btn-icon" style={{ color: 'var(--danger)' }} onClick={async () => {
+                            setSignatureImage(null);
+                            try {
+                                const res = await fetch('/api/admission-page');
+                                const data = await res.json();
+                                data.idCardSignature = '';
+                                await fetch('/api/admission-page', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(data)
+                                });
+                            } catch (err) {
+                                console.error("Failed to remove signature", err);
+                            }
+                        }} title="Remove Signature">
+                            <Trash2 size={16} />
+                        </button>
+                    )}
                     <button 
                         className="btn btn-primary" 
                         onClick={downloadBulkZip}
@@ -1103,6 +1178,9 @@ function IDCardTab() {
                                 </div>
                                 
                                 <div className="idcard-actions" data-html2canvas-ignore="true">
+                                    <button className="idcard-action-btn edit-btn" title="Edit Staff" onClick={() => handleEditStaff(staffMember)}>
+                                        <Edit3 size={16} />
+                                    </button>
                                     <button 
                                         className="idcard-action-btn download-btn" 
                                         title="Download Staff ID Card"
@@ -1110,6 +1188,9 @@ function IDCardTab() {
                                         disabled={downloadingId === staffMember.id}
                                     >
                                         {downloadingId === staffMember.id ? <Clock size={16}/> : <Download size={16} />} 
+                                    </button>
+                                    <button className="idcard-action-btn delete-btn" title="Delete record" onClick={() => handleDeleteStaff(staffMember)}>
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>

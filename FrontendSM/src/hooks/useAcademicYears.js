@@ -2,21 +2,37 @@ import { useState, useEffect } from 'react';
 
 export const useAcademicYears = () => {
     const [years, setYears] = useState([]);
+    const [activeYear, setActiveYear] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [academicYearsData, setAcademicYearsData] = useState([]);
 
-    useEffect(() => {
+    const fetchYears = async () => {
         try {
-            const saved = localStorage.getItem('academic_years');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                const labels = parsed.map(y => y.label);
+            setLoading(true);
+            const res = await fetch('/api/academics/years');
+            if (res.ok) {
+                const data = await res.json();
+                setAcademicYearsData(data);
+                const labels = data.map(y => y.label);
                 setYears(Array.from(new Set(labels)));
+                
+                const active = data.find(y => y.active);
+                if (active) {
+                    setActiveYear(active.label);
+                } else if (data.length > 0) {
+                    setActiveYear(data[0].label);
+                }
             }
         } catch (e) {
-            console.error('Failed to parse academic_years from localStorage', e);
+            console.error('Failed to fetch academic years', e);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchYears();
     }, []);
 
-    const activeYear = years.length > 0 ? years[0] : '2024-2025';
-
-    return { years: years.length > 0 ? years : ['2024-2025'], activeYear };
+    return { years, activeYear, loading, academicYearsData, refetch: fetchYears };
 };

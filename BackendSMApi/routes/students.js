@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Student = require('../models/Student');
-const { verifyToken, isAdmin } = require('../middleware/authMiddleware');
+const { isAdmin } = require('../middleware/authMiddleware');
 
 const crypto = require('crypto');
 
@@ -25,7 +25,7 @@ async function generateParentId() {
 
 
 // Get all students with optional filters
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { class: cls, section, gender, status } = req.query;
         const filter = {};
@@ -42,7 +42,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // Get a single student by id
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const student = await Student.findOne({ id: req.params.id });
         if (!student) return res.status(404).json({ message: 'Student not found' });
@@ -53,7 +53,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 });
 
 // Create a new student
-router.post('/', verifyToken, isAdmin, async (req, res) => {
+router.post('/', isAdmin, async (req, res) => {
     try {
         const studentData = req.body;
         
@@ -77,7 +77,7 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
 });
 
 // Update a student
-router.put('/:id', verifyToken, isAdmin, async (req, res) => {
+router.put('/:id', isAdmin, async (req, res) => {
     try {
         const updatedStudent = await Student.findOneAndUpdate(
             { id: req.params.id },
@@ -91,7 +91,7 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // Soft delete (mark inactive)
-router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
+router.delete('/:id', isAdmin, async (req, res) => {
     try {
         const student = await Student.findOneAndUpdate(
             { id: req.params.id },
@@ -105,7 +105,7 @@ router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 // Hard delete (permanently remove)
-router.delete('/:id/hard', verifyToken, isAdmin, async (req, res) => {
+router.delete('/:id/hard', isAdmin, async (req, res) => {
     try {
         if (req.user.role !== 'Super Admin') {
             return res.status(403).json({ message: 'Super Admin only' });
@@ -144,7 +144,7 @@ router.post('/:id/reset-password', async (req, res) => {
 
 
 // Bulk create students
-router.post('/bulk', verifyToken, isAdmin, async (req, res) => {
+router.post('/bulk', isAdmin, async (req, res) => {
     try {
         const students = req.body;
         if (!Array.isArray(students)) {

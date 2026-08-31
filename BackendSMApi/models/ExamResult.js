@@ -33,6 +33,6 @@ const examResultSchema = new mongoose.Schema({
     principalRemarks: String,
 }, { timestamps: true });
 
-examResultSchema.index({ exam: 1, studentId: 1 }, { unique: true });
+examResultSchema.index({ exam: 1, studentId: 1 }, {  });
 
 module.exports = mongoose.model('ExamResult', examResultSchema);

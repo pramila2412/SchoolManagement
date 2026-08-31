@@ -15,6 +15,6 @@ const transportAttendanceSchema = new mongoose.Schema({
     records: [attendanceRecordSchema],
 }, { timestamps: true });
 
-transportAttendanceSchema.index({ route: 1, date: 1, trip: 1 }, { unique: true });
+transportAttendanceSchema.index({ route: 1, date: 1, trip: 1 }, {  });
 
 module.exports = mongoose.model('TransportAttendance', transportAttendanceSchema);

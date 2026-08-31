@@ -18,7 +18,8 @@ const features = [
 export default function LoginPage() {
     const { login, user } = useAuth();
     const navigate = useNavigate();
-    const [loginType, setLoginType] = useState('admin'); // 'admin' or 'parent'
+    const [loginType, setLoginType] = useState('admin'); // 'platform', 'admin', or 'parent'
+    const [schoolCode, setSchoolCode] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +38,8 @@ export default function LoginPage() {
                 }
             } else if (user.role === 'Super Admin') {
                 navigate('/', { replace: true });
+            } else if (user.role === 'Platform Admin') {
+                navigate('/platform/schools', { replace: true });
             } else if (user.role === 'CMS Admin') {
                 navigate('/settings', { replace: true });
             } else {
@@ -63,8 +66,13 @@ export default function LoginPage() {
             return;
         }
 
+        if (loginType !== 'platform' && !schoolCode.trim()) {
+            setError('Please enter your School Code');
+            return;
+        }
+
         if (!email.trim() || !password.trim()) {
-            setError(loginType === 'admin' ? 'Please enter both email and password' : 'Please enter both Parent ID and password');
+            setError('Please enter both User ID / Email and password');
             return;
         }
 
@@ -78,7 +86,7 @@ export default function LoginPage() {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.trim(), password })
+                body: JSON.stringify({ email: email.trim(), password, schoolCode: schoolCode.trim() })
             });
 
             const data = await res.json();
@@ -135,14 +143,21 @@ const handleFailedAttempt = () => {
                         <div className="flex w-full bg-gray-100 rounded-lg p-1">
                             <button
                                 type="button"
-                                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${loginType === 'admin' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                                onClick={() => setLoginType('admin')}
+                                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${loginType === 'platform' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => { setLoginType('platform'); setEmail('platformadmin@mountzion.edu'); }}
                             >
-                                Admin / Staff
+                                Platform
                             </button>
                             <button
                                 type="button"
-                                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${loginType === 'parent' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${loginType === 'admin' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                onClick={() => setLoginType('admin')}
+                            >
+                                Admin/Staff
+                            </button>
+                            <button
+                                type="button"
+                                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${loginType === 'parent' ? 'bg-white text-[#0B3C5D] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => setLoginType('parent')}
                             >
                                 Parent
@@ -165,18 +180,37 @@ const handleFailedAttempt = () => {
                         </AnimatePresence>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {loginType !== 'platform' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-[#0B3C5D] uppercase tracking-wide">
+                                        School Code
+                                    </label>
+                                    <div className="relative">
+                                        <Layout className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                        <input
+                                            type="text"
+                                            placeholder="Enter School Code (e.g. SION)"
+                                            value={schoolCode}
+                                            onChange={e => setSchoolCode(e.target.value)}
+                                            className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B3C5D]/20 focus:border-[#0B3C5D] transition-all outline-none text-gray-800 uppercase"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-[#0B3C5D] uppercase tracking-wide">
-                                    {loginType === 'admin' ? 'User ID / Email' : 'User ID'}
+                                    {loginType === 'parent' ? 'User ID' : 'User ID / Email'}
                                 </label>
                                 <div className="relative">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                                     <input
                                         type="text"
-                                        placeholder={loginType === 'admin' ? 'Enter Admin ID' : 'Enter your User ID'}
+                                        placeholder={loginType === 'parent' ? 'Enter your User ID' : 'Enter User ID / Email'}
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                         className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0B3C5D]/20 focus:border-[#0B3C5D] transition-all outline-none text-gray-800"
+                                        disabled={loginType === 'platform'}
                                     />
                                 </div>
                             </div>

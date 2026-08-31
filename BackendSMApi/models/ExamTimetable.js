@@ -19,6 +19,6 @@ const examTimetableSchema = new mongoose.Schema({
     status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
 }, { timestamps: true });
 
-examTimetableSchema.index({ exam: 1, className: 1, section: 1 }, { unique: true });
+examTimetableSchema.index({ exam: 1, className: 1, section: 1 }, {  });
 
 module.exports = mongoose.model('ExamTimetable', examTimetableSchema);

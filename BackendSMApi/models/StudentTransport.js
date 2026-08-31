@@ -12,6 +12,6 @@ const studentTransportSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Prevent duplicate active assignment
-studentTransportSchema.index({ studentId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'Active' } });
+studentTransportSchema.index({ studentId: 1, status: 1 }, {  partialFilterExpression: { status: 'Active' } });
 
 module.exports = mongoose.model('StudentTransport', studentTransportSchema);

@@ -8,24 +8,13 @@ import { customAlert } from '../utils/dialogs';
 import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
-// Helper function to get active academic year
-const getActiveBatch = () => {
-    try {
-        const academicYears = JSON.parse(localStorage.getItem('academic_years') || '[]');
-        const activeYear = academicYears.find(y => y.active === true);
-        return activeYear ? activeYear.label : '2024-2025';
-    } catch (e) {
-        return '2024-2025';
-    }
-};
-
 export default function AddStudent() {
-    const { years } = useAcademicYears();
+    const { years, activeYear } = useAcademicYears();
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState('');
     const [formData, setFormData] = useState({
-        batch: getActiveBatch(),
+        batch: '',
         class: '',
         section: '',
         firstName: '',
@@ -109,9 +98,10 @@ export default function AddStudent() {
 
         setFormData(prev => ({
             ...prev,
-            studentId: prev.studentId || generateStudentId()
+            studentId: prev.studentId || generateStudentId(),
+            batch: activeYear || prev.batch
         }));
-    }, []);
+    }, [activeYear]);
 
     const handleParentSelect = (e) => {
         const pId = e.target.value;
@@ -303,6 +293,7 @@ export default function AddStudent() {
             const newStudent = {
                 ...formData,
                 id: newId,
+                academicYear: activeYear || formData.batch,
                 status: 'Active',
                 totalFees: 45000,
                 paidFees: 0,
@@ -356,24 +347,25 @@ export default function AddStudent() {
                 photoUrl: photoUrl,
                 status: 'Active',
                 admissionDate: formData.admissionDate,
-                feesStartDate: formData.feesStartDate,
                 firstLogin: true
             };
-            localStorage.setItem('mzs_students', JSON.stringify([...globalStudents, portalStudent]));
+
+            // No local storage save for students. Single source of truth is backend.
 
             try {
                 await api.createStudent(newStudent);
             } catch (apiErr) {
-                console.warn("Backend API unavailable, student saved to local storage only.", apiErr);
+                console.error("Backend API error:", apiErr);
+                throw apiErr; // Bubble up to outer catch block to show alert
             }
 
             await customAlert(
                 `Student added successfully!\n\n` +
                 `Parent Portal Login Credentials:\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `├────────────────────────────\n` +
                 `Parent ID: ${parentId}\n` +
                 `Password: ${parentPassword}\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `├────────────────────────────\n\n` +
                 `Please share these credentials with the parent during admission.`,
                 'Student Created',
                 'success'
@@ -381,7 +373,7 @@ export default function AddStudent() {
             navigate('/students');
         } catch (err) {
             console.error("Failed to add student", err);
-            await customAlert("Failed to add student. Please try again.");
+            await customAlert(err.message || "Failed to add student. Please check backend connection and validation.", "Error", "error");
         } finally {
             setIsSubmitting(false);
         }

@@ -23,6 +23,6 @@ const examMarksSchema = new mongoose.Schema({
     entries: [markEntrySchema],
 }, { timestamps: true });
 
-examMarksSchema.index({ exam: 1, className: 1, section: 1, subject: 1 }, { unique: true });
+examMarksSchema.index({ exam: 1, className: 1, section: 1, subject: 1 }, {  });
 
 module.exports = mongoose.model('ExamMarks', examMarksSchema);

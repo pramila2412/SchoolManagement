@@ -15,7 +15,7 @@ const tcSchema = new mongoose.Schema({
     dateOfFirstAdmission: Date,
     firstAdmissionClass: String,
     dobInWords: String,  // DOB written in words
-    tcNo: { type: String, unique: true },
+    tcNo: { type: String },
     dateOfLeaving: { type: Date, required: true },
     reasonForLeaving: { type: String, required: true },
     conduct: { type: String, enum: ['Good', 'Satisfactory', 'Excellent', 'Needs Improvement'], default: 'Good' },

@@ -10,14 +10,14 @@ import PhoneInput from '../components/PhoneInput';
 import './AddStudent.css';
 
 export default function EditStudent() {
-    const { years } = useAcademicYears();
+    const { years, activeYear } = useAcademicYears();
     const { ALL_CLASSES, getSectionsForClass } = useAcademicClassesData();
     const { id } = useParams();
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [formError, setFormError] = useState('');
     const [formData, setFormData] = useState({
-        batch: '2024-2025',
+        batch: '',
         class: '',
         section: '',
         firstName: '',
@@ -71,11 +71,25 @@ export default function EditStudent() {
                     const d = new Date(dateStr);
                     return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
                 };
+                let parsedClass = data.class || '';
+                let parsedSection = data.section || '';
                 
-                setFormData({
-                    batch: data.batch || '2024-2025',
-                    class: data.class || '',
-                    section: data.section || '',
+                if (parsedClass && parsedSection && parsedClass.endsWith(`-${parsedSection}`)) {
+                    parsedClass = parsedClass.slice(0, -(parsedSection.length + 1));
+                } else if (parsedClass && !parsedSection && parsedClass.includes('-')) {
+                    const lastHyphenIndex = parsedClass.lastIndexOf('-');
+                    const potentialSection = parsedClass.slice(lastHyphenIndex + 1);
+                    if (potentialSection.length <= 2) {
+                        parsedSection = potentialSection;
+                        parsedClass = parsedClass.slice(0, lastHyphenIndex);
+                    }
+                }
+
+                setFormData(prev => ({
+                    ...prev,
+                    batch: data.batch || activeYear || '',
+                    class: parsedClass,
+                    section: parsedSection,
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
                     gender: data.gender || 'Male',
@@ -114,7 +128,7 @@ export default function EditStudent() {
                             parentId: match.parentId || ''
                         } : {};
                     })())
-                });
+                }));
             } catch (err) {
                 console.error("Failed to load student details", err);
                 customAlert("Failed to load student details.");
@@ -123,7 +137,7 @@ export default function EditStudent() {
             }
         };
         fetchStudent();
-    }, [id]);
+    }, [id, activeYear]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -301,83 +315,17 @@ export default function EditStudent() {
             delete studentUpdate.existingBirthCertificateUrl;
             delete studentUpdate.existingPreviousTcUrl;
 
-            // ALWAYS Sync all edited fields to mzs_students localStorage
-            const globalStudents = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-            const existingIdx = globalStudents.findIndex(s => s.id === id || s.admissionNo === formData.admissionNo || s.parentEmail === formData.email);
-            if (existingIdx >= 0) {
-                globalStudents[existingIdx] = {
-                    ...globalStudents[existingIdx],
-                    name: `${formData.firstName} ${formData.lastName}`,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    class: `${formData.class}-${formData.section}`,
-                    section: formData.section,
-                    admissionNo: formData.admissionNo,
-                    rollNo: formData.rollNo,
-                    dateOfBirth: formData.dateOfBirth,
-                    gender: formData.gender,
-                    bloodGroup: formData.bloodGroup,
-                    parentEmail: formData.email,
-                    parentName: formData.fatherName,
-                    fatherName: formData.fatherName,
-                    motherName: formData.motherName,
-                    phone: formData.contactNo,
-                    contactNo: formData.contactNo,
-                    guardianPhone: formData.guardianPhone,
-                    address: formData.address,
-                    admissionDate: formData.admissionDate,
-                    feesStartDate: formData.feesStartDate,
-                    photoUrl: photoUrl || formData.existingPhotoUrl || globalStudents[existingIdx].photoUrl
-                };
-                if (formData.parentPassword) {
-                    globalStudents[existingIdx].parentPassword = formData.parentPassword;
-                }
-                if (formData.parentId) {
-                    globalStudents[existingIdx].parentId = formData.parentId;
-                }
-                localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
-            } else {
-                const newStudent = {
-                    id: id,
-                    name: `${formData.firstName} ${formData.lastName}`,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    class: `${formData.class}-${formData.section}`,
-                    section: formData.section,
-                    admissionNo: formData.admissionNo,
-                    rollNo: formData.rollNo,
-                    dateOfBirth: formData.dateOfBirth,
-                    gender: formData.gender,
-                    bloodGroup: formData.bloodGroup,
-                    parentEmail: formData.email,
-                    parentName: formData.fatherName,
-                    fatherName: formData.fatherName,
-                    motherName: formData.motherName,
-                    phone: formData.contactNo,
-                    contactNo: formData.contactNo,
-                    guardianPhone: formData.guardianPhone,
-                    address: formData.address,
-                    admissionDate: formData.admissionDate,
-                    feesStartDate: formData.feesStartDate,
-                    photoUrl: photoUrl || formData.existingPhotoUrl,
-                    parentId: formData.parentId || '',
-                    parentPassword: formData.parentPassword || 'password123',
-                    firstLogin: true
-                };
-                globalStudents.push(newStudent);
-                localStorage.setItem('mzs_students', JSON.stringify(globalStudents));
-            }
-
             try {
                 await api.updateStudent(id, studentUpdate);
             } catch (apiErr) {
-                console.warn("Backend API unavailable, student updated in local storage only.", apiErr);
+                console.error("Backend API error:", apiErr);
+                throw apiErr;
             }
             await customAlert('Student updated successfully!', 'Success', 'success');
             navigate(`/students/${id}`);
         } catch (err) {
             console.error("Failed to update student", err);
-            await customAlert(err.message || "Failed to update student in DB. Please check your network connection.");
+            await customAlert(err.message || "Failed to update student in DB. Please check your network connection.", "Error", "error");
         } finally {
             setIsSubmitting(false);
         }

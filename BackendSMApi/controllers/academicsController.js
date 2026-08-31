@@ -1,6 +1,60 @@
 const AcademicClass = require('../models/AcademicClass');
 const AcademicSubject = require('../models/AcademicSubject');
 const SubjectTeacherAssignment = require('../models/SubjectTeacherAssignment');
+const AcademicYear = require('../models/AcademicYear');
+
+// --- Academic Years ---
+
+exports.getAcademicYears = async (req, res) => {
+    try {
+        const years = await AcademicYear.find().sort({ createdAt: -1 });
+        res.json(years);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.createAcademicYear = async (req, res) => {
+    try {
+        const { label, startDate, endDate, active } = req.body;
+        
+        if (active) {
+            // Unset active for all others in this tenant
+            await AcademicYear.updateMany({}, { active: false });
+        }
+        
+        const year = new AcademicYear({ label, startDate, endDate, active });
+        await year.save();
+        res.status(201).json(year);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+exports.updateAcademicYear = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { label, startDate, endDate, active } = req.body;
+
+        if (active) {
+            await AcademicYear.updateMany({}, { active: false });
+        }
+        
+        const year = await AcademicYear.findByIdAndUpdate(id, { label, startDate, endDate, active }, { new: true });
+        res.json(year);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+exports.deleteAcademicYear = async (req, res) => {
+    try {
+        await AcademicYear.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Academic Year deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 // --- Classes & Sections ---
 

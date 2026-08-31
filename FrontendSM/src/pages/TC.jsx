@@ -15,15 +15,7 @@ import './TC.css';
 
 const API = '/api';
 
-const getActiveBatch = () => {
-    try {
-        const academicYears = JSON.parse(localStorage.getItem('academic_years') || '[]');
-        const activeYear = academicYears.find(y => y.active === true);
-        return activeYear ? activeYear.label : '2024-2025';
-    } catch (e) {
-        return '2024-2025';
-    }
-};
+
 
 const DEFAULT_TC_FORM = {
     dateOfLeaving: '',

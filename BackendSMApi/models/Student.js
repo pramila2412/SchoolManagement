@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const studentSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true }, // e.g. STU-2024-001
+    id: { type: String, required: true }, // e.g. STU-2024-001
     firstName: { type: String, required: true },
     lastName: { type: String, default: '' },
     gender: { type: String, required: true },
@@ -11,7 +11,7 @@ const studentSchema = new mongoose.Schema({
     category: { type: String, default: 'General' },
 
     // Parent / Guardian
-    parentId: { type: String, unique: true, sparse: true },
+    parentId: { type: String, sparse: true },
     parentPassword: { type: String },
     studentPassword: { type: String },
     fatherName: { type: String, required: true },

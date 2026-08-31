@@ -161,6 +161,9 @@ const subIconMap = {
 import { useAuth } from '../context/AuthContext';
 
 export const SIDEBAR_MODULES = [
+    {
+        id: 'platform-admin', name: 'Platform Dashboard', icon: 'Building', path: '/platform/schools',
+    },
     { id: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', path: '/' },
     {
         id: 'student', name: 'Student', icon: 'Users', path: '/students',
@@ -345,11 +348,13 @@ export default function Sidebar({ open, onClose }) {
 
     const filteredModules = user?.role === 'Parent'
         ? SIDEBAR_MODULES.filter(m => m.id === 'parent-portal')
-        : user?.role === 'Accountant'
-            ? SIDEBAR_MODULES.filter(m => m.id === 'finance')
-            : user?.role === 'Teacher'
-                ? SIDEBAR_MODULES.filter(m => ['dashboard', 'student', 'academics', 'attendance', 'examination', 'collaborate'].includes(m.id))
-                : SIDEBAR_MODULES.filter(m => m.id !== 'parent-portal');
+        : user?.role === 'Platform Admin'
+            ? SIDEBAR_MODULES.filter(m => m.id === 'platform-admin')
+            : user?.role === 'Accountant'
+                ? SIDEBAR_MODULES.filter(m => m.id === 'finance')
+                : user?.role === 'Teacher'
+                    ? SIDEBAR_MODULES.filter(m => ['dashboard', 'student', 'academics', 'attendance', 'examination', 'collaborate'].includes(m.id))
+                    : SIDEBAR_MODULES.filter(m => !['parent-portal', 'platform-admin'].includes(m.id));
 
     const toggleModule = (moduleId) => {
         setExpandedModules(prev =>
@@ -395,7 +400,9 @@ export default function Sidebar({ open, onClose }) {
                         <span className="sidebar-logo">🏫</span>
                         <div>
                             <h2>Mount Zion</h2>
-                            <span>School Management</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {user?.schoolName || 'School Management'}
+                            </span>
                         </div>
                     </div>
                 </div>

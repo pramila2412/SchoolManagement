@@ -21,41 +21,11 @@ export default function StudentsPage() {
 
     useEffect(() => {
         const fetchStudents = async () => {
+            setLoading(true);
             try {
                 // Fetch from API
                 const apiData = await api.getStudents();
-                
-                // Fetch from Local Admission (Confirmed)
-                const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
-                
-                // Merge and normalize (Admission form uses 'name', API uses 'firstName'/'lastName')
-                const normalizedLocal = localData.map(s => {
-                    const nameParts = (s.name || '').split(' ');
-                    return {
-                        ...s,
-                        firstName: s.firstName || nameParts[0],
-                        lastName: s.lastName || nameParts.slice(1).join(' '),
-                        contactNo: s.phone || s.contactNo || 'N/A',
-                        newStudent: true
-                    };
-                });
-
-                // Merge by ID to prevent duplicates
-                const allStudentsMap = new Map();
-                
-                // Add local data first (reverse so newest is at the top)
-                normalizedLocal.reverse().forEach(s => {
-                    allStudentsMap.set(s.id || s.admissionNo, s);
-                });
-                
-                // Add API data (already sorted newest first by backend)
-                apiData.forEach(s => {
-                    if (!allStudentsMap.has(s.id || s.admissionNo)) {
-                        allStudentsMap.set(s.id || s.admissionNo, s);
-                    }
-                });
-
-                setStudents(Array.from(allStudentsMap.values()));
+                setStudents(apiData);
             } catch (err) {
                 console.error("Failed to load students", err);
             } finally {
@@ -67,15 +37,20 @@ export default function StudentsPage() {
 
     const handleDelete = async (e, student) => {
         e.preventDefault();
-        e.stopPropagation();
         
         if (canHardDeleteStudent) {
             if (await customConfirm('SUPER ADMIN ACTION: Are you sure you want to PERMANENTLY delete this student record? This cannot be undone.')) {
                 try {
-                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
                     const studentId = student.id || student._id || student.admissionNo;
-                    const filteredData = localData.filter(s => (s.id || s._id || s.admissionNo) !== studentId);
-                    localStorage.setItem('mzs_students', JSON.stringify(filteredData));
+                    
+                    // Call backend API to delete
+                    try {
+                        await api.deleteStudent(studentId);
+                    } catch (apiErr) {
+                        console.error('API Error during delete', apiErr);
+                        await customAlert('Failed to hard delete student from backend.');
+                        return;
+                    }
                     
                     setStudents(prev => prev.filter(s => (s.id || s._id || s.admissionNo) !== studentId));
                     customAlert('Student permanently deleted.');
@@ -86,17 +61,15 @@ export default function StudentsPage() {
         } else if (canDeleteStudent) {
             if (await customConfirm('Are you sure you want to soft remove this student? They will be marked as Inactive.')) {
                 try {
-                    const localData = JSON.parse(localStorage.getItem('mzs_students') || '[]');
                     const studentId = student.id || student._id || student.admissionNo;
-                    const studentIndex = localData.findIndex(s => (s.id || s._id || s.admissionNo) === studentId);
                     
-                    if (studentIndex >= 0) {
-                        localData[studentIndex].status = 'Inactive';
-                        localStorage.setItem('mzs_students', JSON.stringify(localData));
-                    } else {
-                        const override = { ...student, status: 'Inactive' };
-                        localData.push(override);
-                        localStorage.setItem('mzs_students', JSON.stringify(localData));
+                    // Soft delete on backend (assuming updateStudent handles status change)
+                    try {
+                        await api.updateStudent(studentId, { status: 'Inactive' });
+                    } catch (apiErr) {
+                        console.error('API Error during soft delete', apiErr);
+                        await customAlert('Failed to remove student from backend.');
+                        return;
                     }
                     
                     setStudents(prev => prev.map(s => {

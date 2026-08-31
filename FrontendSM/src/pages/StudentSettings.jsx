@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings, Download, Save, ListTree, Calendar, Hash, CheckSquare } from 'lucide-react';
-import { customAlert } from '../utils/dialogs';
+import { customAlert } from '../components/dialogs';
+import { useAcademicYears } from '../hooks/useAcademicYears';
 import './StudentSettings.css';
 
 export default function StudentSettings() {
+    const { years, activeYear } = useAcademicYears();
     const [idFormat, setIdFormat] = useState('STU-YYYY-NNN');
-    const [academicYear, setAcademicYear] = useState('2024-2025');
+    const [academicYear, setAcademicYear] = useState('');
+
+    // Ensure we set the default academic year once it loads
+    useEffect(() => {
+        if (activeYear && !academicYear) {
+            setAcademicYear(activeYear);
+        }
+    }, [activeYear, academicYear]);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -99,9 +108,9 @@ export default function StudentSettings() {
                     <div className="form-group">
                         <label className="form-label">Current Academic Year</label>
                         <select className="form-select" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)}>
-                            <option value="2023-2024">2023-2024</option>
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
+                            {years.map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

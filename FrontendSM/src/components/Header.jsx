@@ -79,7 +79,8 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
     // Perform module search
     const searchableItems = SIDEBAR_MODULES.filter(module => {
         if (user?.role === 'Parent') return module.id === 'parent-portal';
-        return module.id !== 'parent-portal';
+        if (user?.role === 'Platform Admin') return module.id === 'platform-admin';
+        return module.id !== 'parent-portal' && module.id !== 'platform-admin';
     }).flatMap(module => {
         const items = [];
         items.push({ id: `main-${module.id}`, name: module.name, path: module.path, category: 'Main Module' });

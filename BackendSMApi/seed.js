@@ -20,7 +20,7 @@ const seedData = async () => {
         const students = await Student.insertMany([
             {
                 id: 'STU001', firstName: 'Aarav', lastName: 'Sharma', gender: 'Male',
-                fatherName: 'Rajesh Sharma', motherName: 'Priya Sharma', batch: '2024-2025',
+                fatherName: 'Rajesh Sharma', motherName: 'Priya Sharma', batch: '',
                 class: 'X', section: 'A', email: 'rajesh.sharma@email.com', contactNo: '9876543210',
                 address: '121 MG Road, New Delhi', rollNo: '01', admissionNo: 'ADM2024001',
                 category: 'General', facility: ['Transport'], totalFees: 45000, paidFees: 30000,
@@ -28,7 +28,7 @@ const seedData = async () => {
             },
             {
                 id: 'STU002', firstName: 'Diya', lastName: 'Patel', gender: 'Female',
-                fatherName: 'Amit Patel', motherName: 'Neha Patel', batch: '2024-2025',
+                fatherName: 'Amit Patel', motherName: 'Neha Patel', batch: '',
                 class: 'IX', section: 'B', email: 'amit.patel@email.com', contactNo: '9876543211',
                 address: '45 Park Street, Mumbai', rollNo: '05', admissionNo: 'ADM2024002',
                 category: 'OBC', facility: ['Library'], totalFees: 40000, paidFees: 40000,
@@ -36,7 +36,7 @@ const seedData = async () => {
             },
             {
                 id: 'STU003', firstName: 'Rohan', lastName: 'Gupta', gender: 'Male',
-                fatherName: 'Sanjay Gupta', motherName: 'Anita Gupta', batch: '2024-2025',
+                fatherName: 'Sanjay Gupta', motherName: 'Anita Gupta', batch: '',
                 class: 'VIII', section: 'A', email: 'sanjay.gupta@email.com', contactNo: '9876543212',
                 address: '77 Lake View, Bangalore', rollNo: '12', admissionNo: 'ADM2024003',
                 category: 'General', facility: ['Transport', 'Hostel'], totalFees: 60000, paidFees: 15000,

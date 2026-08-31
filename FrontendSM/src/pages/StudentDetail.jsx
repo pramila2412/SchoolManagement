@@ -308,7 +308,7 @@ export default function StudentDetail() {
                         <h2>{student.firstName} {student.lastName}</h2>
                         <span className="profile-class">Class {student.class} - Section {student.section} | Roll No: {student.rollNo}</span>
                         <div className="profile-badges">
-                            {student.studentId && <span className="badge badge-primary">ID: {student.studentId}</span>}
+                            {(student.studentId || student.id) && <span className="badge badge-primary">ID: {student.studentId || student.id}</span>}
                             <span className="badge badge-info">Adm: {student.admissionNo}</span>
                             <span className="badge badge-success">Batch: {student.batch}</span>
                             {student.status && student.status !== 'Active' && <span className="badge badge-danger">{student.status}</span>}
@@ -365,7 +365,7 @@ export default function StudentDetail() {
                                 <div className="detail-item"><span className="detail-label">Class</span><span className="detail-value">{student.class}</span></div>
                                 <div className="detail-item"><span className="detail-label">Section</span><span className="detail-value">{student.section}</span></div>
                                 <div className="detail-item"><span className="detail-label">Roll No</span><span className="detail-value">{student.rollNo}</span></div>
-                                <div className="detail-item"><span className="detail-label">Student ID</span><span className="detail-value">{student.studentId || '—'}</span></div>
+                                <div className="detail-item"><span className="detail-label">Student ID</span><span className="detail-value">{student.studentId || student.id || 'N/A'}</span></div>
                                 <div className="detail-item"><span className="detail-label">Admission No</span><span className="detail-value">{student.admissionNo}</span></div>
                                 <div className="detail-item"><span className="detail-label">Admission Date</span><span className="detail-value">{student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-IN') : '—'}</span></div>
                                 <div className="detail-item"><span className="detail-label">Academic Year</span><span className="detail-value">{student.batch}</span></div>

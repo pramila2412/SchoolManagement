@@ -6,7 +6,7 @@ const certificateSchema = new mongoose.Schema({
     class: String,
     section: String,
     type: { type: String, enum: ['Bonafide', 'Character', 'Study', 'Migration', 'Fee', 'Custom'], required: true },
-    certificateNo: { type: String, unique: true },
+    certificateNo: { type: String },
     issueDate: { type: Date, default: Date.now },
     purpose: String,
     remarks: String,

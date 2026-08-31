@@ -44,6 +44,7 @@ const Transport = lazy(() => import('./pages/Transport'));
 const Examination = lazy(() => import('./pages/Examination'));
 const FrontOffice = lazy(() => import('./pages/FrontOffice'));
 const Collaborate = lazy(() => import('./pages/Collaborate'));
+const Schools = lazy(() => import('./pages/Schools'));
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '40px' }}>
@@ -82,7 +83,9 @@ function AppLayout() {
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={
-              user.role === 'Parent' ? <Navigate to="/parent-portal" replace /> : <Dashboard />
+              user.role === 'Parent' ? <Navigate to="/parent-portal" replace /> 
+              : user.role === 'Platform Admin' ? <Navigate to="/platform/schools" replace /> 
+              : <Dashboard />
             } />
             <Route path="/students" element={
               <RouteRoleGuard allowedRoles={['Super Admin', 'Admin', 'HR']}>
@@ -201,6 +204,11 @@ function AppLayout() {
             <Route path="/settings" element={
               <RouteRoleGuard allowedRoles={['Super Admin', 'Admin']}>
                 <SiteSettings />
+              </RouteRoleGuard>
+            } />
+            <Route path="/platform/schools" element={
+              <RouteRoleGuard allowedRoles={['Platform Admin']}>
+                <Schools />
               </RouteRoleGuard>
             } />
             

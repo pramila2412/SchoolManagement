@@ -4,6 +4,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,6 +22,10 @@ export function AuthProvider({ children }) {
                 }
             }
             setUser(parsed);
+            const savedToken = localStorage.getItem('authToken');
+            if (savedToken) {
+                setToken(savedToken);
+            }
             localStorage.setItem('authLastActivity', Date.now().toString());
         }
         setLoading(false);
@@ -58,24 +63,31 @@ export function AuthProvider({ children }) {
         };
     }, [user]);
 
-    const login = (userData, token) => {
+    const login = (userData, tokenStr) => {
         setUser(userData);
+        setToken(tokenStr);
         localStorage.setItem('authUser', JSON.stringify(userData));
-        if (token) {
-            localStorage.setItem('authToken', token);
+        if (tokenStr) {
+            localStorage.setItem('authToken', tokenStr);
         }
         localStorage.setItem('authLastActivity', Date.now().toString());
     };
 
     const logout = () => {
         setUser(null);
+        setToken(null);
         localStorage.removeItem('authUser');
         localStorage.removeItem('authToken');
         localStorage.removeItem('authLastActivity');
+        localStorage.removeItem('academic_classes');
+        localStorage.removeItem('mzs_staff');
+        localStorage.removeItem('mzs_attendance');
+        localStorage.removeItem('mzs_attendance_locks');
+        localStorage.removeItem('mzs_leave_req');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

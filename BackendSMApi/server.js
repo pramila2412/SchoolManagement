@@ -2,7 +2,11 @@ require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const tenantPlugin = require('./models/plugins/tenantPlugin');
+mongoose.plugin(tenantPlugin);
+
 const path = require('path');
+const { verifyToken } = require('./middleware/authMiddleware');
 
 const studentRoutes = require('./routes/students');
 const financeRoutes = require('./routes/finance');
@@ -27,6 +31,7 @@ const admissionRoutes = require('./routes/admission');
 const academicsRoutes = require('./routes/academics');
 const teacherRoutes = require('./routes/teachers');
 const staffRoutes = require('./routes/staff');
+const schoolsRoutes = require('./routes/schools');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -41,30 +46,34 @@ app.use((req, res, next) => {
     next();
 });
 
-// API Routes
-app.use('/api/students', studentRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/concessions', concessionRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+// --- PUBLIC ROUTES (No Token Required) ---
 app.use('/api/auth', authRoutes);
-app.use('/api/transport', transportRoutes);
-app.use('/api/exam', examRoutes);
-app.use('/api/collaborate', collaborateRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/certificates', certificateRoutes);
-app.use('/api/tc', tcRoutes);
-app.use('/api/frontoffice', frontofficeRoutes);
 app.use('/api/about', aboutRoutes);
 app.use('/api/admission-page', admissionPageRoutes);
 app.use('/api/curriculum-page', curriculumPageRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/landing-page', landingPageRoutes);
-app.use('/api/upload', uploadRoutes);
 app.use('/api/admission', admissionRoutes);
-app.use('/api/academics', academicsRoutes);
-app.use('/api/teachers', teacherRoutes);
-app.use('/api/staff', staffRoutes);
+
+// --- PROTECTED ROUTES (Requires Token & Tenant Filtering) ---
+app.use('/api/students', verifyToken, studentRoutes);
+app.use('/api/finance', verifyToken, financeRoutes);
+app.use('/api/concessions', verifyToken, concessionRoutes);
+app.use('/api/dashboard', verifyToken, dashboardRoutes);
+app.use('/api/transport', verifyToken, transportRoutes);
+app.use('/api/exam', verifyToken, examRoutes);
+app.use('/api/collaborate', verifyToken, collaborateRoutes);
+app.use('/api/attendance', verifyToken, attendanceRoutes);
+app.use('/api/certificates', verifyToken, certificateRoutes);
+app.use('/api/tc', verifyToken, tcRoutes);
+app.use('/api/frontoffice', verifyToken, frontofficeRoutes);
+app.use('/api/upload', verifyToken, uploadRoutes);
+app.use('/api/academics', verifyToken, academicsRoutes);
+app.use('/api/teachers', verifyToken, teacherRoutes);
+app.use('/api/staff', verifyToken, staffRoutes);
+app.use('/api/schools', verifyToken, schoolsRoutes);
+
 // Serve public uploads directory
 const frontendPublicPath = path.join(__dirname, '..', 'FrontendSM', 'public');
 app.use(express.static(frontendPublicPath));

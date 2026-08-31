@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const StaffSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true }, // EMP-2026-001
+    id: { type: String, required: true }, // EMP-2026-001
     name: { type: String, required: true },
     email: { type: String },
     phone: { type: String, required: true },
@@ -32,5 +32,7 @@ const StaffSchema = new mongoose.Schema({
         ifsc: { type: String }
     }
 }, { timestamps: true });
+
+StaffSchema.index({ id: 1, schoolId: 1 }, {  });
 
 module.exports = mongoose.model('Staff', StaffSchema);

@@ -9,7 +9,7 @@ const maintenanceSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const vehicleSchema = new mongoose.Schema({
-    vehicleNumber: { type: String, required: true, unique: true, trim: true },
+    vehicleNumber: { type: String, required: true, trim: true },
     type: { type: String, enum: ['Bus', 'Mini Bus', 'Van', 'Auto'], required: true },
     capacity: { type: Number, required: true },
     model: String,

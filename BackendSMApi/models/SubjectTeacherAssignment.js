@@ -10,6 +10,6 @@ const SubjectTeacherAssignmentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Ensure unique assignment per class and section
-SubjectTeacherAssignmentSchema.index({ className: 1, section: 1 }, { unique: true });
+SubjectTeacherAssignmentSchema.index({ className: 1, section: 1 }, {  });
 
 module.exports = mongoose.model('SubjectTeacherAssignment', SubjectTeacherAssignmentSchema);

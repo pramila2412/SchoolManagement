@@ -7,7 +7,7 @@ const SectionSchema = new mongoose.Schema({
 });
 
 const AcademicClassSchema = new mongoose.Schema({
-    className: { type: String, required: true, unique: true },
+    className: { type: String, required: true },
     sections: [SectionSchema]
 }, { timestamps: true });
 

@@ -16,6 +16,6 @@ const attendanceRecordSchema = new mongoose.Schema({
     markedBy: { type: String, default: 'Admin' },
 }, { timestamps: true });
 
-attendanceRecordSchema.index({ date: 1, class: 1, section: 1 }, { unique: true });
+attendanceRecordSchema.index({ date: 1, class: 1, section: 1 }, {  });
 
 module.exports = mongoose.model('AttendanceRecord', attendanceRecordSchema);

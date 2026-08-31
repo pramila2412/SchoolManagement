@@ -17,19 +17,72 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 
 // ======================== ACADEMIC YEAR ========================
 function AcademicYearTab() {
-    const [years, setYears] = useLocalStorage('academic_years', []);
-    
+    const [years, setYears] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [form, setForm] = useState({ label: '', startDate: '', endDate: '', active: false });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const newYear = { ...form, id: Date.now(), active: form.active };
-        if (newYear.active) setYears(prev => prev.map(y => ({ ...y, active: false })));
-        setYears(prev => [newYear, ...prev]);
-        setForm({ label: '', startDate: '', endDate: '', active: false });
+    useEffect(() => {
+        fetchYears();
+    }, []);
+
+    const fetchYears = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch('/api/academics/years');
+            if (res.ok) setYears(await res.json());
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
-    const toggleActive = (id) => setYears(prev => prev.map(y => ({ ...y, active: y.id === id })));
-    const handleDelete = (id) => setYears(prev => prev.filter(y => y.id !== id));
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/academics/years', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+            if (res.ok) {
+                setForm({ label: '', startDate: '', endDate: '', active: false });
+                fetchYears();
+                customAlert('Academic Year added!');
+            } else {
+                const data = await res.json();
+                customAlert(data.message || 'Error saving year');
+            }
+        } catch (e) {
+            customAlert('Network Error');
+            console.error(e);
+        }
+    };
+    
+    const toggleActive = async (year) => {
+        try {
+            const res = await fetch(`/api/academics/years/${year._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...year, active: true })
+            });
+            if (res.ok) fetchYears();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+    
+    const handleDelete = async (id) => {
+        if (!await customConfirm('Delete this Academic Year?')) return;
+        try {
+            const res = await fetch(`/api/academics/years/${id}`, { method: 'DELETE' });
+            if (res.ok) fetchYears();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    if (loading) return <div className="p-6">Loading...</div>;
 
     return (
         <div className="animate-fade-in">
@@ -40,8 +93,8 @@ function AcademicYearTab() {
                         <div className="form-group"><label className="form-label">Year Label <span className="required">*</span></label>
                             <input type="text" className="form-input" required placeholder="e.g. 2025-2026" value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} /></div>
                         <div className="acad-form form-row">
-                            <div className="form-group"><label className="form-label">Start Date</label><input type="date" className="form-input" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} /></div>
-                            <div className="form-group"><label className="form-label">End Date</label><input type="date" className="form-input" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} /></div>
+                            <div className="form-group"><label className="form-label">Start Date</label><input type="date" className="form-input" value={form.startDate ? form.startDate.split('T')[0] : ''} onChange={e => setForm({ ...form, startDate: e.target.value })} /></div>
+                            <div className="form-group"><label className="form-label">End Date</label><input type="date" className="form-input" value={form.endDate ? form.endDate.split('T')[0] : ''} onChange={e => setForm({ ...form, endDate: e.target.value })} /></div>
                         </div>
                         <div className="form-group" style={{ marginTop: 14 }}>
                             <label className="status-toggle"><span className="form-label" style={{ margin: 0 }}>Set as Active Year</span>
@@ -54,10 +107,16 @@ function AcademicYearTab() {
                 <div className="acad-table-panel">
                     <table className="data-table"><thead><tr><th>Year</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>{years.map(y => (
-                            <tr key={y.id}><td className="fw-600">{y.label}</td><td>{y.startDate}</td><td>{y.endDate}</td>
+                            <tr key={y._id}>
+                                <td className="fw-600">{y.label}</td>
+                                <td>{y.startDate ? new Date(y.startDate).toLocaleDateString() : ''}</td>
+                                <td>{y.endDate ? new Date(y.endDate).toLocaleDateString() : ''}</td>
                                 <td><span className={`badge ${y.active ? 'badge-success' : 'badge-draft'}`}>{y.active ? 'Active' : 'Archived'}</span></td>
-                                <td><button className="btn-icon" title="Set Active" onClick={() => toggleActive(y.id)}><CheckCircle2 size={16}/></button>
-                                    <button className="btn-icon" title="Delete" onClick={() => handleDelete(y.id)}><Trash2 size={16}/></button></td></tr>
+                                <td>
+                                    {!y.active && <button className="btn-icon" title="Set Active" onClick={() => toggleActive(y)}><CheckCircle2 size={16}/></button>}
+                                    <button className="btn-icon" title="Delete" onClick={() => handleDelete(y._id)}><Trash2 size={16}/></button>
+                                </td>
+                            </tr>
                         ))}</tbody></table>
                 </div>
             </div>
@@ -99,18 +158,21 @@ function ClassSectionTab() {
                 }))));
             }
             
-            // Fetch teachers from HR Staff List in localStorage
+            // Fetch teachers from backend API
             try {
-                const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
-                const teachersList = hrStaff
-                    .filter(s => s.role === 'Teacher')
-                    .map(s => ({
-                        _id: s.id || Math.random().toString(),
-                        name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
-                    }));
-                setTeachers(teachersList);
+                const staffRes = await fetch('/api/staff');
+                if (staffRes.ok) {
+                    const staffList = await staffRes.json();
+                    const teachersList = staffList
+                        .filter(s => s.role === 'Teacher')
+                        .map(s => ({
+                            _id: s.id || s._id,
+                            name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
+                        }));
+                    setTeachers(teachersList);
+                }
             } catch (err) {
-                console.error("Failed to parse hr staff", err);
+                console.error("Failed to fetch staff", err);
             }
         } catch (e) {
             console.error("Error fetching classes:", e);
@@ -264,7 +326,7 @@ function ClassSectionTab() {
                                 <React.Fragment key={c._id}>
                                     <tr style={{ backgroundColor: 'var(--surface-50)' }}>
                                         <td colSpan="4" className="fw-bold" style={{ color: 'var(--primary)' }}>
-                                            Class: {c.className}
+                                            {c.className}
                                         </td>
                                         <td>
                                             <button className="btn-icon" onClick={() => deleteClass(c._id)} title="Delete Class"><Trash2 size={16} color="var(--danger)" /></button>
@@ -476,18 +538,21 @@ function TeacherAssignmentTab() {
             if (clsRes.ok) setClasses(await clsRes.json());
             if (subjRes.ok) setSubjects(await subjRes.json());
             
-            // Fetch teachers from HR Staff List in localStorage
+            // Fetch teachers from backend API
             try {
-                const hrStaff = JSON.parse(localStorage.getItem('mzs_staff') || '[]');
-                const teachersList = hrStaff
-                    .filter(s => s.role === 'Teacher')
-                    .map(s => ({
-                        _id: s.id || Math.random().toString(),
-                        name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
-                    }));
-                setTeachers(teachersList);
+                const staffRes = await fetch('/api/staff');
+                if (staffRes.ok) {
+                    const staffList = await staffRes.json();
+                    const teachersList = staffList
+                        .filter(s => s.role === 'Teacher')
+                        .map(s => ({
+                            _id: s.id || s._id,
+                            name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim()
+                        }));
+                    setTeachers(teachersList);
+                }
             } catch (err) {
-                console.error("Failed to parse hr staff", err);
+                console.error("Failed to fetch staff", err);
             }
         } catch (e) {
             console.error(e);

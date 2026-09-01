@@ -30,6 +30,11 @@ const DEFAULTS = {
 
 export default function ContactPublicPage() {
     const [data, setData] = useState(DEFAULTS);
+    const [isMounted, setIsMounted] = useState(false);
+    
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     
     // Form state
     const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', phone: '', message: '' });
@@ -283,16 +288,18 @@ export default function ContactPublicPage() {
                 <div className="section-container">
                     <h2 className="map-heading">SEE ON MAP</h2>
                     <div className="map-container">
-                        <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.3367401412197!2d87.4447969!3d25.7924625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eff99ea1e7f3bd%3A0x698a31e366250485!2sMount%20Zion%20School!5e0!3m2!1sen!2sin!4v1777440961542!5m2!1sen!2sin" 
-                            width="100%" 
-                            height="100%" 
-                            style={{ border: 0 }} 
-                            allowFullScreen="" 
-                            loading="lazy" 
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Mount Zion School Location Map"
-                        ></iframe>
+                        {isMounted && (
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.3367401412197!2d87.4447969!3d25.7924625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eff99ea1e7f3bd%3A0x698a31e366250485!2sMount%20Zion%20School!5e0!3m2!1sen!2sin!4v1777440961542!5m2!1sen!2sin" 
+                                width="100%" 
+                                height="100%" 
+                                style={{ border: 0 }} 
+                                allowFullScreen="" 
+                                loading="lazy" 
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="Mount Zion School Location Map"
+                            ></iframe>
+                        )}
                     </div>
                 </div>
             </section>

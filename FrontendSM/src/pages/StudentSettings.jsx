@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Download, Save, ListTree, Calendar, Hash, CheckSquare } from 'lucide-react';
-import { customAlert } from '../components/dialogs';
+import { customAlert } from '../utils/dialogs';
 import { useAcademicYears } from '../hooks/useAcademicYears';
 import './StudentSettings.css';
 

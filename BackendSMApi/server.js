@@ -46,6 +46,8 @@ app.use((req, res, next) => {
     next();
 });
 
+const hrSettingsRoutes = require('./routes/hrSettings');
+
 // --- PUBLIC ROUTES (No Token Required) ---
 app.use('/api/auth', authRoutes);
 app.use('/api/about', aboutRoutes);
@@ -73,6 +75,7 @@ app.use('/api/academics', verifyToken, academicsRoutes);
 app.use('/api/teachers', verifyToken, teacherRoutes);
 app.use('/api/staff', verifyToken, staffRoutes);
 app.use('/api/schools', verifyToken, schoolsRoutes);
+app.use('/api/hr-settings', verifyToken, hrSettingsRoutes);
 
 // Serve public uploads directory
 const frontendPublicPath = path.join(__dirname, '..', 'FrontendSM', 'public');

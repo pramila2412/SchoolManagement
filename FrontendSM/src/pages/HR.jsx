@@ -19,10 +19,11 @@ function DashboardTab() {
     const navigate = useNavigate();
     const [staff, setStaff] = useState([]);
     useEffect(() => {
-        fetch('/api/staff')
-            .then(res => res.json())
-            .then(data => setStaff(data))
-            .catch(console.error);
+        const token = localStorage.getItem('authToken');
+        fetch('/api/staff', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setStaff(Array.isArray(data) ? data : []))
+            .catch(err => { console.error(err); setStaff([]); });
     }, []);
     
     // KPI Logic
@@ -79,11 +80,23 @@ function StaffTab() {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [staff, setStaff] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [departments, setDepartments] = useState([]);
     useEffect(() => {
-        fetch('/api/staff')
-            .then(res => res.json())
-            .then(data => setStaff(data))
-            .catch(console.error);
+        const token = localStorage.getItem('authToken');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        fetch('/api/staff', { headers })
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setStaff(Array.isArray(data) ? data : []))
+            .catch(err => { console.error(err); setStaff([]); });
+        fetch('/api/hr-settings/roles', { headers })
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setRoles(Array.isArray(data) ? data : []))
+            .catch(err => { console.error(err); setRoles([]); });
+        fetch('/api/hr-settings/departments', { headers })
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setDepartments(Array.isArray(data) ? data : []))
+            .catch(err => { console.error(err); setDepartments([]); });
     }, []);
     const [searchTerm, setSearchTerm] = useState('');
     const [deptFilter, setDeptFilter] = useState('All Departments');
@@ -126,16 +139,7 @@ function StaffTab() {
         }
     };
 
-    // Auto-map roles based on employment type
-    useEffect(() => {
-        if (staffForm.type === 'Part-time' && !['Visiting Teacher', 'Counsellor'].includes(staffForm.role)) {
-            setStaffForm(f => ({ ...f, role: 'Visiting Teacher' }));
-        } else if (staffForm.type === 'Contract' && !['Driver', 'Security', 'Housekeeping'].includes(staffForm.role)) {
-            setStaffForm(f => ({ ...f, role: 'Driver' }));
-        } else if (staffForm.type === 'Full-time' && !['Teacher', 'Admin', 'Principal', 'Accountant'].includes(staffForm.role)) {
-            setStaffForm(f => ({ ...f, role: 'Teacher' }));
-        }
-    }, [staffForm.type]);
+    // Removed auto-map roles based on employment type to allow dynamic roles
 
     const navigate = useNavigate();
     const closeAdd = () => {
@@ -202,7 +206,8 @@ function StaffTab() {
     const handleDeleteStaff = async (staffMember) => {
         if (await customConfirm(`Are you sure you want to delete the record for ${staffMember.name}?`)) {
             try {
-                const res = await fetch(`/api/staff/${staffMember.id || staffMember._id}`, { method: 'DELETE' });
+                const token = localStorage.getItem('authToken');
+                const res = await fetch(`/api/staff/${staffMember.id || staffMember._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
                 if (res.ok) {
                     setStaff(prev => prev.filter(s => s.id !== staffMember.id));
                     await customAlert("Staff member deleted successfully!", "Success", "success");
@@ -260,9 +265,10 @@ function StaffTab() {
                 }
             };
             try {
+                const token = localStorage.getItem('authToken');
                 const res = await fetch(`/api/staff/${editingStaff.id || editingStaff._id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(updatedStaff)
                 });
                 if (res.ok) {
@@ -310,9 +316,10 @@ function StaffTab() {
             }
         };
         try {
+            const token = localStorage.getItem('authToken');
             const res = await fetch('/api/staff', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newStaff)
             });
             if (res.ok) {
@@ -381,11 +388,12 @@ function StaffTab() {
                             <div className="form-group"><label className="form-label">Employment Type <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.type ? 'error-border' : ''}`} value={staffForm.type} onChange={e => {setStaffForm({...staffForm, type: e.target.value}); setErrors({...errors, type: null});}}><option value="">Select Type</option><option>Full-time</option><option>Part-time</option><option>Contract</option></select>{errors.type && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.type}</small>}</div>
                             <div className="form-group"><label className="form-label">Role <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.role ? 'error-border' : ''}`} value={staffForm.role} onChange={e => {setStaffForm({...staffForm, role: e.target.value}); setErrors({...errors, role: null});}}>
                                 <option value="">Select Role</option>
-                                {staffForm.type === 'Full-time' && <><option>Teacher</option><option>Admin</option><option>Principal</option><option>Accountant</option></>}
-                                {staffForm.type === 'Part-time' && <><option>Visiting Teacher</option><option>Counsellor</option></>}
-                                {staffForm.type === 'Contract' && <><option>Driver</option><option>Security</option><option>Housekeeping</option></>}
+                                {roles.map(r => <option key={r._id} value={r.name}>{r.name}</option>)}
                             </select>{errors.role && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.role}</small>}</div>
-                            <div className="form-group"><label className="form-label">Department <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.dept ? 'error-border' : ''}`} value={staffForm.dept} onChange={e => {setStaffForm({...staffForm, dept: e.target.value}); setErrors({...errors, dept: null});}}><option value="">Select Department</option><option>Mathematics</option><option>Science</option><option>English</option><option>Administration</option><option>Transport</option><option>Student Welfare</option><option>Support</option></select>{errors.dept && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.dept}</small>}</div>
+                            <div className="form-group"><label className="form-label">Department <span style={{ color: 'var(--danger)' }}>*</span></label><select className={`form-select ${errors.dept ? 'error-border' : ''}`} value={staffForm.dept} onChange={e => {setStaffForm({...staffForm, dept: e.target.value}); setErrors({...errors, dept: null});}}>
+                                <option value="">Select Department</option>
+                                {departments.map(d => <option key={d._id} value={d.name}>{d.name}</option>)}
+                            </select>{errors.dept && <small style={{color: 'var(--danger)', fontSize: '0.75rem', marginTop: 4, display: 'block'}}>{errors.dept}</small>}</div>
                             <div className="form-group"><label className="form-label">Date of Joining</label><input type="date" className="form-input" value={staffForm.joined} onChange={e => setStaffForm({...staffForm, joined: e.target.value})}/></div>
                         </div>
                     </div>
@@ -459,7 +467,7 @@ function StaffTab() {
 function AttendanceTab() {
     const { user } = useAuth();
     const [staffList, setStaffList] = useState([]);
-    useEffect(() => { fetch('/api/staff').then(r=>r.json()).then(d=>setStaffList(d)).catch(console.error); }, []);
+    useEffect(() => { const token = localStorage.getItem('authToken'); fetch('/api/staff', {headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.ok?r.json():[]).then(d=>setStaffList(Array.isArray(d)?d:[])).catch(e=>{console.error(e);setStaffList([]);}); }, []);
     const [attendanceRecords, setAttendanceRecords] = useLocalStorage('mzs_attendance', []);
     const [attendanceLocks, setAttendanceLocks] = useLocalStorage('mzs_attendance_locks', {});
     
@@ -589,7 +597,7 @@ function AttendanceTab() {
 function LeaveTab() {
     const { user } = useAuth();
     const [staffList, setStaffList] = useState([]);
-    useEffect(() => { fetch('/api/staff').then(r=>r.json()).then(d=>setStaffList(d)).catch(console.error); }, []);
+    useEffect(() => { const token = localStorage.getItem('authToken'); fetch('/api/staff', {headers:{'Authorization':`Bearer ${token}`}}).then(r=>r.ok?r.json():[]).then(d=>setStaffList(Array.isArray(d)?d:[])).catch(e=>{console.error(e);setStaffList([]);}); }, []);
     const [leaveRequests, setLeaveRequests] = useLocalStorage('mzs_leave_req', []);
 
     const [isApplying, setIsApplying] = useState(false);
@@ -2488,6 +2496,102 @@ function LoginManagementTab() {
     );
 }
 
+// ======================== ROLES & DEPARTMENTS ========================
+function RolesDepartmentsTab() {
+    const [roles, setRoles] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [newRole, setNewRole] = useState('');
+    const [newDept, setNewDept] = useState('');
+
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const [rolesRes, deptRes] = await Promise.all([
+                fetch('/api/hr-settings/roles', { headers }),
+                fetch('/api/hr-settings/departments', { headers })
+            ]);
+            const rolesData = rolesRes.ok ? await rolesRes.json() : [];
+            const deptData = deptRes.ok ? await deptRes.json() : [];
+            setRoles(Array.isArray(rolesData) ? rolesData : []);
+            setDepartments(Array.isArray(deptData) ? deptData : []);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    useEffect(() => { fetchData(); }, []);
+
+    const addRole = async () => {
+        if (!newRole.trim()) return;
+        const token = localStorage.getItem('authToken');
+        await fetch('/api/hr-settings/roles', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newRole.trim() }) });
+        setNewRole('');
+        fetchData();
+    };
+
+    const deleteRole = async (id) => {
+        const token = localStorage.getItem('authToken');
+        await fetch(`/api/hr-settings/roles/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchData();
+    };
+
+    const addDept = async () => {
+        if (!newDept.trim()) return;
+        const token = localStorage.getItem('authToken');
+        await fetch('/api/hr-settings/departments', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newDept.trim() }) });
+        setNewDept('');
+        fetchData();
+    };
+
+    const deleteDept = async (id) => {
+        const token = localStorage.getItem('authToken');
+        await fetch(`/api/hr-settings/departments/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        fetchData();
+    };
+
+    return (
+        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="hr-form-panel">
+                <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}>Manage Roles</h3>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                    <input className="form-input" value={newRole} onChange={e => setNewRole(e.target.value)} placeholder="New Role Name" />
+                    <button className="btn btn-primary" onClick={addRole}>Add</button>
+                </div>
+                <table className="data-table">
+                    <thead><tr><th>Role Name</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {roles.map(r => (
+                            <tr key={r._id}>
+                                <td>{r.name}</td>
+                                <td><button className="btn-icon" onClick={() => deleteRole(r._id)} style={{ color: 'var(--danger)' }}><Trash2 size={16}/></button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <div className="hr-form-panel">
+                <h3 style={{ color: 'var(--primary)', marginBottom: 20 }}>Manage Departments</h3>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                    <input className="form-input" value={newDept} onChange={e => setNewDept(e.target.value)} placeholder="New Department Name" />
+                    <button className="btn btn-primary" onClick={addDept}>Add</button>
+                </div>
+                <table className="data-table">
+                    <thead><tr><th>Department Name</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {departments.map(d => (
+                            <tr key={d._id}>
+                                <td>{d.name}</td>
+                                <td><button className="btn-icon" onClick={() => deleteDept(d._id)} style={{ color: 'var(--danger)' }}><Trash2 size={16}/></button></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
 // ======================== MAIN HR COMPONENT ========================
 const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'HR Manager', 'Staff', 'Teacher', 'CMS Admin'] },
@@ -2499,6 +2603,7 @@ const TABS = [
     { id: 'documents', label: 'Documents', icon: FileText, roles: ['Super Admin', 'Admin', 'HR Manager', 'Staff', 'Teacher'] },
     { id: 'performance', label: 'Performance', icon: Star, roles: ['Super Admin', 'Admin', 'HR Manager'] },
     { id: 'shifts', label: 'Shifts', icon: Clock, roles: ['Super Admin', 'Admin', 'HR Manager'] },
+    { id: 'roles-departments', label: 'Roles & Depts', icon: Settings, roles: ['Super Admin', 'Admin', 'Platform Admin'] },
     { id: 'login-management', label: 'Login Access', icon: ShieldCheck, roles: ['Super Admin'] },
     { id: 'reports', label: 'Reports', icon: Download, roles: ['Super Admin', 'Admin', 'HR Manager'] },
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['Super Admin', 'Admin'] },
@@ -2706,6 +2811,7 @@ export default function HR() {
                         <Route path="login-management" element={<LoginManagementTab />} />
                         <Route path="reports" element={<ReportsTab />} />
                         <Route path="settings" element={<SettingsTab />} />
+                        <Route path="roles-departments" element={<RolesDepartmentsTab />} />
                     </Routes>
                 </div>
             </div>

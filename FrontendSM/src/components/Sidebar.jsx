@@ -59,6 +59,7 @@ const subIconMap = {
         'Shifts & Timetable': Clock,
         'HR Reports': Download,
         'HR Settings': Settings,
+        'Roles & Depts': Settings,
         'Login Access': ShieldCheck,
     },
     'parent-portal': {
@@ -258,6 +259,7 @@ export const SIDEBAR_MODULES = [
             { name: 'Shifts & Timetable', path: '/hr/shifts' },
             { name: 'HR Reports', path: '/hr/reports' },
             { name: 'HR Settings', path: '/hr/settings', allowedRoles: ['Super Admin', 'Admin'] },
+            { name: 'Roles & Depts', path: '/hr/roles-departments', allowedRoles: ['Super Admin', 'Admin', 'Platform Admin'] },
             { name: 'Login Access', path: '/hr/login-management', allowedRoles: ['Super Admin'] },
         ]
     },
